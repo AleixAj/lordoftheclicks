@@ -15,7 +15,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,md}\"",
     "typecheck": "tsc --noEmit",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -57,8 +57,8 @@
     "vitest": "^3.0.0"
   },
   "pnpm": {
-    "allowBuilds": {
-      "esbuild": true
-    }
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }
