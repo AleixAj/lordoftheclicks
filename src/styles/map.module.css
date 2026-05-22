@@ -10,6 +10,8 @@
   background: #1a1810;
   user-select: none;
   touch-action: none;
+  /* Isolate compositing so siblings outside the panel never repaint with us. */
+  contain: strict;
 }
 
 .inner {
@@ -17,6 +19,10 @@
   top: 0;
   left: 0;
   will-change: transform;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  /* GPU layer hint — keeps the bitmap rasterised on the compositor thread. */
+  transform-style: preserve-3d;
 }
 
 .image {
@@ -25,6 +31,8 @@
   display: block;
   pointer-events: none;
   filter: brightness(0.62) contrast(1.05);
+  /* The darken filter is expensive when re-rasterised. Pin to its own layer. */
+  will-change: filter;
 }
 
 .overlay {
@@ -33,6 +41,7 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
+  shape-rendering: geometricPrecision;
 }
 
 .marker {
@@ -142,6 +151,40 @@
   letter-spacing: 1px;
   pointer-events: none;
   z-index: 20;
+}
+
+.toolbar {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+  z-index: 30;
+}
+
+.toolButton {
+  padding: 3px 8px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  color: var(--color-gold);
+  background: rgba(10, 8, 4, 0.78);
+  border: 1px solid rgba(201, 164, 74, 0.55);
+  border-radius: 3px;
+  cursor: pointer;
+  opacity: 0.85;
+  transition:
+    opacity 0.15s,
+    background 0.15s;
+}
+
+.toolButton:hover {
+  opacity: 1;
+  background: rgba(30, 22, 10, 0.95);
+}
+
+.toolButton:focus-visible {
+  outline: 1px solid var(--color-gold);
+  outline-offset: 1px;
 }
 
 @keyframes mapPulse {

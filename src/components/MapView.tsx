@@ -1,0 +1,174 @@
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { LOCATIONS } from '@/data';
+import { useGameStore } from '@/engine/store';
+import { useMapInteraction } from '@/hooks/useMapInteraction';
+import { MapMarker } from './MapMarker';
+import { MapPaths } from './MapPaths';
+import styles from '@/styles/map.module.css';
+
+const MAP_ASPECT = 3000 / 1713;
+export const DEFAULT_MAP_ZOOM = 4.3;
+const MAP_SRC = '/middle-earth-map.jpg';
+
+interface MapViewProps {
+  /** Initial zoom on first mount. */
+  initialZoom?: number;
+  /** When provided, an expand button is shown in the toolbar. */
+  onExpand?: () => void;
+  /** When provided, a close button is shown instead of expand (used inside the modal). */
+  onClose?: () => void;
+}
+
+/**
+ * Interactive Middle-earth map viewport: pan, zoom, animated centering,
+ * coordinate badge, location markers and routes.
+ */
+export function MapView({ initialZoom = DEFAULT_MAP_ZOOM, onExpand, onClose }: MapViewProps) {
+  const state = useGameStore((s) => s.state);
+  const travelTo = useGameStore((s) => s.travelTo);
+
+  const map = useMapInteraction({ mapAspect: MAP_ASPECT, defaultZoom: initialZoom });
+  const didInit = useRef(false);
+
+  const loc = LOCATIONS[state.locIdx];
+
+  useEffect(() => {
+    if (!loc || map.containerSize.w < 50) return;
+    if (!didInit.current) {
+      didInit.current = true;
+      map.centerOn(loc.id, initialZoom);
+    } else {
+      map.centerOn(loc.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.locIdx, map.containerSize.w, map.containerSize.h]);
+
+  // Stable handler factory: memoizing the inner click means each marker only
+  // re-binds when its own props change, not on every pan.
+  const handleMarkerClick = useCallback(
+    (i: number, unlocked: boolean) => (e: React.MouseEvent) => {
+      if (map.wasDragged()) {
+        e.stopPropagation();
+        return;
+      }
+      if (unlocked) travelTo(i);
+    },
+    [map, travelTo],
+  );
+
+  const markerScale = map.isOverview
+    ? 0.45
+    : Math.max(0.5, Math.min(1.4, 0.35 + map.zoom * 0.16));
+
+  const unlockedSet = useMemo(
+    () => new Set(state.unlockedLocs),
+    [state.unlockedLocs],
+  );
+
+  return (
+    <div
+      ref={map.containerRef}
+      className={styles.viewport}
+      style={{ cursor: map.isDragging ? 'grabbing' : 'grab' }}
+      {...map.handlers}
+    >
+      <div
+        ref={map.innerRef}
+        className={styles.inner}
+        style={{
+          width: map.displaySize.w,
+          height: map.displaySize.h,
+          transform: `translate3d(${map.offset.x}px, ${map.offset.y}px, 0)`,
+          transition: map.transitioning
+            ? 'transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+            : 'none',
+        }}
+      >
+        <img
+          src={MAP_SRC}
+          className={styles.image}
+          draggable={false}
+          alt="Tierra Media"
+          decoding="async"
+        />
+
+        <MapPaths unlocked={state.unlockedLocs} />
+
+        {LOCATIONS.map((l, i) => {
+          const unlocked = unlockedSet.has(l.id);
+          const isCurrent = i === state.locIdx;
+          const isComplete = unlocked && (state.locKills[l.id] ?? 0) >= l.killsNeeded;
+          return (
+            <MapMarker
+              key={l.id}
+              loc={l}
+              index={i}
+              isCurrent={isCurrent}
+              unlocked={unlocked}
+              isComplete={isComplete}
+              scale={markerScale}
+              showLabel={isCurrent && !map.isOverview && unlocked}
+              onClick={handleMarkerClick}
+            />
+          );
+        })}
+      </div>
+
+      <div className={styles.toolbar}>
+        <button
+          type="button"
+          onClick={() => map.centerOn(loc.id, initialZoom)}
+          className={styles.toolButton}
+          title="Centrar en localización actual"
+        >
+          ⊙ Centrar
+        </button>
+        <button
+          type="button"
+          onClick={map.fitToScreen}
+          className={styles.toolButton}
+          title="Ver mapa completo"
+        >
+          ⊖ Ver todo
+        </button>
+        {onExpand && (
+          <button
+            type="button"
+            onClick={onExpand}
+            className={styles.toolButton}
+            title="Expandir mapa"
+            aria-label="Expandir mapa"
+          >
+            ⛶ Expandir
+          </button>
+        )}
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className={styles.toolButton}
+            title="Cerrar mapa expandido"
+            aria-label="Cerrar mapa expandido"
+          >
+            ✕ Cerrar
+          </button>
+        )}
+      </div>
+
+      <div className={styles.locOverlay}>
+        <div className={styles.locName}>{loc.name}</div>
+        <div className={styles.locDesc}>{loc.desc}</div>
+      </div>
+
+      {map.hoverCoord && (
+        <div className={styles.coord} aria-hidden="true">
+          [{map.hoverCoord.x}, {map.hoverCoord.y}]
+        </div>
+      )}
+
+      <div className={styles.zoom} aria-hidden="true">
+        {map.zoom.toFixed(1)}x
+      </div>
+    </div>
+  );
+}

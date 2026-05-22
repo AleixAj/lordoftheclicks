@@ -23,11 +23,13 @@ export interface UseMapInteractionOptions {
 export interface UseMapInteractionResult {
   /** Ref to attach to the viewport element. */
   containerRef: React.RefObject<HTMLDivElement | null>;
+  /** Ref to attach to the inner element. Drag updates its transform directly to avoid React re-renders. */
+  innerRef: React.RefObject<HTMLDivElement | null>;
   /** Current viewport dimensions in CSS pixels. */
   containerSize: MapSize;
   /** Current rendered map size after zoom. */
   displaySize: MapSize;
-  /** Current pan offset (translate). */
+  /** Current pan offset (translate). Only updated on commit (after drag, wheel, etc.). */
   offset: MapOffset;
   /** Current zoom factor. */
   zoom: number;
@@ -59,7 +61,14 @@ function fitMap(cw: number, ch: number, aspect: number): MapSize {
   return { w: cw, h: cw / aspect };
 }
 
-function clampOffset(x: number, y: number, dw: number, dh: number, cw: number, ch: number): MapOffset {
+function clampOffset(
+  x: number,
+  y: number,
+  dw: number,
+  dh: number,
+  cw: number,
+  ch: number,
+): MapOffset {
   const nx = dw <= cw ? (cw - dw) / 2 : Math.min(0, Math.max(cw - dw, x));
   const ny = dh <= ch ? (ch - dh) / 2 : Math.min(0, Math.max(ch - dh, y));
   return { x: nx, y: ny };
@@ -67,7 +76,11 @@ function clampOffset(x: number, y: number, dw: number, dh: number, cw: number, c
 
 /**
  * Encapsulates all the pan/zoom logic for the map viewport.
- * The view layer just spreads the returned handlers and renders the markers.
+ *
+ * Performance notes:
+ *  - During drag the transform is written directly to `innerRef.current.style`
+ *    to bypass React reconciliation. State is only committed on `endDrag`.
+ *  - Hover coordinate updates are throttled with `requestAnimationFrame`.
  */
 export function useMapInteraction({
   mapAspect,
@@ -77,7 +90,11 @@ export function useMapInteraction({
   dragThreshold = 4,
 }: UseMapInteractionOptions): UseMapInteractionResult {
   const containerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef({ dragging: false, moved: 0, startX: 0, startY: 0, baseX: 0, baseY: 0 });
+  const liveOffsetRef = useRef<MapOffset>({ x: 0, y: 0 });
+  const rafRef = useRef<number | null>(null);
+  const pendingCoordRef = useRef<{ x: string; y: string } | null>(null);
 
   const [containerSize, setContainerSize] = useState<MapSize>({ w: 600, h: 220 });
   const [zoom, setZoom] = useState(defaultZoom);
@@ -88,6 +105,11 @@ export function useMapInteraction({
 
   const fit = fitMap(containerSize.w, containerSize.h, mapAspect);
   const displaySize: MapSize = { w: fit.w * zoom, h: fit.h * zoom };
+
+  // Keep the live offset ref in sync with committed state.
+  useEffect(() => {
+    liveOffsetRef.current = offset;
+  }, [offset]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -176,25 +198,26 @@ export function useMapInteraction({
         moved: 0,
         startX: e.clientX,
         startY: e.clientY,
-        baseX: offset.x,
-        baseY: offset.y,
+        baseX: liveOffsetRef.current.x,
+        baseY: liveOffsetRef.current.y,
       };
       setTransitioning(false);
       setIsDragging(true);
     },
-    [offset.x, offset.y],
+    [],
   );
 
   const onMouseMove = useCallback(
     (e: React.MouseEvent) => {
       const r = e.currentTarget.getBoundingClientRect();
-      let nextOff = offset;
       const drag = dragRef.current;
+      let liveOff = liveOffsetRef.current;
+
       if (drag.dragging) {
         const dx = e.clientX - drag.startX;
         const dy = e.clientY - drag.startY;
         drag.moved = Math.max(drag.moved, Math.abs(dx) + Math.abs(dy));
-        nextOff = clampOffset(
+        liveOff = clampOffset(
           drag.baseX + dx,
           drag.baseY + dy,
           displaySize.w,
@@ -202,35 +225,60 @@ export function useMapInteraction({
           containerSize.w,
           containerSize.h,
         );
-        setOffset(nextOff);
+        liveOffsetRef.current = liveOff;
+
+        // Direct DOM write: bypass React reconciliation while dragging.
+        const inner = innerRef.current;
+        if (inner) {
+          inner.style.transform = `translate3d(${liveOff.x}px, ${liveOff.y}px, 0)`;
+        }
       }
-      const localX = e.clientX - r.left - nextOff.x;
-      const localY = e.clientY - r.top - nextOff.y;
+
+      const localX = e.clientX - r.left - liveOff.x;
+      const localY = e.clientY - r.top - liveOff.y;
       const px = (localX / displaySize.w) * 100;
       const py = (localY / displaySize.h) * 100;
-      if (px >= 0 && px <= 100 && py >= 0 && py <= 100) {
-        setHoverCoord({ x: px.toFixed(1), y: py.toFixed(1) });
-      } else {
-        setHoverCoord(null);
+      pendingCoordRef.current =
+        px >= 0 && px <= 100 && py >= 0 && py <= 100
+          ? { x: px.toFixed(1), y: py.toFixed(1) }
+          : null;
+
+      // Throttle coord badge updates with rAF.
+      if (rafRef.current == null) {
+        rafRef.current = window.requestAnimationFrame(() => {
+          rafRef.current = null;
+          setHoverCoord(pendingCoordRef.current);
+        });
       }
     },
-    [offset, displaySize.w, displaySize.h, containerSize.w, containerSize.h],
+    [displaySize.w, displaySize.h, containerSize.w, containerSize.h],
   );
 
   const endDrag = useCallback(() => {
+    if (!dragRef.current.dragging) return;
     dragRef.current.dragging = false;
     setIsDragging(false);
+    // Commit the live offset to React state so the rest of the tree (markers, etc.) sees it.
+    setOffset(liveOffsetRef.current);
   }, []);
 
   const onMouseLeave = useCallback(() => {
     endDrag();
+    pendingCoordRef.current = null;
     setHoverCoord(null);
   }, [endDrag]);
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current != null) window.cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
 
   const wasDragged = useCallback(() => dragRef.current.moved > dragThreshold, [dragThreshold]);
 
   return {
     containerRef,
+    innerRef,
     containerSize,
     displaySize,
     offset,
