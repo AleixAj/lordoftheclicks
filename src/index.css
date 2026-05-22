@@ -1,0 +1,76 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-display: 'Cinzel Decorative', serif;
+  --font-heading: 'Cinzel', serif;
+  --font-body: 'Crimson Pro', serif;
+
+  --color-parchment: #e6d3ac;
+  --color-parchment-light: #f0e4c8;
+  --color-parchment-dark: #d2bc90;
+  --color-border-gold: #7a6a30;
+  --color-border-gold-light: #a08c48;
+  --color-header-bg: #1e1a14;
+  --color-header-text: #c9a44a;
+  --color-ink: #2c1c10;
+  --color-ink-soft: #6b5840;
+  --color-gold: #ffd700;
+  --color-mithril: #8ac0e0;
+  --color-danger: #a03020;
+  --color-success: #3a7a3a;
+}
+
+:root {
+  --bg-primary: #0e1118;
+  --bg-gradient-a: #161c2a;
+  --bg-gradient-b: #0e1118;
+  --hp-fill: #8b2222;
+  --hp-bg: #2a1010;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: var(--bg-primary);
+  background-image: radial-gradient(
+    ellipse at 30% 20%,
+    var(--bg-gradient-a) 0%,
+    var(--bg-gradient-b) 70%
+  );
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.5);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-parchment-dark);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-gold);
+  border-radius: 3px;
+}

@@ -1,0 +1,54 @@
+.panel {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid var(--color-border-gold);
+  border-radius: 4px;
+  background: var(--color-parchment);
+  background-image:
+    url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E"),
+    linear-gradient(170deg, var(--color-parchment-light) 0%, var(--color-parchment) 40%, var(--color-parchment-dark) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.panel::before,
+.panel::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  width: 12px;
+  height: 12px;
+  border-color: var(--color-border-gold-light);
+  border-style: solid;
+  opacity: 0.5;
+  pointer-events: none;
+}
+.panel::before {
+  left: 3px;
+  border-width: 1px 0 0 1px;
+}
+.panel::after {
+  right: 3px;
+  border-width: 1px 1px 0 0;
+}
+
+.header {
+  padding: 6px 12px;
+  text-align: center;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--color-header-text);
+  background: var(--color-header-bg);
+  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 0%, transparent 100%);
+  border-bottom: 1px solid var(--color-border-gold);
+}
+
+.body {
+  /* No padding by default — each panel decides via bodyClassName. */
+  padding: 0;
+}
