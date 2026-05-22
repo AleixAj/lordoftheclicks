@@ -4,7 +4,14 @@ import { spawnInitial } from '../spawn';
 import { LOCATIONS } from '@/data';
 import type { GameState } from '@/types/game';
 
-function freshState(locIdx = 0): GameState {
+/**
+ * Pick the first location that actually spawns enemies — rest locations
+ * (e.g. La Comarca / Rivendel) are skipped to keep tests resilient to
+ * content tweaks at the start of the journey.
+ */
+const COMBAT_IDX = LOCATIONS.findIndex((l) => !l.isRest && l.enemies.length > 0);
+
+function freshState(locIdx = COMBAT_IDX): GameState {
   return {
     locIdx,
     gold: 0,
@@ -45,11 +52,11 @@ describe('combat.dealDamage', () => {
   });
 
   it('unlocks next location once killsNeeded is reached', () => {
-    let state = freshState(0);
-    const killsNeeded = LOCATIONS[0].killsNeeded;
+    let state = freshState(COMBAT_IDX);
+    const killsNeeded = LOCATIONS[COMBAT_IDX].killsNeeded;
     for (let i = 0; i < killsNeeded; i++) {
       state = dealDamage(state, state.enemy!.hp + 999, () => 0);
     }
-    expect(state.unlockedLocs).toContain(LOCATIONS[1].id);
+    expect(state.unlockedLocs).toContain(LOCATIONS[COMBAT_IDX + 1].id);
   });
 });

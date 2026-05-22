@@ -4,7 +4,7 @@ import {
   unlockNextLocation,
   updateReachQuestProgress,
 } from '../progression';
-import { LOCATIONS } from '@/data';
+import { LOCATIONS, QUESTS } from '@/data';
 import type { GameState } from '@/types/game';
 
 function state(overrides: Partial<GameState> = {}): GameState {
@@ -42,12 +42,12 @@ describe('progression', () => {
   });
 
   it('updateReachQuestProgress completes reach quests for unlocked locations', () => {
-    const result = updateReachQuestProgress(
-      {},
-      [],
-      ['comarca', 'bree', 'cima_vientos', 'rivendel'],
-    );
-    expect(result.q5).toBe(1);
+    // Pick any defined `reach` quest dynamically so the test stays valid as
+    // content evolves (quest ids and target locations may shift over time).
+    const reachQuest = QUESTS.find((q) => q.type === 'reach');
+    expect(reachQuest, 'expected at least one reach quest in content').toBeDefined();
+    const result = updateReachQuestProgress({}, [], [reachQuest!.loc]);
+    expect(result[reachQuest!.id]).toBe(1);
   });
 
   it('unlockCompanionsForLocations grants companions from visited locations', () => {
