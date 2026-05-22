@@ -7,6 +7,7 @@ const AUTOSAVE_DEBOUNCE_MS = 500;
 /**
  * Wires together the runtime side-effects of the game:
  *  - DPS tick (4 times per second).
+ *  - Boss-fight deadline check.
  *  - Debounced auto-save to localStorage.
  *
  * Mounted once at the App root. Lives in a hook so that
@@ -15,14 +16,24 @@ const AUTOSAVE_DEBOUNCE_MS = 500;
  */
 export function useGameLoop(): void {
   useEffect(() => {
-    const tick = useGameStore.getState().tick;
-    const id = window.setInterval(tick, TICK_INTERVAL_MS);
+    const id = window.setInterval(() => {
+      const store = useGameStore.getState();
+      const fight = store.state.bossFight;
+      if (fight && Date.now() >= fight.deadlineMs) {
+        store.failBossFight();
+        return;
+      }
+      store.tick();
+    }, TICK_INTERVAL_MS);
     return () => window.clearInterval(id);
   }, []);
 
   useEffect(() => {
     let saveTimer: number | null = null;
+    let lastSavedState = useGameStore.getState().state;
     const unsubscribe = useGameStore.subscribe((store) => {
+      if (store.state === lastSavedState) return;
+      lastSavedState = store.state;
       if (saveTimer) window.clearTimeout(saveTimer);
       saveTimer = window.setTimeout(() => saveGame(store.state), AUTOSAVE_DEBOUNCE_MS);
     });

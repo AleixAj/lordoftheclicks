@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { LOCATIONS } from '@/data';
+import { LOCATIONS, QUESTS } from '@/data';
 import { useGameStore } from '@/engine/store';
 import { useMapInteraction } from '@/hooks/useMapInteraction';
 import { MapMarker } from './MapMarker';
@@ -56,6 +56,22 @@ export function MapView({ initialZoom = DEFAULT_MAP_ZOOM, onExpand, onClose }: M
     [map, travelTo],
   );
 
+  // Per-location set of pending quests (in unlocked zones, not yet accepted
+  // and not yet done) — drives the "!" badge on each marker.
+  const questsByLoc = useMemo(() => {
+    const acc = new Set(state.questsAccepted);
+    const done = new Set(state.questsDone);
+    const unlocked = new Set(state.unlockedLocs);
+    const out = new Set<string>();
+    for (const q of QUESTS) {
+      if (acc.has(q.id) || done.has(q.id)) continue;
+      const pickup = q.pickupLoc ?? q.loc;
+      if (!unlocked.has(pickup)) continue;
+      out.add(pickup);
+    }
+    return out;
+  }, [state.questsAccepted, state.questsDone, state.unlockedLocs]);
+
   const markerScale = map.isOverview
     ? 0.45
     : Math.max(0.5, Math.min(1.4, 0.35 + map.zoom * 0.16));
@@ -97,7 +113,13 @@ export function MapView({ initialZoom = DEFAULT_MAP_ZOOM, onExpand, onClose }: M
         {LOCATIONS.map((l, i) => {
           const unlocked = unlockedSet.has(l.id);
           const isCurrent = i === state.locIdx;
-          const isComplete = unlocked && (state.locKills[l.id] ?? 0) >= l.killsNeeded;
+          const isComplete =
+            unlocked &&
+            (l.isRest || l.isFinal
+              ? state.bossDefeated[l.id] || (state.locKills[l.id] ?? 0) >= l.killsNeeded
+              : l.boss
+                ? !!state.bossDefeated[l.id]
+                : (state.locKills[l.id] ?? 0) >= l.killsNeeded);
           return (
             <MapMarker
               key={l.id}
@@ -108,6 +130,7 @@ export function MapView({ initialZoom = DEFAULT_MAP_ZOOM, onExpand, onClose }: M
               isComplete={isComplete}
               scale={markerScale}
               showLabel={isCurrent && !map.isOverview && unlocked}
+              hasQuest={questsByLoc.has(l.id)}
               onClick={handleMarkerClick}
             />
           );

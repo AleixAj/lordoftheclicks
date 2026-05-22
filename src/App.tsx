@@ -14,6 +14,7 @@ export function App() {
   const resetGame = useGameStore((s) => s.resetGame);
   const unlockAll = useGameStore((s) => s.unlockAll);
   const completeAll = useGameStore((s) => s.completeAll);
+  const completeCurrentZone = useGameStore((s) => s.completeCurrentZone);
   const isDev = import.meta.env.DEV;
 
   return (
@@ -32,6 +33,14 @@ export function App() {
                 title="Dev: desbloquear todas las ubicaciones"
               >
                 ⚙ Unlock all
+              </button>
+              <button
+                type="button"
+                onClick={completeCurrentZone}
+                className="px-2 py-0.5 text-[11px] border border-[#7a6a30] text-[#c9a44a] rounded opacity-70 hover:opacity-100 font-[Crimson_Pro]"
+                title="Dev: completar la zona actual (boss derrotado, siguiente zona desbloqueada)"
+              >
+                ⏭ Complete zone
               </button>
               <button
                 type="button"

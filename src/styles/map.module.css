@@ -50,7 +50,59 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px;
+}
+
+.markerHit {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  /* Keep the hit area tight to the visible dot so adjacent markers stay
+     clickable — the map renders at ~4.3× by default, so every CSS px of
+     padding becomes ~4 screen px on each side. 2px gives a small slack
+     to cover the 3px border without bleeding into neighbouring markers. */
+  padding: 2px;
+  font: inherit;
+  color: inherit;
+}
+
+/* Informational only — the actual "accept" action lives on the click panel. */
+.questBadge {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #ffe46a, #c98a1a);
+  color: #1a1000;
+  font-family: var(--font-heading);
+  font-weight: 900;
+  border: 1.5px solid #6b4912;
+  padding: 0;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  box-shadow:
+    0 0 6px rgba(255, 215, 0, 0.9),
+    0 1px 3px rgba(0, 0, 0, 0.7);
+  animation: questBadgePulse 1.6s ease-in-out infinite;
+  z-index: 5;
+}
+
+@keyframes questBadgePulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 4px rgba(255, 215, 0, 0.6),
+      0 1px 3px rgba(0, 0, 0, 0.7);
+  }
+  50% {
+    box-shadow:
+      0 0 14px rgba(255, 215, 0, 1),
+      0 1px 3px rgba(0, 0, 0, 0.7);
+  }
 }
 
 .dot {
@@ -64,7 +116,7 @@
   z-index: 2;
 }
 
-.marker:hover .dot {
+.markerHit:hover .dot {
   filter: brightness(1.35);
   transform: scale(1.25);
   box-shadow: 0 0 14px rgba(255, 215, 0, 0.85) !important;
@@ -190,11 +242,11 @@
 @keyframes mapPulse {
   0%,
   100% {
-    opacity: 0.5;
+    opacity: 0.6;
     transform: translate(-50%, -50%) scale(1);
   }
   50% {
     opacity: 0.15;
-    transform: translate(-50%, -50%) scale(1.6);
+    transform: translate(-50%, -50%) scale(1.3);
   }
 }

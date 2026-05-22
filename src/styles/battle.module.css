@@ -156,15 +156,6 @@
   user-select: none;
 }
 
-.bossGlow {
-  position: absolute;
-  inset: -8px;
-  border: 3px solid var(--color-danger);
-  border-radius: 8px;
-  box-shadow: 0 0 25px rgba(200, 60, 30, 0.55);
-  animation: bossGlow 2s ease-in-out infinite;
-}
-
 .name {
   font-family: var(--font-heading);
   font-weight: 700;
@@ -176,12 +167,40 @@
 .boss {
   color: #ff7a4a;
 }
+.semi {
+  color: #ffd17a;
+}
 .bossTag {
   display: block;
   font-size: clamp(11px, 1vw, 14px);
   letter-spacing: 3px;
   color: var(--color-danger);
   margin-bottom: 4px;
+}
+.semiTag {
+  display: block;
+  font-size: clamp(10px, 0.9vw, 13px);
+  letter-spacing: 2.5px;
+  color: var(--color-gold);
+  margin-bottom: 4px;
+}
+
+.enemyTypePill {
+  display: block;
+  width: fit-content;
+  max-width: min(360px, 90vw);
+  margin: 5px auto 0;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(201, 164, 74, 0.42);
+  background: rgba(8, 6, 3, 0.68);
+  color: #f4e4bc;
+  font-family: var(--font-body);
+  font-size: clamp(11px, 0.95vw, 13px);
+  font-style: italic;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: none;
 }
 
 .hpBar {
@@ -332,12 +351,841 @@
   }
 }
 
-@keyframes bossGlow {
+/* ---------- Side navigation arrows (prev/next zone) ---------- */
+
+.navWrap {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+}
+
+.nav_prev {
+  left: 10px;
+}
+
+.nav_next {
+  right: 10px;
+}
+
+.navArrow {
+  width: 40px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid rgba(201, 164, 74, 0.55);
+  background: rgba(10, 8, 4, 0.65);
+  color: var(--color-gold);
+  font-family: var(--font-heading);
+  font-size: 32px;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  appearance: none;
+  padding: 0;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    transform 0.12s,
+    color 0.15s,
+    opacity 0.15s;
+}
+
+.navArrow:hover:not(:disabled) {
+  background: rgba(30, 22, 10, 0.85);
+  border-color: rgba(255, 215, 0, 0.85);
+  color: #fff5c8;
+  transform: scale(1.06);
+}
+
+.navArrow:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.navArrow:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+.navArrow:disabled {
+  cursor: not-allowed;
+}
+
+.navDisabled {
+  opacity: 0.35;
+  color: #7a705c;
+  border-color: rgba(120, 110, 90, 0.4);
+  background: rgba(10, 8, 4, 0.45);
+}
+
+.navTooltip {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%) translateX(4px);
+  padding: 4px 9px;
+  background: rgba(8, 6, 3, 0.92);
+  border: 1px solid rgba(201, 164, 74, 0.45);
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 11px;
+  color: #d8c896;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.nav_prev .navTooltip {
+  left: calc(100% + 8px);
+}
+
+.nav_next .navTooltip {
+  right: calc(100% + 8px);
+  transform: translateY(-50%) translateX(-4px);
+}
+
+.navWrap:hover .navTooltip,
+.navArrow:focus-visible + .navTooltip {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* ---------- Encounter actions (circular floating buttons) ---------- */
+
+.actionsFloat {
+  position: absolute;
+  /* Top-left corner, laid out horizontally. The side navigation arrows
+     sit at vertical mid-edge so they don't collide with these. High
+     z-index so the hover tooltip floats above damage numbers, kill
+     counter, enemy sprite, etc. */
+  left: 14px;
+  top: 14px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  z-index: 50;
+  pointer-events: auto;
+}
+
+.encWrap {
+  position: relative;
+}
+
+.encChip {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  appearance: none;
+  padding: 0;
+  position: relative;
+  overflow: visible;
+  transition: transform 0.12s ease;
+}
+
+.encChip:hover:not(:disabled) {
+  transform: scale(1.08);
+}
+.encChip:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.encChip:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 3px;
+  border-radius: 50%;
+}
+.encChip:disabled {
+  cursor: not-allowed;
+}
+
+.encIcon {
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  image-rendering: pixelated;
+}
+
+/* Semi sprite is square (409×409): fills the button circle naturally. */
+.encSemi .encIcon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Boss sprite is 375×454 — the top ~17% is horns. We render the icon
+   slightly taller than wide and shift it up so the skull aligns with
+   the button circle while the horns clearly stick out above. */
+.encBoss .encIcon {
+  width: 100%;
+  height: 121%;
+  margin-top: -21%;
+  object-fit: contain;
+}
+
+/* The glow is a filter on the image itself so it follows the actual
+   silhouette of the sprite (horns included), not a rectangular box. */
+.encSemi:not(:disabled) .encIcon {
+  animation: encPulseSemi 2.4s ease-in-out infinite;
+}
+
+.encBoss:not(:disabled) .encIcon {
+  animation: encPulseBoss 1.8s ease-in-out infinite;
+}
+
+.encLocked .encIcon {
+  filter: grayscale(0.9) brightness(0.55)
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  animation: none !important;
+}
+
+.encDoneBadge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(80, 180, 80, 0.95);
+  color: #08160a;
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 1px 4px rgba(0, 0, 0, 0.6),
+    0 0 0 2px rgba(8, 6, 3, 0.9);
+  pointer-events: none;
+}
+
+/* Tooltip on hover */
+.encTooltip {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  transform: translateY(-6px);
+  min-width: 140px;
+  max-width: 220px;
+  white-space: normal;
+  padding: 6px 10px;
+  background: rgba(8, 6, 3, 0.92);
+  border: 1px solid rgba(201, 164, 74, 0.45);
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+  font-family: var(--font-heading);
+  color: #f4e4bc;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+  z-index: 60;
+}
+
+.encTooltip::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 24px;
+  border: 6px solid transparent;
+  border-bottom-color: rgba(201, 164, 74, 0.45);
+}
+
+.encWrap:hover .encTooltip,
+.encChip:focus-visible + .encTooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.encTooltipTitle {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-align: left;
+}
+
+.encTooltipBody {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 11px;
+  color: #d8c896;
+  text-align: right;
+  margin-top: 2px;
+}
+
+@keyframes encPulseSemi {
   0%,
   100% {
-    opacity: 0.5;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6))
+      drop-shadow(0 0 5px rgba(255, 215, 0, 0.4))
+      drop-shadow(0 0 10px rgba(255, 215, 0, 0.18));
   }
   50% {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6))
+      drop-shadow(0 0 10px rgba(255, 215, 0, 0.85))
+      drop-shadow(0 0 18px rgba(255, 215, 0, 0.45));
+  }
+}
+
+@keyframes encPulseBoss {
+  0%,
+  100% {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6))
+      drop-shadow(0 0 6px rgba(255, 90, 60, 0.5))
+      drop-shadow(0 0 12px rgba(255, 90, 60, 0.22));
+  }
+  50% {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6))
+      drop-shadow(0 0 12px rgba(255, 90, 60, 0.95))
+      drop-shadow(0 0 22px rgba(255, 90, 60, 0.5));
+  }
+}
+
+/* ---------- Boss fight countdown ---------- */
+
+.timer {
+  width: min(80%, 460px);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+
+.timerLabel {
+  font-family: var(--font-heading);
+  font-size: clamp(12px, 1.05vw, 14px);
+  letter-spacing: 2px;
+  color: var(--color-gold);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.timerBar {
+  width: 100%;
+  height: 10px;
+  background: rgba(20, 14, 8, 0.8);
+  border: 1px solid rgba(201, 164, 74, 0.45);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.timerFill {
+  height: 100%;
+  background: linear-gradient(90deg, #f6c558 0%, #c98a2a 100%);
+  transition: width 0.25s linear;
+}
+
+.timerLow .timerLabel {
+  color: #ff7a4a;
+  animation: timerPulse 0.6s ease-in-out infinite;
+}
+.timerLow .timerFill {
+  background: linear-gradient(90deg, #ff5b3a 0%, #8c1c0a 100%);
+}
+
+@keyframes timerPulse {
+  0%,
+  100% {
     opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ---------- Fight-failed flash ---------- */
+
+.flash {
+  margin-top: 6px;
+  padding: 6px 14px;
+  background: rgba(70, 18, 6, 0.7);
+  border: 1px solid rgba(255, 90, 60, 0.55);
+  border-radius: 4px;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: clamp(11px, 1vw, 13px);
+  color: #f4d8c8;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  animation: flashIn 0.25s ease-out;
+}
+
+@keyframes flashIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---------- Rest-zone recruit panel ---------- */
+
+.recruitWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 12px 10px;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.recruitHeader {
+  font-family: var(--font-heading);
+  font-size: clamp(14px, 1.4vw, 18px);
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--color-gold);
+  text-shadow:
+    0 0 4px rgba(0, 0, 0, 0.95),
+    0 1px 3px rgba(0, 0, 0, 0.85);
+}
+
+.recruitGrid {
+  display: grid;
+  gap: clamp(8px, 1.2vw, 18px);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  flex: 1;
+  min-height: 0;
+  align-content: center;
+  align-items: end;
+  /* Column count is set per roster size so cards shrink instead of overflowing. */
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+.recruitGrid[data-count='2'] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.recruitGrid[data-count='3'] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.recruitGrid[data-count='4'] {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.recruitCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 2px 10px;
+  min-width: 0;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Single soft vignette that covers the bottom half of the portrait, the
+   name/title/DPS overlay and the buy/owned button. The ellipse is taller
+   than the card and centered below it, so only its upper portion shows —
+   that way every edge (top, sides, bottom) fades to fully transparent
+   without any visible rectangle. */
+.recruitCard::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 38%;
+  bottom: 0;
+  background: radial-gradient(
+    ellipse 70% 130% at 50% 75%,
+    rgba(8, 6, 3, 0.85) 0%,
+    rgba(8, 6, 3, 0.65) 35%,
+    rgba(8, 6, 3, 0.3) 65%,
+    rgba(8, 6, 3, 0) 100%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Wrapper turns the portrait into the positioning context for the overlay
+   text. It also matches the portrait's footprint so the buy button below
+   aligns nicely with the image. */
+.recruitPortraitWrap {
+  position: relative;
+  /* Shrink with the grid cell but never exceed ~24vh so four cards in
+     one row still fit above the recruit button without vertical scroll. */
+  --portrait: min(100%, clamp(90px, 22vh, 260px));
+  width: var(--portrait);
+  height: var(--portrait);
+  max-width: 100%;
+  flex-shrink: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recruitPortrait {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  user-select: none;
+  pointer-events: none;
+  transition: filter 0.4s ease;
+  /* Per-companion scale (1 = full size). Anchored to the bottom so shorter
+     races (hobbits, dwarves) appear "standing on the floor" instead of
+     floating in the middle of the card. */
+  transform: scale(var(--portrait-scale, 1));
+  transform-origin: bottom center;
+}
+
+.recruitPortraitSilhouette {
+  /* Pure-black silhouette via brightness(0). A subtle gold rim glow lifts
+     the shape off the background without giving away identity. */
+  filter: brightness(0) saturate(0)
+    drop-shadow(0 2px 6px rgba(0, 0, 0, 0.85))
+    drop-shadow(0 0 4px rgba(201, 164, 74, 0.4));
+}
+
+.recruitPortraitColor {
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.85))
+    drop-shadow(0 0 6px rgba(201, 164, 74, 0.35));
+}
+
+/* Text container sits at the bottom of the portrait. The dark background
+   that makes the text legible is the .recruitCard::before vignette, which
+   also covers the buy button below — so this element doesn't paint its
+   own background. */
+.recruitOverlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 14px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.recruitName {
+  font-family: var(--font-heading);
+  font-size: clamp(20px, 1.8vw, 27px);
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: #f4e4bc;
+  text-align: center;
+  text-shadow:
+    0 3px 3px #000,
+    0 0 7px #000,
+    0 0 14px #000,
+    2px 2px 2px #000,
+    -2px 2px 2px #000,
+    2px -2px 2px #000,
+    -2px -2px 2px #000;
+}
+
+.recruitTitle {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: clamp(15px, 1.25vw, 18px);
+  color: #ebd9a6;
+  text-align: center;
+  text-shadow:
+    0 3px 3px #000,
+    0 0 7px #000,
+    0 0 13px #000,
+    2px 2px 2px #000,
+    -2px 2px 2px #000,
+    2px -2px 2px #000,
+    -2px -2px 2px #000;
+}
+
+.recruitDps {
+  font-family: var(--font-heading);
+  font-size: clamp(14px, 1.15vw, 17px);
+  font-weight: 600;
+  color: var(--color-gold);
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+  text-shadow:
+    0 3px 3px #000,
+    0 0 7px #000,
+    0 0 13px #000,
+    2px 2px 2px #000,
+    -2px 2px 2px #000,
+    2px -2px 2px #000,
+    -2px -2px 2px #000;
+}
+
+.shopBonus {
+  max-width: 92%;
+  margin-top: 2px;
+  color: #c8e6ff;
+  font-family: var(--font-body);
+  font-size: clamp(10px, 0.85vw, 12px);
+  font-style: italic;
+  line-height: 1.1;
+  text-align: center;
+  text-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.98),
+    0 0 4px rgba(0, 0, 0, 0.85);
+}
+
+.recruitBuy {
+  margin-top: 4px;
+  width: 100%;
+  max-width: 180px;
+  min-width: 0;
+  padding: 8px 10px;
+  font-family: var(--font-heading);
+  font-size: clamp(13px, 1.1vw, 15px);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #1a1208;
+  background: linear-gradient(180deg, #f6c558 0%, #c98a2a 100%);
+  border: 1px solid rgba(201, 164, 74, 0.9);
+  border-radius: 4px;
+  cursor: pointer;
+  appearance: none;
+  transition:
+    transform 0.1s ease,
+    filter 0.15s ease,
+    box-shadow 0.15s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
+.recruitBuy:hover:not(:disabled) {
+  filter: brightness(1.1);
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.35);
+  transform: translateY(-1px);
+}
+
+.recruitBuy:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.recruitBuy:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+.recruitBuyPoor {
+  filter: grayscale(0.7) brightness(0.65);
+  cursor: not-allowed;
+}
+
+.recruitOwned {
+  margin-top: 4px;
+  width: 100%;
+  max-width: 180px;
+  min-width: 0;
+  padding: 8px 10px;
+  font-family: var(--font-heading);
+  font-size: clamp(12px, 1vw, 14px);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #b6e2b6;
+  background: rgba(20, 40, 20, 0.55);
+  border: 1px solid rgba(120, 200, 120, 0.5);
+  border-radius: 4px;
+  text-align: center;
+}
+
+/* ==========================================================================
+   Rest-zone Recruit/Tienda toggle. Floats top-left of the scene.
+   ========================================================================== */
+
+.restToggle {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  padding: 3px;
+  z-index: 2;
+  background: rgba(8, 6, 3, 0.78);
+  border: 1px solid rgba(201, 164, 74, 0.45);
+  border-radius: 6px;
+  width: fit-content;
+  margin: -2px auto 2px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+  pointer-events: auto;
+}
+
+.restToggleBtn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: #b8a070;
+  padding: 6px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.restToggleBtn:hover:not(.restToggleActive) {
+  color: #f4e4bc;
+  background: rgba(201, 164, 74, 0.12);
+}
+
+.restToggleBtn:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+.restToggleActive {
+  background: linear-gradient(180deg, #f6c558 0%, #c98a2a 100%);
+  color: #1a1208;
+  font-weight: 700;
+  box-shadow: inset 0 1px 2px rgba(255, 240, 180, 0.4);
+}
+
+/* ==========================================================================
+   Rest-zone shop card icon (mirrors recruit portrait box).
+   ========================================================================== */
+
+.shopIcon {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-size: clamp(80px, 11vw, 160px);
+  font-weight: 700;
+  color: var(--color-gold);
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+  text-shadow:
+    0 0 14px rgba(201, 164, 74, 0.55),
+    0 4px 10px rgba(0, 0, 0, 0.85),
+    0 2px 4px rgba(0, 0, 0, 0.9);
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.7));
+  transition: filter 0.4s ease;
+}
+
+.shopIconOwned {
+  color: #b6e2b6;
+  text-shadow:
+    0 0 14px rgba(120, 200, 120, 0.4),
+    0 4px 10px rgba(0, 0, 0, 0.85);
+}
+
+/* ==========================================================================
+   Quest pickup — mirror of .actionsFloat on the LEFT side of the scene.
+   ========================================================================== */
+
+.questPickupWrap {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 4;
+  pointer-events: auto;
+}
+
+.questPickup {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 2px solid #6b4912;
+  appearance: none;
+  padding: 0;
+  position: relative;
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 44px;
+  line-height: 1;
+  color: #1a1000;
+  text-shadow: 0 1px 0 rgba(255, 240, 180, 0.4);
+  background: radial-gradient(circle at 32% 28%, #ffe46a 0%, #d39a23 55%, #8a5a10 100%);
+  box-shadow:
+    inset 0 1px 4px rgba(255, 255, 200, 0.5),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.35),
+    0 2px 6px rgba(0, 0, 0, 0.5);
+  transition: transform 0.12s ease;
+  animation: questPickupPulse 1.6s ease-in-out infinite;
+}
+
+.questPickup:hover {
+  transform: scale(1.08);
+  filter: brightness(1.08);
+}
+
+.questPickup:active {
+  transform: scale(0.96);
+}
+
+.questPickup:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 3px;
+}
+
+.questPickupCount {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 12px;
+  background: #1a0f00;
+  color: #ffd96a;
+  border: 1.5px solid #6b4912;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+@keyframes questPickupPulse {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 1px 4px rgba(255, 255, 200, 0.5),
+      inset 0 -3px 6px rgba(0, 0, 0, 0.35),
+      0 2px 6px rgba(0, 0, 0, 0.5),
+      0 0 0 0 rgba(255, 210, 80, 0.55);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 4px rgba(255, 255, 200, 0.5),
+      inset 0 -3px 6px rgba(0, 0, 0, 0.35),
+      0 2px 6px rgba(0, 0, 0, 0.5),
+      0 0 18px 8px rgba(255, 210, 80, 0);
   }
 }

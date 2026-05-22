@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { applyLevelUps, calcClickDamage, calcDps, companionUpgradeCost, xpForLevel } from '../formulas';
+import {
+  applyLevelUps,
+  calcClickDamage,
+  calcClickDamageAgainstEnemy,
+  calcDps,
+  calcDpsAgainstEnemy,
+  calcEnemyTypeMultiplier,
+  companionUpgradeCost,
+  xpForLevel,
+} from '../formulas';
 import type { GameState } from '@/types/game';
 
 function makeState(overrides: Partial<GameState> = {}): GameState {
@@ -11,6 +20,7 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
     level: 1,
     clickDmg: 2,
     enemy: null,
+    bossFight: null,
     companions: {},
     equipped: { weapon: null, armor: null, accessory: null },
     owned: [],
@@ -18,8 +28,10 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
     totalKills: 0,
     unlockedLocs: ['comarca'],
     bossDefeated: {},
+    semiBossDefeated: {},
     questProgress: {},
     questsDone: [],
+    questsAccepted: [],
     ...overrides,
   };
 }
@@ -58,6 +70,35 @@ describe('formulas', () => {
       },
     });
     expect(calcDps(state)).toBeGreaterThan(0);
+  });
+
+  it('calcEnemyTypeMultiplier sums equipped percentage bonuses', () => {
+    const state = makeState({
+      equipped: { weapon: 'dardo', armor: null, accessory: 'lembas' },
+    });
+
+    expect(calcEnemyTypeMultiplier(state.equipped, 'orco')).toBeCloseTo(1.5);
+    expect(calcEnemyTypeMultiplier(state.equipped, 'espectro')).toBeCloseTo(1.15);
+  });
+
+  it('applies enemy type bonuses to click and DPS damage', () => {
+    const state = makeState({
+      level: 5,
+      equipped: { weapon: 'dardo', armor: null, accessory: null },
+      companions: { frodo: { unlocked: true, level: 2 } },
+    });
+    const enemy = {
+      id: 'trasgo',
+      name: 'Trasgo',
+      hp: 100,
+      maxHp: 100,
+      enemyType: 'orco' as const,
+      tier: 'normal' as const,
+      isBoss: false,
+    };
+
+    expect(calcClickDamageAgainstEnemy(state, enemy)).toBeGreaterThan(calcClickDamage(state));
+    expect(calcDpsAgainstEnemy(state, enemy)).toBeGreaterThan(calcDps(state));
   });
 
   it('applyLevelUps consumes xp and increments level', () => {

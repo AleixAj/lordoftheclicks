@@ -1,33 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
-  unlockCompanionsForLocations,
+  isUnlockGateMet,
   unlockNextLocation,
   updateReachQuestProgress,
 } from '../progression';
 import { LOCATIONS, QUESTS } from '@/data';
-import type { GameState } from '@/types/game';
-
-function state(overrides: Partial<GameState> = {}): GameState {
-  return {
-    locIdx: 0,
-    gold: 0,
-    mithril: 0,
-    xp: 0,
-    level: 1,
-    clickDmg: 2,
-    enemy: null,
-    companions: {},
-    equipped: { weapon: null, armor: null, accessory: null },
-    owned: [],
-    locKills: {},
-    totalKills: 0,
-    unlockedLocs: ['comarca'],
-    bossDefeated: {},
-    questProgress: {},
-    questsDone: [],
-    ...overrides,
-  };
-}
 
 describe('progression', () => {
   it('unlockNextLocation adds the next location id', () => {
@@ -41,18 +18,41 @@ describe('progression', () => {
     expect(next).toBe(initial);
   });
 
-  it('updateReachQuestProgress completes reach quests for unlocked locations', () => {
+  it('updateReachQuestProgress completes accepted reach quests for unlocked locations', () => {
     // Pick any defined `reach` quest dynamically so the test stays valid as
     // content evolves (quest ids and target locations may shift over time).
     const reachQuest = QUESTS.find((q) => q.type === 'reach');
     expect(reachQuest, 'expected at least one reach quest in content').toBeDefined();
-    const result = updateReachQuestProgress({}, [], [reachQuest!.loc]);
+    const result = updateReachQuestProgress({}, [], [reachQuest!.loc], [reachQuest!.id]);
     expect(result[reachQuest!.id]).toBe(1);
   });
 
-  it('unlockCompanionsForLocations grants companions from visited locations', () => {
-    const result = unlockCompanionsForLocations(state({ unlockedLocs: ['comarca'] }));
-    expect(result.companions.frodo).toEqual({ unlocked: true, level: 1 });
-    expect(result.companions.sam).toEqual({ unlocked: true, level: 1 });
+  it('updateReachQuestProgress ignores reach quests the player has not accepted', () => {
+    const reachQuest = QUESTS.find((q) => q.type === 'reach');
+    expect(reachQuest).toBeDefined();
+    const result = updateReachQuestProgress({}, [], [reachQuest!.loc], []);
+    expect(result[reachQuest!.id]).toBeUndefined();
+  });
+
+  it('isUnlockGateMet returns true only when every gate companion is unlocked', () => {
+    const gate = ['frodo', 'sam'] as const;
+    expect(isUnlockGateMet(gate, {})).toBe(false);
+    expect(isUnlockGateMet(gate, { frodo: { unlocked: true, level: 1 } })).toBe(false);
+    expect(
+      isUnlockGateMet(gate, {
+        frodo: { unlocked: true, level: 1 },
+        sam: { unlocked: true, level: 1 },
+      }),
+    ).toBe(true);
+    // An unlocked: false companion should NOT satisfy the gate.
+    expect(
+      isUnlockGateMet(gate, {
+        frodo: { unlocked: true, level: 1 },
+        sam: { unlocked: false, level: 1 },
+      }),
+    ).toBe(false);
+    // Undefined/empty gate is treated as never met.
+    expect(isUnlockGateMet(undefined, {})).toBe(false);
+    expect(isUnlockGateMet([], {})).toBe(false);
   });
 });

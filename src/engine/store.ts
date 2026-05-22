@@ -9,11 +9,19 @@ import type {
   QuestId,
   CompanionId,
 } from '@/types/game';
-import { calcClickDamage, calcDps, companionUpgradeCost } from './formulas';
-import { dealDamage } from './combat';
-import { spawnFromPool, spawnBoss } from './spawn';
 import {
-  unlockCompanionsForLocations,
+  calcClickDamage,
+  calcClickDamageAgainstEnemy,
+  calcDpsAgainstEnemy,
+  companionUpgradeCost,
+} from './formulas';
+import { dealDamage } from './combat';
+import { spawnBoss, spawnFromPool, spawnSemiBoss } from './spawn';
+import {
+  bossKillThreshold,
+  fightTimeLimitS,
+  isUnlockGateMet,
+  semiBossKillThreshold,
   unlockNextLocation,
   updateReachQuestProgress,
 } from './progression';
@@ -33,19 +41,30 @@ interface GameStore {
   shaking: boolean;
   deadAnim: boolean;
   goldBurst: boolean;
+  /** Transient UI flag: set briefly after a semi/boss escapes on timeout. */
+  fightFailed: 'semi' | 'boss' | null;
 
   clickEnemy: () => void;
   tick: () => void;
   travelTo: (locIdx: number) => void;
+  /** Start a semi-boss or boss encounter if all conditions are met. */
+  startBossFight: (tier: 'semi' | 'boss') => void;
+  /** Called by the game loop when the fight's deadline expires. */
+  failBossFight: () => void;
   buyItem: (slot: EquipSlot, itemId: ItemId) => void;
   equipItem: (slot: EquipSlot, itemId: ItemId) => void;
+  recruitCompanion: (companionId: CompanionId) => void;
   levelUpCompanion: (companionId: CompanionId) => void;
+  /** Pick up every pending quest anchored at `locId` (the "!" badge on the map). */
+  acceptQuests: (locId: LocationId) => void;
   claimQuest: (questId: QuestId) => void;
   resetGame: () => void;
   /** Dev cheat: unlock every location and complete `reach` quests. */
   unlockAll: () => void;
   /** Dev cheat: fully simulate a finished playthrough. */
   completeAll: () => void;
+  /** Dev cheat: mark current zone as cleared (boss + semi) and unlock the next one. */
+  completeCurrentZone: () => void;
 }
 
 let dmgIdSeq = 0;
@@ -63,12 +82,15 @@ function pushDamageNumber(set: (fn: (s: GameStore) => Partial<GameStore>) => voi
 }
 
 function applyPostMutations(state: GameState): GameState {
-  let next = unlockCompanionsForLocations(state);
-  next = {
-    ...next,
-    questProgress: updateReachQuestProgress(next.questProgress, next.questsDone, next.unlockedLocs),
+  return {
+    ...state,
+    questProgress: updateReachQuestProgress(
+      state.questProgress,
+      state.questsDone,
+      state.unlockedLocs,
+      state.questsAccepted,
+    ),
   };
-  return next;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -77,11 +99,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   shaking: false,
   deadAnim: false,
   goldBurst: false,
+  fightFailed: null,
 
   clickEnemy: () => {
     const current = get().state;
     if (!current.enemy) return;
-    const baseDmg = calcClickDamage(current);
+    const baseDmg = calcClickDamageAgainstEnemy(current, current.enemy);
     const isCrit = Math.random() < 0.1;
     const finalDmg = isCrit ? baseDmg * 2 : baseDmg;
 
@@ -103,7 +126,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   tick: () => {
     const current = get().state;
     if (!current.enemy) return;
-    const dps = calcDps(current);
+    const dps = calcDpsAgainstEnemy(current, current.enemy);
     if (dps <= 0) return;
     const damagePerTick = dps / 4;
     set({ state: applyPostMutations(dealDamage(current, damagePerTick)) });
@@ -116,22 +139,87 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     let unlockedLocs = current.unlockedLocs;
     let questProgress = current.questProgress;
-    if (loc.isRest) {
+    // Rest zones without an explicit `unlockGate` keep the legacy behaviour
+    // of auto-unlocking the next location on first visit. Zones with a
+    // gate (e.g. La Comarca → requires Frodo + Sam) only advance through
+    // the recruit action.
+    if (loc.isRest && !loc.unlockGate) {
       unlockedLocs = unlockNextLocation(unlockedLocs, locIdx);
-      questProgress = updateReachQuestProgress(questProgress, current.questsDone, unlockedLocs);
+      questProgress = updateReachQuestProgress(
+        questProgress,
+        current.questsDone,
+        unlockedLocs,
+        current.questsAccepted,
+      );
     }
 
-    const enemy = loc.isRest ? null : spawnFromPool(loc) ?? spawnBoss(loc);
+    const enemy = loc.isRest ? null : spawnFromPool(loc);
 
     set({
       state: applyPostMutations({
         ...current,
         locIdx,
         enemy,
+        bossFight: null,
         unlockedLocs,
         questProgress,
       }),
+      fightFailed: null,
     });
+  },
+
+  startBossFight: (tier) => {
+    const current = get().state;
+    if (current.bossFight) return;
+    const loc = LOCATIONS[current.locIdx];
+    if (!loc || loc.isRest) return;
+
+    const kills = current.locKills[loc.id] ?? 0;
+    // Rematches are allowed: once you've cleared the zone you can keep
+    // re-challenging the semi/boss as long as the kill thresholds are met.
+    if (tier === 'semi') {
+      if (!loc.semiBoss) return;
+      if (kills < semiBossKillThreshold(loc)) return;
+    } else {
+      if (!loc.boss) return;
+      // If the zone has a semi-boss, it must have been defeated at least once.
+      if (loc.semiBoss && !current.semiBossDefeated[loc.id]) return;
+      if (kills < bossKillThreshold(loc)) return;
+    }
+
+    const enemy = tier === 'semi' ? spawnSemiBoss(loc) : spawnBoss(loc);
+    if (!enemy) return;
+
+    const now = Date.now();
+    set({
+      state: {
+        ...current,
+        enemy,
+        bossFight: {
+          tier,
+          locId: loc.id,
+          startedAt: now,
+          deadlineMs: now + fightTimeLimitS(loc, tier) * 1000,
+        },
+      },
+      fightFailed: null,
+    });
+  },
+
+  failBossFight: () => {
+    const current = get().state;
+    if (!current.bossFight) return;
+    const loc = LOCATIONS[current.locIdx];
+    const pool = loc ? spawnFromPool(loc) : null;
+    const failedTier = current.bossFight.tier;
+    set({
+      state: { ...current, enemy: pool, bossFight: null },
+      fightFailed: failedTier,
+    });
+    // Auto-clear the flash message so the UI feedback is short and unobtrusive.
+    window.setTimeout(() => {
+      if (get().fightFailed === failedTier) set({ fightFailed: null });
+    }, 2200);
   },
 
   buyItem: (slot, itemId) => {
@@ -160,6 +248,48 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ state: nextState });
   },
 
+  recruitCompanion: (companionId) => {
+    const current = get().state;
+    const c = COMPANIONS.find((x) => x.id === companionId);
+    if (!c) return;
+    if (current.companions[companionId]?.unlocked) return;
+    // Must be present in the current zone's recruit list to be available.
+    // Most companions join in rest zones, but Fangorn intentionally offers
+    // Bárbol while still being a combat location.
+    const loc = LOCATIONS[current.locIdx];
+    if (!loc?.companions?.includes(companionId)) return;
+    if (current.gold < c.recruitCost) return;
+
+    const nextCompanions = {
+      ...current.companions,
+      [companionId]: { unlocked: true, level: 1 },
+    };
+
+    // If this rest zone has an unlock gate and recruiting this companion
+    // completes it, advance the world map automatically.
+    let unlockedLocs = current.unlockedLocs;
+    let questProgress = current.questProgress;
+    if (loc.unlockGate && isUnlockGateMet(loc.unlockGate, nextCompanions)) {
+      unlockedLocs = unlockNextLocation(unlockedLocs, current.locIdx);
+      questProgress = updateReachQuestProgress(
+        questProgress,
+        current.questsDone,
+        unlockedLocs,
+        current.questsAccepted,
+      );
+    }
+
+    set({
+      state: {
+        ...current,
+        gold: current.gold - c.recruitCost,
+        companions: nextCompanions,
+        unlockedLocs,
+        questProgress,
+      },
+    });
+  },
+
   levelUpCompanion: (companionId) => {
     const current = get().state;
     const cs = current.companions[companionId];
@@ -175,6 +305,32 @@ export const useGameStore = create<GameStore>((set, get) => ({
           [companionId]: { ...cs, level: cs.level + 1 },
         },
       },
+    });
+  },
+
+  acceptQuests: (locId) => {
+    const current = get().state;
+    // Can only discover quests in zones you've reached.
+    if (!current.unlockedLocs.includes(locId)) return;
+
+    const newlyAccepted = QUESTS.filter(
+      (q) =>
+        (q.pickupLoc ?? q.loc) === locId &&
+        !current.questsAccepted.includes(q.id) &&
+        !current.questsDone.includes(q.id),
+    );
+    if (newlyAccepted.length === 0) return;
+
+    const questsAccepted = [...current.questsAccepted, ...newlyAccepted.map((q) => q.id)];
+
+    // No backfill: kills_at and boss quests must be completed AFTER pickup.
+    // Reach quests, however, are credited via applyPostMutations because
+    // discovering the "!" in a zone implies the player is already there.
+    set({
+      state: applyPostMutations({
+        ...current,
+        questsAccepted,
+      }),
     });
   },
 
@@ -210,14 +366,64 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
   },
 
+  completeCurrentZone: () => {
+    const current = get().state;
+    const loc = LOCATIONS[current.locIdx];
+    if (!loc) return;
+
+    // Mark the zone as fully cleared: boss + semi defeated, kill count
+    // bumped to the target, next location unlocked. Also push every
+    // accepted quest anchored here to its `need` value so the player can
+    // claim them straight from the panel.
+    const bossDefeated = { ...current.bossDefeated };
+    const semiBossDefeated = { ...current.semiBossDefeated };
+    if (loc.boss) bossDefeated[loc.id] = true;
+    if (loc.semiBoss) semiBossDefeated[loc.id] = true;
+
+    const locKills = {
+      ...current.locKills,
+      [loc.id]: Math.max(current.locKills[loc.id] ?? 0, loc.killsNeeded),
+    };
+
+    const questProgress = { ...current.questProgress };
+    for (const q of QUESTS) {
+      if (q.loc !== loc.id) continue;
+      if (current.questsDone.includes(q.id)) continue;
+      if (!current.questsAccepted.includes(q.id)) continue;
+      questProgress[q.id] = q.need;
+    }
+
+    const unlockedLocs = unlockNextLocation(current.unlockedLocs, current.locIdx);
+
+    // Refresh the on-screen enemy with a fresh pool mob (or null for rest
+    // zones) so the player isn't staring at a dead/boss sprite afterwards.
+    const enemy = loc.isRest ? null : spawnFromPool(loc);
+
+    set({
+      state: applyPostMutations({
+        ...current,
+        enemy,
+        bossFight: null,
+        bossDefeated,
+        semiBossDefeated,
+        locKills,
+        questProgress,
+        unlockedLocs,
+      }),
+      fightFailed: null,
+    });
+  },
+
   completeAll: () => {
     const allLocIds = LOCATIONS.map((l) => l.id);
 
     const locKills: Record<LocationId, number> = {};
     const bossDefeated: Record<LocationId, boolean> = {};
+    const semiBossDefeated: Record<LocationId, boolean> = {};
     for (const l of LOCATIONS) {
       locKills[l.id] = l.killsNeeded;
       if (l.boss) bossDefeated[l.id] = true;
+      if (l.semiBoss) semiBossDefeated[l.id] = true;
     }
 
     const companions: Record<CompanionId, CompanionState> = {};
@@ -226,12 +432,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const allItems = [...SHOP_WEAPONS, ...SHOP_ARMOR, ...SHOP_ACCESS];
     const owned: ItemId[] = allItems.map((i) => i.id);
 
-    const bestOf = <T extends { id: ItemId } & Record<string, unknown>>(
+    const bestOf = <T extends { id: ItemId; dmg?: number; def?: number; bonus?: number }>(
       list: readonly T[],
       key: 'dmg' | 'def' | 'bonus',
     ): ItemId | null => {
       if (!list.length) return null;
-      return list.reduce((a, b) => (Number(a[key] ?? 0) >= Number(b[key] ?? 0) ? a : b)).id;
+      return list.reduce((a, b) => ((a[key] ?? 0) >= (b[key] ?? 0) ? a : b)).id;
     };
 
     const equipped = {
@@ -257,6 +463,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       level: 50,
       clickDmg: 1,
       enemy: null,
+      bossFight: null,
       companions,
       equipped,
       owned,
@@ -264,8 +471,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       totalKills,
       unlockedLocs: allLocIds,
       bossDefeated,
+      semiBossDefeated,
       questProgress,
       questsDone,
+      questsAccepted: QUESTS.map((q) => q.id),
     };
     baseState.clickDmg = calcClickDamage(baseState);
     baseState.enemy = spawnFromPool(LOCATIONS[0]);
@@ -274,7 +483,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 }));
 
-export { calcClickDamage, calcDps, companionUpgradeCost } from './formulas';
+export {
+  calcActiveEnemyTypeBonusPct,
+  calcClickDamage,
+  calcClickDamageAgainstEnemy,
+  calcDps,
+  calcDpsAgainstEnemy,
+  companionUpgradeCost,
+} from './formulas';
 export { xpForLevel } from './formulas';
 export type { LocationId };
 export { saveGame };

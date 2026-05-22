@@ -1,5 +1,6 @@
 import { SHOP_ACCESS, SHOP_ARMOR, SHOP_WEAPONS } from '@/data';
 import { useGameStore } from '@/engine/store';
+import { SLOT_ICONS, formatBonusVs } from '@/lib/equipmentText';
 import type { EquipSlot, ShopItem } from '@/types/game';
 import { Panel } from './Panel';
 
@@ -31,15 +32,7 @@ export function EquipmentPanel() {
             </div>
             {equipped ? (
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-[#1e1a14] border border-[#7a6a30] rounded flex items-center justify-center text-[13px]">
-                  ⚔
-                </div>
-                <div className="flex-1">
-                  <div className="text-[12px] font-semibold text-[#c9a44a]">{equipped.name}</div>
-                  <div className="text-[10px] text-[#6b5840]">
-                    +{equipped[slot.stat]} {slot.key === 'weapon' ? 'daño' : slot.key === 'armor' ? 'defensa' : 'bonus'}
-                  </div>
-                </div>
+                <EquippedItem slot={slot} item={equipped} />
                 {slot.items.length > 1 && (
                   <select
                     className="text-[10px] bg-[#d2bc90] border border-[#7a6a30] rounded px-1 max-w-[90px]"
@@ -61,5 +54,29 @@ export function EquipmentPanel() {
         );
       })}
     </Panel>
+  );
+}
+
+interface EquippedItemProps {
+  slot: SlotDef;
+  item: ShopItem;
+}
+
+function EquippedItem({ slot, item }: EquippedItemProps) {
+  const bonus = formatBonusVs(item);
+  return (
+    <>
+      <div className="w-6 h-6 bg-[#1e1a14] border border-[#7a6a30] rounded flex items-center justify-center text-[13px]">
+        {SLOT_ICONS[slot.key]}
+      </div>
+      <div className="flex-1">
+        <div className="text-[12px] font-semibold text-[#c9a44a]">{item.name}</div>
+        <div className="text-[10px] text-[#6b5840]">
+          +{item[slot.stat]}{' '}
+          {slot.key === 'weapon' ? 'daño' : slot.key === 'armor' ? 'defensa' : 'bonus'}
+        </div>
+        {bonus && <div className="text-[9px] text-[#4d6f8f] leading-tight italic">{bonus}</div>}
+      </div>
+    </>
   );
 }

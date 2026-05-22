@@ -1,5 +1,6 @@
 import { SHOP_ACCESS, SHOP_ARMOR, SHOP_WEAPONS } from '@/data';
 import { useGameStore } from '@/engine/store';
+import { formatBonusVs } from '@/lib/equipmentText';
 import type { EquipSlot, ShopItem } from '@/types/game';
 import { Panel } from './Panel';
 
@@ -53,6 +54,7 @@ function Section({ title, items, slot, statKey, state, onBuy, onEquip }: Section
         const owned = state.owned.includes(item.id);
         const equipped = state.equipped[slot] === item.id;
         const afford = state.gold >= item.cost;
+        const bonus = formatBonusVs(item);
         return (
           <div
             key={item.id}
@@ -67,6 +69,7 @@ function Section({ title, items, slot, statKey, state, onBuy, onEquip }: Section
                 +{item[statKey]} {slot === 'weapon' ? 'daño' : slot === 'armor' ? 'def' : 'bonus'}
                 {item.desc && <span className="italic"> · {item.desc}</span>}
               </div>
+              {bonus && <div className="text-[9px] text-[#4d6f8f] italic leading-tight">{bonus}</div>}
             </div>
             {owned ? (
               equipped ? (

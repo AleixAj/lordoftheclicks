@@ -2,10 +2,10 @@ import type { GameState } from '@/types/game';
 import { calcClickDamage } from './formulas';
 import { spawnInitial } from './spawn';
 
-// Bumped to v4 after inserting Eregion, Pelargir and Ithilien into the
-// location array (and reverting Fangorn back to combat). Old `locIdx` values
-// would point to the wrong location, so we invalidate the previous saves.
-const SAVE_KEY = 'lotc_save_v4';
+// Bumped to v8 after introducing the quest pickup flow: quests are no
+// longer active from the start; the player picks them up via the map's
+// "!" badge. Adds a new `questsAccepted` field.
+const SAVE_KEY = 'lotc_save_v8';
 
 export function createInitialState(): GameState {
   return {
@@ -16,6 +16,7 @@ export function createInitialState(): GameState {
     level: 1,
     clickDmg: 2,
     enemy: spawnInitial(0),
+    bossFight: null,
     companions: {},
     equipped: { weapon: null, armor: null, accessory: null },
     owned: [],
@@ -23,8 +24,10 @@ export function createInitialState(): GameState {
     totalKills: 0,
     unlockedLocs: ['comarca'],
     bossDefeated: {},
+    semiBossDefeated: {},
     questProgress: {},
     questsDone: [],
+    questsAccepted: [],
   };
 }
 
@@ -33,11 +36,35 @@ export function loadGame(): GameState {
   const saved = window.localStorage.getItem(SAVE_KEY);
   if (!saved) return createInitialState();
   try {
-    const parsed = JSON.parse(saved) as GameState;
-    // Light migration: rehydrate derived values to stay consistent across version bumps.
+    const parsed = JSON.parse(saved) as Partial<GameState>;
+    // Light migration: rehydrate derived values and fill in any field that
+    // may be missing in older save snapshots within the same SAVE_KEY.
+    const base = createInitialState();
+    // Quests in old saves were implicitly accepted. Preserve that for any
+    // quest the player has already completed or made progress on, so the
+    // active list doesn't suddenly empty out for returning players.
+    const legacyAccepted =
+      parsed.questsAccepted ??
+      [
+        ...(parsed.questsDone ?? []),
+        ...Object.entries(parsed.questProgress ?? {})
+          .filter(([, v]) => (v ?? 0) > 0)
+          .map(([k]) => k),
+      ];
+    const questsAccepted = Array.from(new Set(legacyAccepted));
+
     return {
+      ...base,
       ...parsed,
-      clickDmg: calcClickDamage({ level: parsed.level, equipped: parsed.equipped }),
+      semiBossDefeated: parsed.semiBossDefeated ?? {},
+      questsAccepted,
+      // Boss fights are real-time: a save mid-fight would carry a stale
+      // deadline. Always reset on load.
+      bossFight: null,
+      clickDmg: calcClickDamage({
+        level: parsed.level ?? base.level,
+        equipped: parsed.equipped ?? base.equipped,
+      }),
     };
   } catch {
     return createInitialState();
