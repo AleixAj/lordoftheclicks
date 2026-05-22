@@ -278,7 +278,7 @@ pnpm test:run
 
 El proyecto usa **pnpm 11** (`packageManager` en `package.json`). Si Cloudflare no lo detecta solo, añade la variable de entorno **`PNPM_VERSION`** = `11.1.2`.
 
-> **Error `packages field missing or empty`:** suele aparecer si existe un `pnpm-workspace.yaml` sin la clave `packages`. Este repo no es monorepo; `allowBuilds` vive en `package.json` bajo `"pnpm"`.
+> **Errores de pnpm en CI:** `packages field missing` → falta `packages: ['.']` en `pnpm-workspace.yaml`. `ERR_PNPM_IGNORED_BUILDS` (esbuild) → en pnpm 11 hay que declarar `allowBuilds: { esbuild: true }` en ese mismo archivo (no basta `onlyBuiltDependencies` en `package.json`).
 
 Para rutas del SPA, `public/_redirects` redirige todo a `index.html`.
 
