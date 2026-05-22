@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "packageManager": "pnpm@11.1.2",
   "description": "Clicker incremental ambientado en El Señor de los Anillos. Recorre la Tierra Media, derrota orcos, trolls y nazgûls, y desbloquea la Comunidad del Anillo.",
   "scripts": {
     "dev": "vite",

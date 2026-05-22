@@ -43,19 +43,19 @@ Lo más relevante para una evaluación técnica:
 
 ## 🛠️ Stack
 
-| Capa            | Herramienta                                                              |
-| --------------- | ------------------------------------------------------------------------ |
-| Build / dev     | **Vite 6** con HMR                                                       |
-| Lenguaje        | **TypeScript 5.7** (strict, `noUnusedLocals`, `noUnusedParameters`)      |
-| UI              | **React 19**                                                             |
-| Estado          | **Zustand 5** (store global + selectors)                                 |
-| Estilos         | **Tailwind 4** + **CSS Modules** para temas visuales custom              |
-| Tests           | **Vitest 3** + **Testing Library** + jsdom                               |
+| Capa            | Herramienta                                                               |
+| --------------- | ------------------------------------------------------------------------- |
+| Build / dev     | **Vite 6** con HMR                                                        |
+| Lenguaje        | **TypeScript 5.7** (strict, `noUnusedLocals`, `noUnusedParameters`)       |
+| UI              | **React 19**                                                              |
+| Estado          | **Zustand 5** (store global + selectors)                                  |
+| Estilos         | **Tailwind 4** + **CSS Modules** para temas visuales custom               |
+| Tests           | **Vitest 3** + **Testing Library** + jsdom                                |
 | Linting         | **ESLint 9** (flat) + **typescript-eslint** + **jsx-a11y** + **Prettier** |
-| Pre-commit      | **Husky** + **lint-staged**                                              |
-| Observabilidad  | Abstracción `logger` lista para enchufar Sentry/Datadog                  |
-| CI              | **GitHub Actions** (lint + typecheck + test + build)                     |
-| Package manager | **pnpm 11**                                                              |
+| Pre-commit      | **Husky** + **lint-staged**                                               |
+| Observabilidad  | Abstracción `logger` lista para enchufar Sentry/Datadog                   |
+| CI              | **GitHub Actions** (lint + typecheck + test + build)                      |
+| Package manager | **pnpm 11**                                                               |
 
 ## 🏗️ Arquitectura
 
@@ -268,6 +268,20 @@ Los tests del motor están en `src/engine/__tests__/` y cubren:
 pnpm test:run
 ```
 
+## ☁️ Deploy (Cloudflare Pages)
+
+| Campo                      | Valor                             |
+| -------------------------- | --------------------------------- |
+| **Build command**          | `pnpm run build`                  |
+| **Build output directory** | `dist`                            |
+| **Node.js version**        | `22` (`.node-version` en la raíz) |
+
+El proyecto usa **pnpm 11** (`packageManager` en `package.json`). Si Cloudflare no lo detecta solo, añade la variable de entorno **`PNPM_VERSION`** = `11.1.2`.
+
+> **Error `packages field missing or empty`:** suele aparecer si existe un `pnpm-workspace.yaml` sin la clave `packages`. Este repo no es monorepo; `allowBuilds` vive en `package.json` bajo `"pnpm"`.
+
+Para rutas del SPA, `public/_redirects` redirige todo a `index.html`.
+
 ## 🗺️ Roadmap
 
 - [ ] Sprites pixel art para enemigos y compañeros restantes
@@ -279,7 +293,8 @@ pnpm test:run
 - [ ] Modo PWA instalable + offline
 - [ ] Migración a IndexedDB con versionado de saves
 - [ ] Storybook para los paneles
-- [ ] Deploy en Cloudflare con preview por PR
+- [x] Deploy en Cloudflare Pages (ver sección anterior)
+- [ ] Preview por PR en Cloudflare
 
 ## 📝 Licencia
 

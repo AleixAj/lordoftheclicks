@@ -77,7 +77,7 @@ describe('combat.dealDamage', () => {
   it('does not increment locKills when the active enemy is a boss fight', () => {
     const loc = LOCATIONS[COMBAT_IDX];
     if (!loc.semiBoss) return;
-    const semi = spawnSemiBoss(loc, () => 0);
+    const semi = spawnSemiBoss(loc);
     expect(semi).not.toBeNull();
 
     const before: GameState = {
@@ -99,7 +99,7 @@ describe('combat.dealDamage', () => {
   it('defeating the zone boss unlocks the next location and clears the fight', () => {
     const loc = LOCATIONS[COMBAT_IDX];
     if (!loc.boss) return;
-    const boss = spawnBoss(loc, () => 0);
+    const boss = spawnBoss(loc);
     expect(boss).not.toBeNull();
 
     const before: GameState = {
