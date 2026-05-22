@@ -268,7 +268,7 @@ Los tests del motor están en `src/engine/__tests__/` y cubren:
 pnpm test:run
 ```
 
-## ☁️ Deploy (Cloudflare Pages)
+## ☁️ Deploy (Cloudflare)
 
 | Campo                      | Valor                             |
 | -------------------------- | --------------------------------- |
@@ -276,11 +276,25 @@ pnpm test:run
 | **Build output directory** | `dist`                            |
 | **Node.js version**        | `22` (`.node-version` en la raíz) |
 
-El proyecto usa **pnpm 11** (`packageManager` en `package.json`). Si Cloudflare no lo detecta solo, añade la variable de entorno **`PNPM_VERSION`** = `11.1.2`.
+El proyecto usa **pnpm 11** (`packageManager` en `package.json`). Si Cloudflare no lo detecta solo, añade **`PNPM_VERSION`** = `11.1.2`.
 
-> **Errores de pnpm en CI:** `packages field missing` → falta `packages: ['.']` en `pnpm-workspace.yaml`. `ERR_PNPM_IGNORED_BUILDS` (esbuild) → en pnpm 11 hay que declarar `allowBuilds: { esbuild: true }` en ese mismo archivo (no basta `onlyBuiltDependencies` en `package.json`).
+### Opción A — Cloudflare Pages (recomendada para este SPA)
 
-Para rutas del SPA, `public/_redirects` redirige todo a `index.html`.
+Deja el **deploy command vacío**. Pages publica `dist/` tras el build; no hace falta Wrangler.
+
+### Opción B — Workers + assets estáticos
+
+Si usas deploy con Wrangler, **no** uses `npx wrangler deploy` (descarga wrangler en caliente y vuelve a instalar deps con scripts bloqueados). Usa:
+
+| Campo              | Valor             |
+| ------------------ | ----------------- |
+| **Deploy command** | `pnpm run deploy` |
+
+`wrangler.jsonc` ya está en el repo (SPA en `dist/`). `wrangler` va en `devDependencies` y `pnpm-workspace.yaml` aprueba `esbuild`, `sharp` y `workerd`.
+
+> **Errores de pnpm en CI:** `packages field missing` → falta `packages: ['.']` en `pnpm-workspace.yaml`. `ERR_PNPM_IGNORED_BUILDS` → añade el paquete en `allowBuilds` (p. ej. `esbuild`, `sharp`, `workerd`).
+
+Para rutas del SPA en Pages, `public/_redirects` redirige todo a `index.html`. Con Workers, `not_found_handling: single-page-application` en `wrangler.jsonc` hace lo mismo.
 
 ## 🗺️ Roadmap
 
