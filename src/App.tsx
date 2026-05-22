@@ -19,7 +19,7 @@ export function App() {
   return (
     <div className="flex flex-col h-screen w-screen p-1 gap-1">
       <header className="relative flex items-center justify-center py-1">
-        <h1 className="font-[Cinzel_Decorative] text-[22px] font-bold uppercase tracking-[4px] text-[#c9a44a] [text-shadow:0_0_30px_rgba(201,164,74,0.25),0_2px_4px_rgba(0,0,0,0.5)]">
+        <h1 className="font-[Aniron,MedievalSharp,Cinzel_Decorative,serif] text-[30px] font-normal normal-case tracking-[2px] text-[#c9a44a] leading-none [text-shadow:0_0_30px_rgba(201,164,74,0.3),0_2px_4px_rgba(0,0,0,0.6)]">
           Lord of the Clicks
         </h1>
         <div className="absolute right-2 flex gap-1">

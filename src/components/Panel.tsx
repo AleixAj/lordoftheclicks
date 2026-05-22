@@ -13,9 +13,9 @@ export function Panel({ title, className = '', bodyClassName = '', headerExtra, 
   return (
     <div className={`${styles.panel} flex flex-col min-h-0 ${className}`}>
       {title !== undefined && (
-        <div className={`${styles.header} flex items-center justify-between gap-2`}>
-          <span className="flex-1 truncate">{title}</span>
-          {headerExtra}
+        <div className={styles.header}>
+          <span className={styles.headerTitle}>{title}</span>
+          {headerExtra && <span className={styles.headerExtra}>{headerExtra}</span>}
         </div>
       )}
       <div className={`${styles.body} flex flex-col flex-1 min-h-0 ${bodyClassName}`}>
