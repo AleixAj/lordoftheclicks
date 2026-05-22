@@ -2,7 +2,10 @@ import type { GameState } from '@/types/game';
 import { calcClickDamage } from './formulas';
 import { spawnInitial } from './spawn';
 
-const SAVE_KEY = 'lotc_save_v1';
+// Bumped to v4 after inserting Eregion, Pelargir and Ithilien into the
+// location array (and reverting Fangorn back to combat). Old `locIdx` values
+// would point to the wrong location, so we invalidate the previous saves.
+const SAVE_KEY = 'lotc_save_v4';
 
 export function createInitialState(): GameState {
   return {
