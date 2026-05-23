@@ -338,6 +338,8 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     xp: 510,
     isBoss: true,
     sprite: '/companions/king-dead.png',
+    glow: 28,
+    glowColor: '102, 217, 217',
   },
 
   // ============================================================

@@ -1,0 +1,109 @@
+.bar {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+.currency {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  flex: 1;
+  max-width: 200px;
+  min-width: 0;
+  background: #1e1a14;
+  border: 1px solid #7a6a30;
+  border-radius: 4px;
+}
+
+.icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+
+.body {
+  line-height: 1.1;
+  min-width: 0;
+}
+
+.value {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 14px;
+  color: #c9a44a;
+}
+
+.label {
+  font-size: 10px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.xpTrack {
+  width: 80px;
+  height: 5px;
+  background: #2a1010;
+  border-radius: 3px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.xpFill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #b28a32, #f4d47a);
+  box-shadow: 0 0 6px rgba(244, 212, 122, 0.45);
+  transition: width 0.25s ease;
+}
+
+/* Two presentations of the same value: the full label-rich one for desktop
+   and a compact icon-only/Lvl form for mobile. The mobile media query below
+   swaps which one is visible. */
+.value [data-form='mini'] {
+  display: none;
+}
+
+@media (max-width: 1180px) {
+  .bar {
+    gap: 3px;
+  }
+
+  .currency {
+    gap: 4px;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  .icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .value {
+    font-size: 12px;
+  }
+
+  /* Hide the "Oro / Mithril / Enemigos" labels — only the icon + number stays. */
+  .label {
+    display: none;
+  }
+
+  /* Swap the "Nivel 50" wording for "Lvl 50". */
+  .value [data-form='full'] {
+    display: none;
+  }
+  .value [data-form='mini'] {
+    display: inline;
+  }
+
+  .xpTrack {
+    width: 44px;
+    height: 3px;
+    margin-top: 2px;
+  }
+}

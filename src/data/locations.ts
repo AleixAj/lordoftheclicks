@@ -104,7 +104,7 @@ export const LOCATIONS: readonly Location[] = [
     semiBoss: 'troll_caverna',
     boss: 'balrog',
     pos: [52.0, 35.5],
-    background: '/backgrounds/moria-khazad-dum.jpg',
+    background: '/backgrounds/moria-khazad-dum.png',
   },
   {
     id: 'lothlorien',
@@ -251,7 +251,7 @@ export const LOCATIONS: readonly Location[] = [
     semiBoss: 'capitan_orco',
     boss: 'nazgul_alado',
     pos: [62.9, 61.7],
-    background: '/backgrounds/osgiliath.jpg',
+    background: '/backgrounds/osgiliath.png',
   },
   {
     id: 'puertas_de_minas_tirith',

@@ -18,6 +18,16 @@
     0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
+.panelCollapsed {
+  flex: 0 0 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+}
+
+.panelResizing {
+  user-select: none;
+}
+
 .panel::before,
 .panel::after {
   content: '';
@@ -40,6 +50,8 @@
 }
 
 .header {
+  width: 100%;
+  border: 0;
   position: relative;
   padding: 6px 12px;
   text-align: center;
@@ -52,6 +64,7 @@
   background: var(--color-header-bg);
   background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 0%, transparent 100%);
   border-bottom: 1px solid var(--color-border-gold);
+  cursor: pointer;
   /* Reserve symmetric horizontal space so a right-side `headerExtra` never
      visually shifts the centered title. */
   --header-side: 0px;
@@ -59,13 +72,35 @@
   padding-right: max(12px, var(--header-side));
 }
 
+.header:hover {
+  color: #f4d47a;
+  background-image:
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 0%, transparent 100%),
+    radial-gradient(circle at 50% 0%, rgba(201, 164, 74, 0.2), transparent 60%);
+}
+
+.header:focus-visible {
+  outline: 2px solid #f4d47a;
+  outline-offset: -2px;
+}
+
 .headerTitle {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   vertical-align: middle;
+}
+
+.collapseIcon {
+  width: 12px;
+  color: #f4d47a;
+  font-size: 10px;
+  line-height: 1;
 }
 
 .headerExtra {
@@ -80,6 +115,25 @@
   pointer-events: none;
 }
 
+/* Long descriptive text shown next to the title (e.g. the BattlePanel
+   location description). Hidden on mobile so the title + reward badges
+   keep breathing room; functional badges keep showing. */
+.headerDesc {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  opacity: 0.7;
+  color: inherit;
+}
+
+@media (max-width: 1180px) {
+  .headerDesc {
+    display: none;
+  }
+}
+
 .headerBadges {
   display: inline-flex;
   align-items: center;
@@ -89,6 +143,60 @@
 .body {
   /* No padding by default — each panel decides via bodyClassName. */
   padding: 0;
+}
+
+.resizeHandle {
+  position: absolute;
+  left: 0;
+  z-index: 5;
+  width: 100%;
+  height: 8px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.resizeHandle::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 46px;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(244, 212, 122, 0);
+  transform: translateX(-50%);
+  transition: background 120ms ease;
+}
+
+.resizeHandle:hover::after,
+.resizeHandle:focus-visible::after {
+  background: rgba(244, 212, 122, 0.72);
+}
+
+.resizeHandle:focus-visible {
+  outline: none;
+}
+
+.resizeHandleTop {
+  top: 0;
+}
+
+.resizeHandleTop::after {
+  top: 1px;
+}
+
+.resizeHandleBottom {
+  bottom: 0;
+}
+
+.resizeHandleBottom::after {
+  bottom: 1px;
+}
+
+.panelCollapsed .resizeHandle {
+  display: none;
 }
 
 .scrollBody {
@@ -295,6 +403,15 @@
   color: #5b3b10;
 }
 
+/* When a reward badge lives in the panel header (counters next to the
+   title) blend it with the dark header band instead of the parchment
+   body, so it stops looking like a sticker pasted on top. */
+.headerExtra .rewardBadge {
+  background: var(--color-header-bg);
+  border-color: rgba(201, 164, 74, 0.55);
+  color: var(--color-header-text);
+}
+
 .bonusBadge {
   margin-top: 3px;
   padding: 3px 6px;
@@ -339,6 +456,13 @@
   color: inherit;
   opacity: 0.88;
   text-transform: uppercase;
+}
+
+/* The chip renders both a multi-letter abbreviation and a single-letter
+   compact form. The mini form is hidden by default; specific contexts
+   (e.g. dense mobile shop grids in BattlePanel) opt it back in. */
+.bonusChipType > [data-form='mini'] {
+  display: none;
 }
 
 .goldText {

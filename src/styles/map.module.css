@@ -3,6 +3,18 @@
   flex-shrink: 0;
 }
 
+@media (max-width: 1180px) {
+  .map {
+    height: clamp(110px, 18vh, 180px);
+  }
+}
+
+@media (max-width: 760px) and (orientation: landscape) {
+  .map {
+    height: clamp(80px, 16vh, 130px);
+  }
+}
+
 .viewport {
   position: relative;
   overflow: hidden;
@@ -149,31 +161,6 @@
   letter-spacing: 0.5px;
 }
 
-.locOverlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 20px 12px 8px;
-  pointer-events: none;
-  background: linear-gradient(to top, rgba(10, 8, 5, 0.85) 0%, transparent 100%);
-}
-
-.locName {
-  font-family: var(--font-heading);
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-gold);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-}
-
-.locDesc {
-  font-family: var(--font-body);
-  font-size: 11px;
-  color: #bba880;
-  margin-top: 1px;
-}
-
 .coord {
   position: absolute;
   top: 6px;
@@ -237,6 +224,26 @@
 .toolButton:focus-visible {
   outline: 1px solid var(--color-gold);
   outline-offset: 1px;
+}
+
+@media (max-width: 1180px) {
+  /* Mobile: drop the "Ver todo" shortcut entirely (the user can drag/zoom
+     instead) and collapse the other tools to just their icon glyph. */
+  .toolButton[data-tool='fit'] {
+    display: none;
+  }
+
+  .toolButton[data-tool='center'] [data-form='label'],
+  .toolButton[data-tool='expand'] [data-form='label'],
+  .toolButton[data-tool='close'] [data-form='label'] {
+    display: none;
+  }
+
+  .toolButton {
+    padding: 4px 8px;
+    font-size: 14px;
+    line-height: 1;
+  }
 }
 
 @keyframes mapPulse {

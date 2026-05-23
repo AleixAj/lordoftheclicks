@@ -51,6 +51,10 @@ export interface UseMapInteractionResult {
     onMouseMove: (e: React.MouseEvent) => void;
     onMouseUp: () => void;
     onMouseLeave: () => void;
+    onTouchStart: (e: React.TouchEvent) => void;
+    onTouchMove: (e: React.TouchEvent) => void;
+    onTouchEnd: () => void;
+    onTouchCancel: () => void;
   };
   /** True while user is actively dragging (used to set cursor style). */
   isDragging: boolean;
@@ -190,22 +194,19 @@ export function useMapInteraction({
     return () => el.removeEventListener('wheel', onWheel);
   }, [zoom, offset.x, offset.y, fit.w, fit.h, containerSize.w, containerSize.h, minZoom, maxZoom]);
 
-  const onMouseDown = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.button !== 0) return;
-      dragRef.current = {
-        dragging: true,
-        moved: 0,
-        startX: e.clientX,
-        startY: e.clientY,
-        baseX: liveOffsetRef.current.x,
-        baseY: liveOffsetRef.current.y,
-      };
-      setTransitioning(false);
-      setIsDragging(true);
-    },
-    [],
-  );
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    dragRef.current = {
+      dragging: true,
+      moved: 0,
+      startX: e.clientX,
+      startY: e.clientY,
+      baseX: liveOffsetRef.current.x,
+      baseY: liveOffsetRef.current.y,
+    };
+    setTransitioning(false);
+    setIsDragging(true);
+  }, []);
 
   const onMouseMove = useCallback(
     (e: React.MouseEvent) => {
@@ -268,6 +269,53 @@ export function useMapInteraction({
     setHoverCoord(null);
   }, [endDrag]);
 
+  /* Touch handlers mirror the mouse ones so the map can be panned on
+     mobile/tablet. The container already sets `touch-action: none`, so
+     the browser won't try to scroll/zoom the page while dragging the map. */
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    const t = e.touches[0];
+    dragRef.current = {
+      dragging: true,
+      moved: 0,
+      startX: t.clientX,
+      startY: t.clientY,
+      baseX: liveOffsetRef.current.x,
+      baseY: liveOffsetRef.current.y,
+    };
+    setTransitioning(false);
+    setIsDragging(true);
+  }, []);
+
+  const onTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      const drag = dragRef.current;
+      if (!drag.dragging || e.touches.length !== 1) return;
+      const t = e.touches[0];
+      const dx = t.clientX - drag.startX;
+      const dy = t.clientY - drag.startY;
+      drag.moved = Math.max(drag.moved, Math.abs(dx) + Math.abs(dy));
+      const liveOff = clampOffset(
+        drag.baseX + dx,
+        drag.baseY + dy,
+        displaySize.w,
+        displaySize.h,
+        containerSize.w,
+        containerSize.h,
+      );
+      liveOffsetRef.current = liveOff;
+      const inner = innerRef.current;
+      if (inner) {
+        inner.style.transform = `translate3d(${liveOff.x}px, ${liveOff.y}px, 0)`;
+      }
+    },
+    [displaySize.w, displaySize.h, containerSize.w, containerSize.h],
+  );
+
+  const onTouchEnd = useCallback(() => {
+    endDrag();
+  }, [endDrag]);
+
   useEffect(() => {
     return () => {
       if (rafRef.current != null) window.cancelAnimationFrame(rafRef.current);
@@ -289,7 +337,16 @@ export function useMapInteraction({
     centerOn,
     fitToScreen,
     wasDragged,
-    handlers: { onMouseDown, onMouseMove, onMouseUp: endDrag, onMouseLeave },
+    handlers: {
+      onMouseDown,
+      onMouseMove,
+      onMouseUp: endDrag,
+      onMouseLeave,
+      onTouchStart,
+      onTouchMove,
+      onTouchEnd,
+      onTouchCancel: onTouchEnd,
+    },
     isDragging,
   };
 }

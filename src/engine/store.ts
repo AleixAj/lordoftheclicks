@@ -50,8 +50,10 @@ interface GameStore {
   travelTo: (locIdx: number) => void;
   /** Start a semi-boss or boss encounter if all conditions are met. */
   startBossFight: (tier: 'semi' | 'boss') => void;
-  /** Called by the game loop when the fight's deadline expires. */
+  /** Called by the game loop when the fight's deadline expires (loss). */
   failBossFight: () => void;
+  /** Player-initiated abandon (X button). Silent: no failure flash. */
+  abandonBossFight: () => void;
   buyItem: (slot: EquipSlot, itemId: ItemId) => void;
   equipItem: (slot: EquipSlot, itemId: ItemId) => void;
   recruitCompanion: (companionId: CompanionId) => void;
@@ -66,6 +68,8 @@ interface GameStore {
   completeAll: () => void;
   /** Dev cheat: mark current zone as cleared (boss + semi) and unlock the next one. */
   completeCurrentZone: () => void;
+  /** Dev cheat: add a large amount of gold to the wallet. */
+  giveGold: (amount?: number) => void;
 }
 
 let dmgIdSeq = 0;
@@ -175,7 +179,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   startBossFight: (tier) => {
     const current = get().state;
-    if (current.bossFight) return;
+    // Already fighting the requested tier? Nothing to do. Different tier is
+    // allowed and silently swaps the encounter (no "failed" flash) so the
+    // player can switch between semi-boss and boss without abandoning first.
+    if (current.bossFight && current.bossFight.tier === tier) return;
     const loc = LOCATIONS[current.locIdx];
     if (!loc || loc.isRest) return;
 
@@ -225,6 +232,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
     window.setTimeout(() => {
       if (get().fightFailed === failedTier) set({ fightFailed: null });
     }, 2200);
+  },
+
+  abandonBossFight: () => {
+    const current = get().state;
+    if (!current.bossFight) return;
+    const loc = LOCATIONS[current.locIdx];
+    const pool = loc ? spawnFromPool(loc) : null;
+    set({
+      state: { ...current, enemy: pool, bossFight: null },
+      fightFailed: null,
+    });
   },
 
   buyItem: (slot, itemId) => {
@@ -374,6 +392,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
         unlockedLocs: allIds,
       }),
     });
+  },
+
+  giveGold: (amount = 1_000_000) => {
+    const current = get().state;
+    set({ state: { ...current, gold: current.gold + amount } });
   },
 
   completeCurrentZone: () => {

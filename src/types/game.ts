@@ -35,6 +35,17 @@ export interface Enemy {
   isBoss?: boolean;
   /** Optional sprite path (relative to /public). Falls back to a default placeholder. */
   sprite?: string;
+  /**
+   * Optional colored halo around the sprite, in CSS pixels of blur radius.
+   * Used to mark etereal / supernatural enemies (e.g. the King of the
+   * Dead). 0 / undefined disables the glow.
+   */
+  glow?: number;
+  /**
+   * Comma-separated RGB triplet for the halo color (e.g. `'102, 217, 217'`
+   * for turquoise). Defaults to white when omitted.
+   */
+  glowColor?: string;
 }
 
 export interface Location {
@@ -117,6 +128,18 @@ export interface Companion {
    * juramento is broken (the boss is beaten).
    */
   requireBossDefeated?: LocationId;
+  /**
+   * Optional colored halo around the recruited portrait, in CSS pixels of
+   * blur radius. Used to hint elven/etereal characters. Subtle ≈ 8–10,
+   * strong ≈ 22–26. Only applies once the companion is recruited so the
+   * silhouette state still hides their identity.
+   */
+  portraitGlow?: number;
+  /**
+   * Comma-separated RGB triplet for the halo color (e.g. `'102, 217, 217'`
+   * for turquoise). Defaults to white when omitted.
+   */
+  portraitGlowColor?: string;
 }
 
 export interface ShopItem {

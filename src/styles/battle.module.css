@@ -60,6 +60,38 @@
   margin-left: 4px;
 }
 
+/* Hidden in big screens; only the abbreviated mobile chip uses this. */
+.statsMobile {
+  display: none;
+}
+
+@media (max-width: 1180px) {
+  .stats {
+    display: none;
+  }
+
+  .statsMobile {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 9px;
+    font-family: var(--font-heading);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    color: #f4e4bc;
+    background: rgba(10, 8, 4, 0.75);
+    border: 1px solid rgba(201, 164, 74, 0.45);
+    border-radius: 999px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  .statsMobile b {
+    color: var(--color-gold);
+  }
+}
+
 .area {
   flex: 1;
   width: 100%;
@@ -159,15 +191,20 @@
   height: 100%;
   object-fit: contain;
   image-rendering: pixelated;
-  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.65));
+  /* Optional configurable colored halo (e.g. turquoise for spectral foes)
+     layered above the base drop-shadow. Disabled by default via 0 blur /
+     transparent color. Set via inline `--enemy-glow-*` vars when the
+     Enemy template defines `glow`/`glowColor`. */
+  filter: drop-shadow(0 0 var(--enemy-glow-blur, 0px) var(--enemy-glow-color, transparent))
+    drop-shadow(0 8px 14px rgba(0, 0, 0, 0.65));
   pointer-events: none;
   user-select: none;
 }
 
 .eliteSprite {
   object-position: center bottom;
-  filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.78))
-    drop-shadow(0 0 16px rgba(125, 255, 210, 0.22));
+  filter: drop-shadow(0 0 var(--enemy-glow-blur, 0px) var(--enemy-glow-color, transparent))
+    drop-shadow(0 12px 20px rgba(0, 0, 0, 0.78)) drop-shadow(0 0 16px rgba(125, 255, 210, 0.22));
 }
 
 .eliteOverlay {
@@ -185,12 +222,12 @@
 
 .eliteTier {
   font-family: var(--font-heading);
-  font-size: clamp(10px, 0.95vw, 14px);
+  font-size: clamp(18px, 1.8vw, 26px);
   font-weight: 900;
-  letter-spacing: 2.5px;
+  letter-spacing: 3.5px;
   text-transform: uppercase;
   line-height: 1;
-  margin-bottom: 2px;
+  margin-bottom: 6px;
   text-shadow:
     0 3px 3px #000,
     0 0 8px #000,
@@ -646,14 +683,37 @@
      sit at vertical mid-edge so they don't collide with these. High
      z-index so the hover tooltip floats above damage numbers, kill
      counter, enemy sprite, etc. */
-  left: 14px;
-  top: 14px;
+  left: 28px;
+  top: 28px;
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 14px;
+  gap: 18px;
   z-index: 50;
   pointer-events: auto;
+}
+
+/* On mobile/tablet: split the boss/semi chips so the boss lives in the
+   top-left and the semi in the top-right. We give the wrapper full width
+   and let the inner chips justify to either side. */
+@media (max-width: 1180px) {
+  .actionsFloat {
+    left: 8px;
+    right: 8px;
+    top: 8px;
+    gap: 0;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+
+  .actionsFloat > * {
+    pointer-events: auto;
+  }
+
+  .encChip {
+    width: 64px;
+    height: 64px;
+  }
 }
 
 .encWrap {
@@ -661,8 +721,8 @@
 }
 
 .encChip {
-  width: 88px;
-  height: 88px;
+  width: 116px;
+  height: 116px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -839,12 +899,13 @@
 @keyframes encPulseSemi {
   0%,
   100% {
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 5px rgba(255, 215, 0, 0.4))
-      drop-shadow(0 0 10px rgba(255, 215, 0, 0.18));
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 5px rgba(255, 255, 255, 0.45))
+      drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
   }
   50% {
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px rgba(255, 215, 0, 0.85))
-      drop-shadow(0 0 18px rgba(255, 215, 0, 0.45));
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6))
+      drop-shadow(0 0 10px rgba(255, 255, 255, 0.95))
+      drop-shadow(0 0 18px rgba(255, 255, 255, 0.55));
   }
 }
 
@@ -961,7 +1022,11 @@
   min-height: 0;
   min-width: 0;
   width: 100%;
-  overflow: hidden;
+  /* No clipping: portrait scale on hover (and per-companion scale > 1)
+     grows the image upward from the bottom; we want it to spill out
+     instead of being chopped at the wrap edge. The outer `.scene` still
+     clips, which is what keeps things inside the panel. */
+  overflow: visible;
 }
 
 .recruitHeader {
@@ -1002,11 +1067,44 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+/* Rosters / shops with 5+ items collapse to a 2-column grid even on
+   desktop so each card stays readable (otherwise the default 1-column
+   fallback stacks them vertically and they spill the panel). 5 items
+   render as 2-2-1, 6 as 2-2-2, etc. */
+.recruitGrid[data-count='5'],
+.recruitGrid[data-count='6'],
+.recruitGrid[data-count='7'],
+.recruitGrid[data-count='8'] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .recruitGrid[data-roster='frodo-sam-merry-pippin'],
 .recruitGrid[data-roster='gandalf-aragorn'],
 .recruitGrid[data-roster='gandalf_blanco-theoden'],
 .recruitGrid[data-roster='eowyn-eomer'] {
   transform: translateY(-7vh);
+}
+
+@media (max-width: 1180px) {
+  /* Tablet/mobile: keep large rosters readable as a 2-column grid instead
+     of squeezing 4+ cards into a single row. Applies to recruit and shop
+     panels alike, since both use [data-count] on the same grid. */
+  .recruitGrid[data-count='4'],
+  .recruitGrid[data-count='5'],
+  .recruitGrid[data-count='6'],
+  .recruitGrid[data-count='7'],
+  .recruitGrid[data-count='8'] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* The desktop translateY for the 2-card rosters pushes them off-screen
+     once the panel collapses to mobile height. Reset on small viewports. */
+  .recruitGrid[data-roster='frodo-sam-merry-pippin'],
+  .recruitGrid[data-roster='gandalf-aragorn'],
+  .recruitGrid[data-roster='gandalf_blanco-theoden'],
+  .recruitGrid[data-roster='eowyn-eomer'] {
+    transform: none;
+  }
 }
 
 .recruitCard {
@@ -1021,6 +1119,32 @@
      must spill out of the card so the head doesn't get cut. */
   overflow: visible;
   isolation: isolate;
+}
+
+/* Hover lives strictly on the portrait image itself — not on the card
+   nor on the surrounding padding. The img sits at the bottom of the
+   stacking order inside `.recruitPortraitWrap`; the overlay (with the
+   buy button) is rendered above and intercepts its own events, so
+   enabling pointer-events on the img only affects the area not covered
+   by the button. Restricted to hover-capable pointers so taps on mobile
+   don't get stuck in the scaled state. */
+@media (hover: hover) {
+  .recruitPortrait:hover {
+    transform: translateY(var(--portrait-offset-y, 0)) scale(calc(var(--portrait-scale, 1) * 1.06));
+  }
+
+  /* Recruited: brighten + warm rim (keep per-companion halo vars). */
+  .recruitPortraitColor:hover {
+    filter: brightness(1.1)
+      drop-shadow(0 0 var(--portrait-glow-blur, 0px) var(--portrait-glow-color, transparent))
+      drop-shadow(0 0 12px rgba(255, 230, 170, 0.45)) drop-shadow(0 0 6px rgba(201, 164, 74, 0.35));
+  }
+
+  /* Not yet recruited: stay a black silhouette — never lift brightness(0). */
+  .recruitPortraitSilhouette:hover {
+    filter: brightness(0) saturate(0) drop-shadow(0 0 8px rgba(201, 164, 74, 0.65))
+      drop-shadow(0 0 14px rgba(255, 230, 170, 0.35));
+  }
 }
 
 /* Wrapper turns the portrait into the positioning context for the overlay
@@ -1047,8 +1171,13 @@
   object-position: bottom center;
   image-rendering: pixelated;
   user-select: none;
-  pointer-events: none;
-  transition: filter 0.4s ease;
+  /* Accept hover events so `.recruitPortrait:hover` actually fires. The
+     overlay above (with the buy button) is on top in the stacking order
+     and intercepts its own clicks, so this doesn't block recruiting. */
+  pointer-events: auto;
+  transition:
+    transform 0.18s ease-out,
+    filter 0.18s ease-out;
   /* Per-companion scale (1 = full size). Anchored to the bottom so shorter
      races (hobbits, dwarves) appear "standing on the floor" instead of
      floating in the middle of the card. The optional offset lets tall
@@ -1058,6 +1187,137 @@
   transform-origin: bottom center;
 }
 
+@media (max-width: 1180px) {
+  /* Mobile/tablet: the available vertical space is much smaller, so the
+     34vh portrait clamp blows large rosters off the top of the scene.
+     Cap the portrait footprint and the per-card scale so heads stop
+     clipping behind the rest-toggle / quest pickup buttons. */
+  .recruitPortraitWrap {
+    --portrait: min(100%, clamp(110px, 26vh, 260px));
+  }
+
+  .recruitGrid[data-count='1'] .recruitPortraitWrap {
+    --portrait: min(100%, clamp(120px, 28vh, 260px));
+  }
+
+  .recruitGrid[data-count='2'] .recruitPortraitWrap,
+  .recruitGrid[data-count='3'] .recruitPortraitWrap {
+    --portrait: min(100%, clamp(110px, 24vh, 220px));
+  }
+
+  .recruitGrid[data-count='4'] .recruitPortraitWrap,
+  .recruitGrid[data-count='5'] .recruitPortraitWrap,
+  .recruitGrid[data-count='6'] .recruitPortraitWrap,
+  .recruitGrid[data-count='7'] .recruitPortraitWrap,
+  .recruitGrid[data-count='8'] .recruitPortraitWrap {
+    /* 4+ cards become a 2x2 grid on mobile: each row already takes ~50%
+       of the panel height, so the portrait clamp has to be much smaller
+       than the single-card case to leave room for name + buy button. */
+    --portrait: min(100%, clamp(78px, 14vh, 140px));
+  }
+
+  /* Cap upscaled portraits to keep them inside their box on small screens. */
+  .recruitPortrait {
+    transform: translateY(var(--portrait-offset-y, 0)) scale(min(var(--portrait-scale, 1), 1.05));
+  }
+
+  /* In a 2x2 grid we cannot afford the extra offset/scale that pushes
+     portraits above the wrap; cap to 1.0 and clear the offset so heads
+     stay inside their card. */
+  .recruitGrid[data-count='4'] .recruitPortrait,
+  .recruitGrid[data-count='5'] .recruitPortrait,
+  .recruitGrid[data-count='6'] .recruitPortrait,
+  .recruitGrid[data-count='7'] .recruitPortrait,
+  .recruitGrid[data-count='8'] .recruitPortrait {
+    transform: scale(min(var(--portrait-scale, 1), 1));
+  }
+
+  /* Tighten card spacing for multi-card grids so 2 rows fit. */
+  .recruitGrid[data-count='4'] .recruitCard,
+  .recruitGrid[data-count='5'] .recruitCard,
+  .recruitGrid[data-count='6'] .recruitCard,
+  .recruitGrid[data-count='7'] .recruitCard,
+  .recruitGrid[data-count='8'] .recruitCard {
+    gap: 2px;
+    padding: 2px 2px 4px;
+  }
+
+  /* In dense grids the overlay name/title/dps were forced to their desktop
+     minimums (20/15/14px), which overflowed adjacent cards. Scale them
+     down for 4+ cards so each card stays inside its column. */
+  .recruitGrid[data-count='4'] .recruitName,
+  .recruitGrid[data-count='5'] .recruitName,
+  .recruitGrid[data-count='6'] .recruitName,
+  .recruitGrid[data-count='7'] .recruitName,
+  .recruitGrid[data-count='8'] .recruitName {
+    font-size: 12px;
+    letter-spacing: 0.2px;
+    line-height: 1.05;
+  }
+
+  .recruitGrid[data-count='4'] .recruitTitle,
+  .recruitGrid[data-count='5'] .recruitTitle,
+  .recruitGrid[data-count='6'] .recruitTitle,
+  .recruitGrid[data-count='7'] .recruitTitle,
+  .recruitGrid[data-count='8'] .recruitTitle {
+    font-size: 10px;
+    line-height: 1.05;
+  }
+
+  .recruitGrid[data-count='4'] .recruitDps,
+  .recruitGrid[data-count='5'] .recruitDps,
+  .recruitGrid[data-count='6'] .recruitDps,
+  .recruitGrid[data-count='7'] .recruitDps,
+  .recruitGrid[data-count='8'] .recruitDps {
+    font-size: 11px;
+    margin-top: 1px;
+  }
+
+  /* Tight buy/equip buttons. */
+  .recruitGrid[data-count='4'] .recruitBuy,
+  .recruitGrid[data-count='5'] .recruitBuy,
+  .recruitGrid[data-count='6'] .recruitBuy,
+  .recruitGrid[data-count='7'] .recruitBuy,
+  .recruitGrid[data-count='8'] .recruitBuy,
+  .recruitGrid[data-count='4'] .recruitOwned,
+  .recruitGrid[data-count='5'] .recruitOwned,
+  .recruitGrid[data-count='6'] .recruitOwned,
+  .recruitGrid[data-count='7'] .recruitOwned,
+  .recruitGrid[data-count='8'] .recruitOwned {
+    font-size: 11px;
+    padding: 4px 6px;
+    margin-top: 2px;
+  }
+
+  /* Bonus chip row in dense grids: tighter padding and font. */
+  .recruitGrid[data-count='4'] .shopBonusChip,
+  .recruitGrid[data-count='5'] .shopBonusChip,
+  .recruitGrid[data-count='6'] .shopBonusChip,
+  .recruitGrid[data-count='7'] .shopBonusChip,
+  .recruitGrid[data-count='8'] .shopBonusChip {
+    padding: 2px 5px !important;
+    gap: 2px !important;
+    font-size: 9px !important;
+  }
+
+  .recruitGrid[data-count='4'] .shopBonusChip [class*='bonusChipPct'],
+  .recruitGrid[data-count='5'] .shopBonusChip [class*='bonusChipPct'],
+  .recruitGrid[data-count='6'] .shopBonusChip [class*='bonusChipPct'],
+  .recruitGrid[data-count='7'] .shopBonusChip [class*='bonusChipPct'],
+  .recruitGrid[data-count='8'] .shopBonusChip [class*='bonusChipPct'] {
+    font-size: 10px;
+  }
+
+  .recruitGrid[data-count='4'] .shopBonusChip [class*='bonusChipType'],
+  .recruitGrid[data-count='5'] .shopBonusChip [class*='bonusChipType'],
+  .recruitGrid[data-count='6'] .shopBonusChip [class*='bonusChipType'],
+  .recruitGrid[data-count='7'] .shopBonusChip [class*='bonusChipType'],
+  .recruitGrid[data-count='8'] .shopBonusChip [class*='bonusChipType'] {
+    font-size: 10px;
+    letter-spacing: 0.3px;
+  }
+}
+
 .recruitPortraitSilhouette {
   /* Pure-black silhouette via brightness(0). A subtle gold rim glow lifts
      the shape off the background without giving away identity. */
@@ -1065,7 +1325,13 @@
 }
 
 .recruitPortraitColor {
-  filter: drop-shadow(0 0 6px rgba(201, 164, 74, 0.35));
+  /* Configurable halo (off by default via 0 blur / transparent color)
+     layered above the existing warm gold rim. Special companions opt
+     in via the `portraitGlow` (+ optional `portraitGlowColor`) fields
+     on the Companion data, which set the two `--portrait-glow-*`
+     variables on the wrapper. */
+  filter: drop-shadow(0 0 var(--portrait-glow-blur, 0px) var(--portrait-glow-color, transparent))
+    drop-shadow(0 0 6px rgba(201, 164, 74, 0.35));
 }
 
 /* Text container sits at the bottom of the portrait. The dark background
@@ -1178,6 +1444,45 @@
   opacity: 1;
   letter-spacing: 0.6px;
   text-shadow: none;
+}
+
+/* Default: button rows render the full label and hide the mini variant.
+   The mobile media query below swaps them. The mini variants for shop
+   bonus chips stay hidden everywhere except in dense mobile grids. */
+.recruitBuy [data-form='mini'],
+.recruitOwned [data-form='mini'] {
+  display: none;
+}
+
+@media (max-width: 1180px) {
+  /* Mobile: collapse the buy/owned button text to its compact form so
+     the cards stay readable in narrow drawers. */
+  .recruitBuy [data-form='full'],
+  .recruitOwned [data-form='full'] {
+    display: none;
+  }
+  .recruitBuy [data-form='mini'],
+  .recruitOwned [data-form='mini'] {
+    display: inline;
+  }
+
+  /* When the shop/recruit grid is dense (4+ cards become a 2x2+) the bonus
+     chip would overflow the card. Show the single-letter abbreviation
+     instead of the 3-letter one only in that crowded case. */
+  .recruitGrid[data-count='4'] .shopBonusChip [data-form='full'],
+  .recruitGrid[data-count='5'] .shopBonusChip [data-form='full'],
+  .recruitGrid[data-count='6'] .shopBonusChip [data-form='full'],
+  .recruitGrid[data-count='7'] .shopBonusChip [data-form='full'],
+  .recruitGrid[data-count='8'] .shopBonusChip [data-form='full'] {
+    display: none;
+  }
+  .recruitGrid[data-count='4'] .shopBonusChip [data-form='mini'],
+  .recruitGrid[data-count='5'] .shopBonusChip [data-form='mini'],
+  .recruitGrid[data-count='6'] .shopBonusChip [data-form='mini'],
+  .recruitGrid[data-count='7'] .shopBonusChip [data-form='mini'],
+  .recruitGrid[data-count='8'] .shopBonusChip [data-form='mini'] {
+    display: inline;
+  }
 }
 
 .recruitBuy {
@@ -1301,6 +1606,24 @@
   color: #1a1208;
   font-weight: 700;
   box-shadow: inset 0 1px 2px rgba(255, 240, 180, 0.4);
+}
+
+@media (max-width: 1180px) {
+  /* Compact the rest-zone toggle so it doesn't eat vertical space that the
+     recruit/shop cards need on mobile. */
+  .restToggle {
+    padding: 3px;
+    gap: 2px;
+    margin: 0 auto 2px;
+    border-radius: 8px;
+  }
+
+  .restToggleBtn {
+    font-size: 12px;
+    letter-spacing: 0.6px;
+    padding: 5px 14px;
+    border-radius: 5px;
+  }
 }
 
 /* ==========================================================================

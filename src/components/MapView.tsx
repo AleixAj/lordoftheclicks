@@ -72,14 +72,9 @@ export function MapView({ initialZoom = DEFAULT_MAP_ZOOM, onExpand, onClose }: M
     return out;
   }, [state.questsAccepted, state.questsDone, state.unlockedLocs]);
 
-  const markerScale = map.isOverview
-    ? 0.45
-    : Math.max(0.5, Math.min(1.4, 0.35 + map.zoom * 0.16));
+  const markerScale = map.isOverview ? 0.45 : Math.max(0.5, Math.min(1.4, 0.35 + map.zoom * 0.16));
 
-  const unlockedSet = useMemo(
-    () => new Set(state.unlockedLocs),
-    [state.unlockedLocs],
-  );
+  const unlockedSet = useMemo(() => new Set(state.unlockedLocs), [state.unlockedLocs]);
 
   return (
     <div
@@ -142,27 +137,35 @@ export function MapView({ initialZoom = DEFAULT_MAP_ZOOM, onExpand, onClose }: M
           type="button"
           onClick={() => map.centerOn(loc.id, initialZoom)}
           className={styles.toolButton}
+          data-tool="center"
           title="Centrar en localización actual"
+          aria-label="Centrar en localización actual"
         >
-          ⊙ Centrar
+          <span data-form="icon">⊙</span>
+          <span data-form="label"> Centrar</span>
         </button>
         <button
           type="button"
           onClick={map.fitToScreen}
           className={styles.toolButton}
+          data-tool="fit"
           title="Ver mapa completo"
+          aria-label="Ver mapa completo"
         >
-          ⊖ Ver todo
+          <span data-form="icon">⊖</span>
+          <span data-form="label"> Ver todo</span>
         </button>
         {onExpand && (
           <button
             type="button"
             onClick={onExpand}
             className={styles.toolButton}
+            data-tool="expand"
             title="Expandir mapa"
             aria-label="Expandir mapa"
           >
-            ⛶ Expandir
+            <span data-form="icon">⛶</span>
+            <span data-form="label"> Expandir</span>
           </button>
         )}
         {onClose && (
@@ -170,17 +173,14 @@ export function MapView({ initialZoom = DEFAULT_MAP_ZOOM, onExpand, onClose }: M
             type="button"
             onClick={onClose}
             className={styles.toolButton}
+            data-tool="close"
             title="Cerrar mapa expandido"
             aria-label="Cerrar mapa expandido"
           >
-            ✕ Cerrar
+            <span data-form="icon">✕</span>
+            <span data-form="label"> Cerrar</span>
           </button>
         )}
-      </div>
-
-      <div className={styles.locOverlay}>
-        <div className={styles.locName}>{loc.name}</div>
-        <div className={styles.locDesc}>{loc.desc}</div>
       </div>
 
       {map.hoverCoord && (

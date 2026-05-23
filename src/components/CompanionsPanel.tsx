@@ -27,15 +27,10 @@ export function CompanionsPanel() {
   return (
     <Panel
       className="flex-1"
-      title="La Comunidad"
+      title="Reclutados"
       headerExtra={
-        <span className={styles.headerBadges}>
-          <span className={`${styles.rewardBadge} normal-case tracking-normal`}>
-            {unlocked.length}/{COMPANIONS.length}
-          </span>
-          <span className={`${styles.rewardBadge} normal-case tracking-normal`}>
-            CAP {levelCap}
-          </span>
+        <span className={`${styles.rewardBadge} normal-case tracking-normal`}>
+          {unlocked.length}/{COMPANIONS.length}
         </span>
       }
       bodyClassName={`${styles.scrollBody} ${styles.scrollBodyTight}`}

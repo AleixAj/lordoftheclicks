@@ -29,7 +29,10 @@ export function BonusVsChips({ item, className = '', chipClassName = '' }: Bonus
           title={`+${bonus.pct}% daño vs ${bonus.label}`}
         >
           <span className={panelStyles.bonusChipPct}>+{bonus.pct}%</span>
-          <span className={panelStyles.bonusChipType}>{bonus.abbr}</span>
+          <span className={panelStyles.bonusChipType}>
+            <span data-form="full">{bonus.abbr}</span>
+            <span data-form="mini">{bonus.abbr1}</span>
+          </span>
         </span>
       ))}
     </div>

@@ -17,6 +17,7 @@ import {
 } from '@/data';
 import { Panel } from './Panel';
 import styles from '@/styles/battle.module.css';
+import panelStyles from '@/styles/panel.module.css';
 import {
   ENEMY_TYPE_LABELS,
   ENEMY_TYPE_COLORS,
@@ -47,7 +48,7 @@ export function BattlePanel() {
   const fightFailed = useGameStore((s) => s.fightFailed);
   const clickEnemy = useGameStore((s) => s.clickEnemy);
   const startBossFight = useGameStore((s) => s.startBossFight);
-  const failBossFight = useGameStore((s) => s.failBossFight);
+  const abandonBossFight = useGameStore((s) => s.abandonBossFight);
   const travelTo = useGameStore((s) => s.travelTo);
   const acceptQuests = useGameStore((s) => s.acceptQuests);
 
@@ -90,10 +91,11 @@ export function BattlePanel() {
   const semiDone = !!(loc && state.semiBossDefeated[loc.id]);
   const bossDone = !!(loc && state.bossDefeated[loc.id]);
   // Rematches allowed: `done` is purely a visual hint (a ✓ badge), it no
-  // longer disables the button.
-  const semiAvailable = semiUnlocked && kills >= semiKillsNeeded && !bossFight;
-  const bossAvailable =
-    bossUnlocked && (!semiUnlocked || semiDone) && kills >= bossKillsNeeded && !bossFight;
+  // longer disables the button. Availability is also independent from an
+  // active boss fight — clicking the other tier swaps the encounter (see
+  // `startBossFight` in the store).
+  const semiAvailable = semiUnlocked && kills >= semiKillsNeeded;
+  const bossAvailable = bossUnlocked && (!semiUnlocked || semiDone) && kills >= bossKillsNeeded;
 
   // Countdown computed on every render while the fight is active.
   const totalMs = bossFight ? bossFight.deadlineMs - bossFight.startedAt : 0;
@@ -192,11 +194,7 @@ export function BattlePanel() {
     <Panel
       className="flex-1"
       title={loc?.name ?? '???'}
-      headerExtra={
-        <span className="text-[11px] opacity-70 font-[Crimson_Pro] normal-case tracking-normal">
-          {loc?.desc}
-        </span>
-      }
+      headerExtra={loc?.desc ? <span className={panelStyles.headerDesc}>{loc.desc}</span> : null}
       bodyClassName="p-0"
     >
       <div
@@ -226,6 +224,10 @@ export function BattlePanel() {
               <b>{kills}</b>
             </span>
           )}
+        </div>
+
+        <div className={styles.statsMobile} aria-label="DPS actual">
+          DPS<b>{dps.toFixed(1)}</b>
         </div>
 
         {showZoneToggle && (
@@ -259,6 +261,16 @@ export function BattlePanel() {
                 alt={enemy.name}
                 className={`${styles.sprite} ${isEliteEnemy ? styles.eliteSprite : ''}`}
                 draggable={false}
+                style={(() => {
+                  const tmpl = ENEMIES[enemy.id];
+                  if (!tmpl?.glow) return undefined;
+                  const alpha = Math.min(0.9, tmpl.glow * 0.04);
+                  const rgb = tmpl.glowColor ?? '255, 255, 255';
+                  return {
+                    '--enemy-glow-blur': `${tmpl.glow}px`,
+                    '--enemy-glow-color': `rgba(${rgb}, ${alpha.toFixed(2)})`,
+                  } as CSSProperties;
+                })()}
               />
               {isEliteEnemy && (
                 <div className={styles.eliteOverlay} aria-hidden="true">
@@ -321,7 +333,7 @@ export function BattlePanel() {
 
             {fightFailed && (
               <div className={styles.flash} role="status">
-                El {fightFailed === 'boss' ? 'jefe' : 'semi-jefe'} ha escapado.
+                ¡Has perdido! El {fightFailed === 'boss' ? 'jefe' : 'semi-jefe'} ha escapado.
               </div>
             )}
           </div>
@@ -374,7 +386,7 @@ export function BattlePanel() {
               activeTier={bossFight?.tier ?? null}
               equipped={state.equipped}
               onStart={startBossFight}
-              onAbandon={failBossFight}
+              onAbandon={abandonBossFight}
             />
           )}
 
@@ -507,11 +519,13 @@ function RecruitCard({ companion, state, gold, bossDefeated, onRecruit }: Recrui
     : null;
   const canRecruit = canAfford && bossGateMet;
   const portrait = companion.portrait ?? DEFAULT_COMPANION_PORTRAIT;
-  const buyLabel = !bossGateMet
+  const recruitCostStr = companion.recruitCost.toLocaleString('es-ES');
+  const buyLabelFull = !bossGateMet
     ? 'Vence al jefe primero'
     : free
       ? 'Reclutar · Gratis'
-      : `Reclutar · ${companion.recruitCost.toLocaleString('es-ES')} oro`;
+      : `Reclutar · ${recruitCostStr} oro`;
+  const buyLabelMini = !bossGateMet ? 'Bloqueado' : free ? 'Gratis' : `${recruitCostStr} G`;
   const ariaLabel = !bossGateMet
     ? `Reclutar a ${companion.name} bloqueado: derrota antes al jefe de ${gatedLocName}`
     : `Reclutar a ${companion.name}${free ? ' gratis' : ` por ${companion.recruitCost} oro`}`;
@@ -525,6 +539,14 @@ function RecruitCard({ companion, state, gold, bossDefeated, onRecruit }: Recrui
           if (companion.portraitScale) vars['--portrait-scale'] = companion.portraitScale;
           if (companion.portraitOffsetY)
             vars['--portrait-offset-y'] = `${companion.portraitOffsetY}%`;
+          if (recruited && companion.portraitGlow) {
+            // Halo alpha scales linearly with blur, capped so even strong
+            // glows stay readable on the card background.
+            const alpha = Math.min(0.9, companion.portraitGlow * 0.04);
+            const rgb = companion.portraitGlowColor ?? '255, 255, 255';
+            vars['--portrait-glow-blur'] = `${companion.portraitGlow}px`;
+            vars['--portrait-glow-color'] = `rgba(${rgb}, ${alpha.toFixed(2)})`;
+          }
           return Object.keys(vars).length ? (vars as CSSProperties) : undefined;
         })()}
       >
@@ -536,11 +558,20 @@ function RecruitCard({ companion, state, gold, bossDefeated, onRecruit }: Recrui
           className={`${styles.recruitPortrait} ${recruited ? styles.recruitPortraitColor : styles.recruitPortraitSilhouette}`}
         />
         <div className={styles.recruitOverlay}>
-          <div className={styles.recruitName}>{companion.name}</div>
-          <div className={styles.recruitTitle}>{companion.title}</div>
-          <div className={styles.recruitDps}>DPS: {companion.baseDps}</div>
+          {recruited && (
+            <>
+              <div className={styles.recruitName}>{companion.name}</div>
+              <div className={styles.recruitTitle}>{companion.title}</div>
+              <div className={styles.recruitDps}>DPS: {companion.baseDps}</div>
+            </>
+          )}
           {recruited ? (
-            <div className={styles.recruitOwned}>✓ En la Comunidad</div>
+            <div className={styles.recruitOwned}>
+              <span data-form="full">✓ En la Comunidad</span>
+              <span data-form="mini" aria-label="En la Comunidad">
+                ✓
+              </span>
+            </div>
           ) : (
             <button
               type="button"
@@ -550,7 +581,8 @@ function RecruitCard({ companion, state, gold, bossDefeated, onRecruit }: Recrui
               aria-label={ariaLabel}
               title={!bossGateMet ? `Derrota antes al jefe de ${gatedLocName}` : undefined}
             >
-              {buyLabel}
+              <span data-form="full">{buyLabelFull}</span>
+              <span data-form="mini">{buyLabelMini}</span>
             </button>
           )}
         </div>
@@ -695,7 +727,12 @@ function RestShopCard({ item, ownedItem, equippedItem, gold, onBuy, onEquip }: R
       />
       {ownedItem ? (
         equippedItem ? (
-          <div className={styles.recruitOwned}>✓ Equipado</div>
+          <div className={styles.recruitOwned}>
+            <span data-form="full">✓ Equipado</span>
+            <span data-form="mini" aria-label="Equipado">
+              ✓
+            </span>
+          </div>
         ) : (
           <button
             type="button"
@@ -714,7 +751,8 @@ function RestShopCard({ item, ownedItem, equippedItem, gold, onBuy, onEquip }: R
           disabled={!afford}
           aria-label={`Comprar ${item.name} por ${item.cost} oro`}
         >
-          Comprar · {item.cost.toLocaleString('es-ES')} oro
+          <span data-form="full">Comprar · {item.cost.toLocaleString('es-ES')} oro</span>
+          <span data-form="mini">{item.cost.toLocaleString('es-ES')} G</span>
         </button>
       )}
     </div>

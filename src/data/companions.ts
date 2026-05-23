@@ -85,6 +85,7 @@ export const COMPANIONS: readonly Companion[] = [
     color: '#c8d8e8',
     recruitCost: 1200,
     portrait: '/companions/arwen.png',
+    portraitGlow: 9,
   },
   {
     id: 'legolas',
@@ -95,6 +96,7 @@ export const COMPANIONS: readonly Companion[] = [
     color: '#7ab89a',
     recruitCost: 1300,
     portrait: '/companions/legolas.png',
+    portraitGlow: 9,
   },
   {
     id: 'gimli',
@@ -126,6 +128,7 @@ export const COMPANIONS: readonly Companion[] = [
     color: '#c8b8e0',
     recruitCost: 8000,
     portrait: '/companions/galadriel.png',
+    portraitGlow: 24,
   },
   {
     id: 'celeborn',
@@ -137,6 +140,7 @@ export const COMPANIONS: readonly Companion[] = [
     recruitCost: 6500,
     portrait: '/companions/celeborn.png',
     portraitScale: 1.2,
+    portraitGlow: 24,
   },
   {
     id: 'barbol',
@@ -148,7 +152,7 @@ export const COMPANIONS: readonly Companion[] = [
     recruitCost: 12000,
     portrait: '/companions/barbol.png',
     portraitScale: 1.4,
-    portraitOffsetY: 32,
+    portraitOffsetY: 22,
   },
   {
     id: 'theoden',
@@ -205,6 +209,8 @@ export const COMPANIONS: readonly Companion[] = [
     portrait: '/companions/king-dead.png',
     requireBossDefeated: 'paso_de_los_muertos',
     portraitScale: 1.4,
+    portraitGlow: 24,
+    portraitGlowColor: '102, 217, 217',
     portraitOffsetY: 12,
   },
   {

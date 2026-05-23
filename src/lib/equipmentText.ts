@@ -40,6 +40,8 @@ export interface BonusVsEntry {
   type: EnemyType;
   label: string;
   abbr: string;
+  /** Single-letter compact abbreviation, used in dense grids on mobile. */
+  abbr1: string;
   pct: number;
   color: { bg: string; border: string; text: string };
 }
@@ -85,6 +87,7 @@ export function getBonusVsEntries(item: Pick<ShopItem, 'bonusVs'>): BonusVsEntry
       type,
       label: ENEMY_TYPE_LABELS[type],
       abbr: ENEMY_TYPE_ABBR[type],
+      abbr1: ENEMY_TYPE_LABELS[type].charAt(0).toUpperCase(),
       pct: Math.round(value * 100),
       color: ENEMY_TYPE_COLORS[type],
     }));
