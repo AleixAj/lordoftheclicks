@@ -30,15 +30,16 @@ Lo más relevante para una evaluación técnica:
 
 - 🗺️ **Mapa interactivo** de la Tierra Media con pan, zoom (rueda + drag), centrado animado, modo pantalla completa optimizado con `translate3d` + `requestAnimationFrame`, y badge `!` informativo sobre las zonas con misiones disponibles.
 - ⚔️ **Combate por click** con animaciones, críticos, partículas de oro, barra de vida en tiempo real y sprite de enemigo personalizable por zona.
-- 👹 **Jefes y semi-jefes con tiempo limitado**: cada zona desbloquea un semi-jefe a los X kills y un jefe tras los Y kills (configurable por zona). Si no los venzes a tiempo, escapan. Repetibles cuando quieras.
-- 🧩 **Tipos de enemigo y equipo situacional**: los objetos pueden aplicar bonus porcentuales contra orcos, Uruk-hai, espectros, trolls, bestias, Mordor, etc. El bonus afecta tanto al click como al DPS pasivo, haciendo útil re-equiparse según la zona.
+- 👹 **Jefes y semi-jefes con tiempo limitado** (30 s por defecto, configurable por zona): cada zona desbloquea un semi-jefe a los X kills y un jefe tras los Y kills. Si no los venzes a tiempo escapan, pero los puedes **abandonar manualmente** desde el chip flotante (overlay con una `✕` grande), o reintentarlos cuando quieras.
+- 🧩 **Tipos de enemigo y equipo situacional**: los objetos pueden aplicar bonus porcentuales contra orcos, Uruk-hai, espectros, trolls, bestias, mordor, naturaleza, humanos, espirituales o criatura antigua. El bonus afecta tanto al click como al DPS pasivo y se muestra en la tienda y equipamiento como **chips coloreados por tipo** (`BonusVsChips`). Bajo el enemigo, una píldora muestra su tipo con el color y borde correspondientes.
 - ⬅️➡️ **Navegación rápida entre zonas adyacentes** con flechas laterales en el panel de combate.
-- 🧙 **Reclutamiento de La Comunidad** en zonas de descanso: silueta negra → retrato a color al desbloquear. Frodo y Sam son gratis pero requieren reclutarlos; el resto cuesta oro. La Comarca se "abre" hacia el Bosque Viejo cuando reclutas a Frodo + Sam (`unlockGate`).
+- 🧙 **Reclutamiento de La Comunidad** en zonas de descanso: silueta negra → retrato a color al desbloquear. Frodo y Sam son gratis pero requieren reclutarlos; el resto cuesta oro. La Comarca se "abre" hacia el Bosque Viejo cuando reclutas a Frodo + Sam (`unlockGate`). Cada compañero puede ajustar **foco y zoom de su retrato** (`portraitFocus`) para centrar la cara dentro del avatar circular.
+- 📈 **Cap de nivel de compañeros por progreso de aventura**: la subida de nivel está topada según `locIdx`. Avanzar en la historia desbloquea capas más altas (`5 → 8 → 12 → 15 → 18 → 21 → 24 → 28 → 30`) y evita farmear las primeras zonas para trivializar el final.
 - 🛡️ **Equipo épico** (Dardo, Glamdring, Andúril, Cota de Mithril, Luz de Galadriel, Palantír…) comprable por zona y con bonus de especialización.
 - 📜 **Misiones descubribles**: las misiones empiezan ocultas y se revelan con un botón `!` en la pantalla de combate. Las misiones tipo `reach` se reparten en la zona _anterior_ ("vé a X") así que aceptarlas nunca bloquea tu avance.
 - 💾 **Guardado automático** en `localStorage`, debounced a 500 ms, con migración de saves entre versiones.
-- 🎨 **Fondos por localización** y temática visual coherente (tipografía Aniron, paleta dorada).
-- ♿ **Accesible**: todos los interactivos son `<button>` semánticos con `aria-label` y `focus-visible`, validado por `eslint-plugin-jsx-a11y`.
+- 🎨 **Fondos por localización** y temática visual coherente (tipografía **Ringbearer** para el título principal, Aniron / Cinzel para el resto, paleta dorada y pergamino).
+- ♿ **Accesible**: todos los interactivos son `<button>` semánticos con `aria-label`, tooltips contextuales y `focus-visible`, validado por `eslint-plugin-jsx-a11y`.
 - 🧱 **Error boundary global** que captura crashes y muestra un fallback sin perder el save.
 
 ## 🛠️ Stack
@@ -63,16 +64,16 @@ Lo más relevante para una evaluación técnica:
 src/
 ├── types/game.ts              # Modelo de dominio (Location, Enemy, Quest, GameState…)
 ├── data/                      # Contenido estático del juego
-│   ├── locations.ts           #   ~29 zonas siguiendo la trilogía de Peter Jackson
+│   ├── locations.ts           #   30 zonas siguiendo la trilogía de Peter Jackson
 │   ├── enemies.ts             #   pool de mobs + semi-jefes + jefes por zona
-│   ├── companions.ts          #   miembros de La Comunidad (con coste y retrato)
+│   ├── companions.ts          #    19 miembros de La Comunidad (coste, retrato, focus)
 │   ├── shop.ts                #   armas, armaduras y accesorios
 │   ├── quests.ts              #   misiones de tipo kills_at / boss / reach
 │   └── index.ts               #   barrel exports
 ├── engine/                    # Lógica del juego (puro TS, sin React)
 │   ├── formulas.ts            #   xp/nivel, DPS, daño click, bonus por tipo
 │   ├── combat.ts              #   dealDamage (reducer puro testable)
-│   ├── progression.ts         #   desbloqueo de zonas, gates, reach quests
+│   ├── progression.ts         #   desbloqueo de zonas, gates, reach quests, cap nivel compañeros
 │   ├── spawn.ts               #   generación de enemigos / semi-bosses / bosses
 │   ├── persistence.ts         #   save/load + migraciones por SAVE_KEY
 │   ├── store.ts               #   Zustand store (datos + actions)
@@ -83,28 +84,29 @@ src/
 ├── components/                # Componentes React (TSX, un componente por archivo)
 │   ├── App.tsx                #   layout principal (header + 3 columnas)
 │   ├── ErrorBoundary.tsx      #   captura crashes y renderiza fallback
-│   ├── BattlePanel.tsx        #   combate, boss/semi flotantes, "!" de misiones, navegación
+│   ├── BattlePanel.tsx        #   combate, boss/semi flotantes (con abandono ✕), "!" de misiones, navegación
+│   ├── BonusVsChips.tsx       #   chips compactos coloreados por tipo de enemigo
 │   ├── MapPanel.tsx           #   wrapper con botón de expandir
 │   ├── MapView.tsx            #   viewport del mapa (consume useMapInteraction)
 │   ├── MapMarker.tsx          #   marcador memoizado + badge "!" informativo
 │   ├── MapPaths.tsx           #   rutas SVG entre zonas desbloqueadas
 │   ├── Modal.tsx              #   modal genérico (mapa expandido)
-│   ├── CompanionsPanel.tsx    #   lista de héroes y subida de nivel
-│   ├── EquipmentPanel.tsx     #   slots de arma/armadura/accesorio
+│   ├── CompanionsPanel.tsx    #   lista de héroes, subida de nivel y cap de nivel por progreso
+│   ├── EquipmentPanel.tsx     #   slots de arma/armadura/accesorio con BonusVsChips
 │   ├── QuestsPanel.tsx        #   misiones aceptadas, compacto 2-col + claim arriba-derecha
-│   ├── ShopPanel.tsx          #   tienda filtrada por zonas visitadas
+│   ├── ShopPanel.tsx          #   tienda filtrada por zonas visitadas con BonusVsChips
 │   ├── CurrencyBar.tsx        #   oro, mithril, XP y kills
 │   └── Panel.tsx              #   marco de pergamino reutilizable con título centrado
 ├── styles/                    # CSS Modules para los temas custom
-│   ├── battle.module.css      #   escena de combate, boss/semi, "!" pickup, reclutamiento
+│   ├── battle.module.css      #   escena de combate, boss/semi, abandono, "!" pickup, reclutamiento
 │   ├── map.module.css         #   mapa, marcadores, ruta, badge informativo
-│   └── panel.module.css       #   marco de pergamino reutilizable
+│   └── panel.module.css       #   marco de pergamino + cards de Comunidad / equipo / misiones
 ├── lib/                       # Utilidades transversales
-│   ├── equipmentText.ts       #   labels/iconos/formato de equipo y tipos de enemigo
+│   ├── equipmentText.ts       #   labels/iconos/colores/abreviaturas de tipos de enemigo, getBonusVsEntries
 │   └── logger.ts              #   logger abstraído (preparado para Sentry/Datadog)
 ├── test/setup.ts              # Setup global de Vitest
 ├── main.tsx                   # Entry point (StrictMode + ErrorBoundary)
-└── index.css                  # Tailwind v4 + tema CSS vars + @font-face Aniron
+└── index.css                  # Tailwind v4 + tema CSS vars + @font-face Ringbearer/Aniron
 ```
 
 ### Decisiones de diseño
@@ -113,8 +115,10 @@ src/
 - **Side-effects en hooks**: el tick de DPS, el auto-save y el deadline de las boss-fights viven en `useGameLoop`, no a nivel de módulo. Compatible con HMR, SSR y unit-testable.
 - **`useMapInteraction`**: toda la lógica de pan/zoom/drag/wheel del mapa (>150 líneas) está fuera del componente; el `MapView` queda como vista. En modo pantalla completa, las transformaciones se aplican vía `translate3d` directo al DOM con `requestAnimationFrame` para mantener fluidez con imágenes pesadas.
 - **Tailwind para layout, CSS Modules para temas**: utilidades rápidas para grids/spacings y CSS aislado para los efectos visuales custom (pergamino, batalla, mapa, retratos con vignette).
-- **Datos como código**: añadir una zona, un enemigo, una misión o un compañero es editar un `.ts` con autocompletado. Cada zona puede declarar `semiBoss`, `boss`, `semiBossAt`, `bossAt`, `semiBossTimeLimit`, `bossTimeLimit`, `unlockGate`, `background`, `backgroundPosition`, `backgroundSize`. Cada enemigo tiene `enemyType`; cada objeto puede declarar `bonusVs`; cada compañero puede declarar `recruitCost`, `portrait` y `portraitScale` (para razas más bajas como enanos/hobbits).
-- **Equipo situacional**: `calcEnemyTypeMultiplier`, `calcClickDamageAgainstEnemy` y `calcDpsAgainstEnemy` aplican multiplicadores por tipo de enemigo en el momento de dañar, manteniendo las fórmulas base reutilizables para UI.
+- **Datos como código**: añadir una zona, un enemigo, una misión o un compañero es editar un `.ts` con autocompletado. Cada zona puede declarar `semiBoss`, `boss`, `semiBossAt`, `bossAt`, `semiBossTimeLimit`, `bossTimeLimit`, `unlockGate`, `background`, `backgroundPosition`, `backgroundSize`. Cada enemigo tiene `enemyType`; cada objeto puede declarar `bonusVs`; cada compañero puede declarar `recruitCost`, `portrait`, `portraitScale` (para razas más bajas como enanos/hobbits) y `portraitFocus` (x/y/scale para encuadrar la cara dentro del avatar circular).
+- **Equipo situacional con UI consistente**: `calcEnemyTypeMultiplier`, `calcClickDamageAgainstEnemy` y `calcDpsAgainstEnemy` aplican multiplicadores por tipo de enemigo en el momento de dañar. El componente reutilizable `BonusVsChips` + el helper `getBonusVsEntries` (en `lib/equipmentText.ts`) renderizan los bonuses como chips coloreados con el color, borde y abreviatura del tipo correspondiente, tanto en la tienda como en el panel de equipamiento.
+- **Cap de nivel de compañeros**: `companionLevelCapForLocation(locIdx)` define tramos crecientes de cap. El store rechaza `levelUpCompanion` por encima del cap, y `CompanionsPanel` muestra "CAP X" en el header y "MAX" en el botón con tooltip cuando el compañero está topado. Tests dedicados en `progression.test.ts`.
+- **Abandono de boss/semi-boss**: durante un encuentro especial, el chip flotante del enemigo que estás peleando se oscurece y muestra una `✕` grande superpuesta. Pulsarla dispara `failBossFight` (mismo flujo que el timeout), permitiendo retirarte y volver al mapa.
 - **Quests data-driven**: las misiones `reach` declaran `pickupLoc` (zona donde aparece el `!`) ≠ `loc` (destino objetivo), para que la zona anterior "dé" la quest hacia la siguiente sin bloquear el avance.
 - **Estado serializable**: `GameState` es un POJO. `persistence.ts` usa una `SAVE_KEY` versionada y aplica migraciones al cargar saves antiguos.
 - **Accesibilidad por defecto**: `eslint-plugin-jsx-a11y` bloquea el lint si se introduce un elemento interactivo sin semántica adecuada.
@@ -186,21 +190,21 @@ En desarrollo aparecen tres botones extra en la cabecera (no se renderizan en pr
 
 ## 📋 Añadir contenido
 
-Cada tipo de contenido vive en `src/data/`. Por ejemplo, un nuevo enemigo:
+Cada tipo de contenido vive en `src/data/`. El `enemyType` se asigna en el mapa `ENEMY_TYPES` del propio `enemies.ts`:
 
 ```ts
 // src/data/enemies.ts
-orco_guardia: {
-  id: 'orco_guardia',
-  name: 'Orco Guardia',
-  hp: 220,
-  gold: 42,
-  xp: 28,
-  enemyType: 'orco',
-},
+// 1) Declara el tipo
+const ENEMY_TYPES: Record<string, EnemyType> = {
+  orco_guardia: 'orco',
+  // …resto
+};
+
+// 2) Añade la def (stats, sprite opcional, isBoss si aplica)
+orco_guardia: { id: 'orco_guardia', name: 'Orco Guardia', hp: 220, gold: 42, xp: 28 },
 ```
 
-Un nuevo objeto con bonus situacional:
+Un nuevo objeto con bonus situacional (se renderiza automáticamente como chips coloreados con `BonusVsChips`):
 
 ```ts
 // src/data/shop.ts
@@ -222,7 +226,7 @@ Y una nueva zona de combate con semi-jefe y jefe:
   id: 'eregion',
   name: 'Eregion',
   desc: 'Las tierras de los herreros élficos',
-  enemies: ['huargo', 'trasgo'],
+  enemies: ['huargo', 'orco_moria'],
   killsNeeded: 80,
   semiBoss: 'capitan_orco',
   boss: 'troll_caverna',
@@ -234,6 +238,8 @@ Y una nueva zona de combate con semi-jefe y jefe:
   background: '/backgrounds/eregion.jpg',
 },
 ```
+
+> **Cap de nivel de compañeros:** si insertas una zona en mitad de la lista, los índices se desplazan y debes ajustar `COMPANION_LEVEL_CAPS` en `src/engine/progression.ts` (y sus tests en `progression.test.ts`) para que el tramo deseado siga coincidiendo con la zona correcta.
 
 Y una nueva misión de tipo `reach` que se recoge en la zona anterior:
 
@@ -261,8 +267,8 @@ Los tests del motor están en `src/engine/__tests__/` y cubren:
 
 - Fórmulas de daño, XP, level-up, coste de subida de compañeros y bonus de equipo por tipo de enemigo.
 - Reducer de combate (daño al enemigo, recompensas, transición a siguiente).
-- Lógica de progresión (desbloqueo de zonas, completion de misiones `reach`, gating por compañeros).
-- Integridad de contenido: referencias válidas entre `locations`, `enemies`, `quests`, `shop` y `companions`.
+- Lógica de progresión (desbloqueo de zonas, completion de misiones `reach`, gating por compañeros, cap de nivel por zona).
+- Integridad de contenido: referencias válidas entre `locations`, `enemies`, `quests`, `shop` y `companions`, y que cada `enemyType` esté dentro del set permitido.
 
 ```bash
 pnpm test:run
@@ -294,7 +300,10 @@ Si usas deploy con Wrangler, **no** uses `npx wrangler deploy` (descarga wrangle
 
 > **Errores de pnpm en CI:** `packages field missing` → falta `packages: ['.']` en `pnpm-workspace.yaml`. `ERR_PNPM_IGNORED_BUILDS` → añade el paquete en `allowBuilds` (p. ej. `esbuild`, `sharp`, `workerd`).
 
-Para rutas del SPA en Pages, `public/_redirects` redirige todo a `index.html`. Con Workers, `not_found_handling: single-page-application` en `wrangler.jsonc` hace lo mismo.
+Para rutas del SPA:
+
+- **Workers (`pnpm run deploy`)**: usa `not_found_handling: "single-page-application"` en `wrangler.jsonc`. **No** añadas `public/_redirects`: Cloudflare detecta un bucle infinito si conviven ambos (`Invalid _redirects configuration`, código `100324`).
+- **Pages (sin Wrangler)**: crea `public/_redirects` con una sola línea `/*    /index.html   200` para el fallback del SPA. No uses ese archivo si despliegas con Workers.
 
 ## 🗺️ Roadmap
 
