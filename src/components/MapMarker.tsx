@@ -28,6 +28,31 @@ function MapMarkerImpl({
 }: MapMarkerProps) {
   const dotSize = isCurrent ? 24 : unlocked ? 18 : 12;
   const scaled = dotSize * scale;
+
+  const isRest = loc.isRest === true;
+  const palette = isRest
+    ? { bg: '#4a9a4a', border: '#1f4d1f', glow: 'rgba(102, 200, 102, 0.55)' }
+    : { bg: '#c93a3a', border: '#5a1818', glow: 'rgba(220, 80, 60, 0.55)' };
+
+  let background: string;
+  let borderColor: string;
+  let boxShadow: string;
+  if (isCurrent) {
+    background = '#ffd700';
+    borderColor = '#fff';
+    boxShadow = '0 0 12px rgba(255,215,0,0.7)';
+  } else if (!unlocked) {
+    background = 'rgba(60, 50, 30, 0.85)';
+    borderColor = '#5a4a20';
+    boxShadow = '0 0 4px rgba(0,0,0,0.7)';
+  } else {
+    background = palette.bg;
+    borderColor = palette.border;
+    boxShadow = isComplete
+      ? `0 0 8px ${palette.glow}, 0 0 2px rgba(255,255,255,0.85)`
+      : `0 0 6px ${palette.glow}`;
+  }
+
   return (
     <div
       className={styles.marker}
@@ -59,19 +84,9 @@ function MapMarkerImpl({
           style={{
             width: scaled,
             height: scaled,
-            background: isCurrent
-              ? '#ffd700'
-              : isComplete
-                ? '#4a9a4a'
-                : unlocked
-                  ? '#c9a44a'
-                  : 'rgba(60, 50, 30, 0.85)',
-            borderColor: isCurrent ? '#fff' : unlocked ? '#8a7430' : '#5a4a20',
-            boxShadow: isCurrent
-              ? '0 0 12px rgba(255,215,0,0.7)'
-              : unlocked
-                ? '0 0 6px rgba(0,0,0,0.6)'
-                : '0 0 4px rgba(0,0,0,0.7)',
+            background,
+            borderColor,
+            boxShadow,
             opacity: unlocked ? 1 : 0.7,
           }}
         />

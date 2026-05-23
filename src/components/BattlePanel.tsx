@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useGameStore } from '@/engine/store';
 import { calcActiveEnemyTypeBonusPct, calcDps } from '@/engine/formulas';
-import { bossKillThreshold, fightTimeLimitS, semiBossKillThreshold } from '@/engine/progression';
+import {
+  bossKillThreshold,
+  fightTimeLimitForFight,
+  semiBossKillThreshold,
+} from '@/engine/progression';
 import {
   COMPANIONS,
   ENEMIES,
@@ -19,8 +23,16 @@ import {
   SLOT_ICONS,
   SLOT_LABELS,
   STAT_LABELS,
+  formatArmorStatLine,
 } from '@/lib/equipmentText';
-import type { Companion, CompanionState, EquipSlot, ItemId, ShopItem } from '@/types/game';
+import type {
+  Companion,
+  CompanionState,
+  EquipSlot,
+  EquippedItems,
+  ItemId,
+  ShopItem,
+} from '@/types/game';
 import { BonusVsChips } from './BonusVsChips';
 
 const DEFAULT_ENEMY_SPRITE = '/orc.png';
@@ -43,13 +55,11 @@ export function BattlePanel() {
   const enemy = state.enemy;
   const bossFight = state.bossFight;
   const kills = state.locKills[loc?.id ?? ''] ?? 0;
-  const dps = useMemo(
-    () => calcDps({ companions: state.companions, equipped: state.equipped }),
-    [state.companions, state.equipped],
-  );
+  const dps = useMemo(() => calcDps({ companions: state.companions }), [state.companions]);
   const activeEnemyBonusPct = enemy
     ? calcActiveEnemyTypeBonusPct(state.equipped, enemy.enemyType)
     : 0;
+  const isEliteEnemy = enemy?.tier === 'boss' || enemy?.tier === 'semi';
   const hasPendingCompanionsHere = !!loc?.companions?.some((id) => !state.companions[id]?.unlocked);
   const bg = loc?.background;
 
@@ -62,13 +72,15 @@ export function BattlePanel() {
     return () => window.clearInterval(id);
   }, [bossFight]);
 
-  // Rest-zone view toggle: "recruit" (default) vs "shop". Reset to recruit
-  // every time the player travels to a different zone so they don't land
-  // on a stale tab from the previous rest stop.
+  // Zone view toggle: "recruit/combat" (default) vs "shop". Reset to the
+  // default every time the player travels to a different zone so they don't
+  // land on a stale tab from the previous location. Applies to rest stops
+  // and to combat zones flagged with `hasShop` (e.g. Fangorn).
   const [restView, setRestView] = useState<'recruit' | 'shop'>('recruit');
   useEffect(() => {
     setRestView('recruit');
   }, [state.locIdx]);
+  const showZoneToggle = !!(loc?.isRest || loc?.hasShop);
 
   // Encounter gating (only meaningful for combat zones).
   const semiUnlocked = !!loc?.semiBoss;
@@ -109,6 +121,72 @@ export function BattlePanel() {
   const nextLoc = nextIdx < LOCATIONS.length ? LOCATIONS[nextIdx] : undefined;
   const canPrev = !bossFight && !!prevLoc && state.unlockedLocs.includes(prevLoc.id);
   const canNext = !bossFight && !!nextLoc && state.unlockedLocs.includes(nextLoc.id);
+  const renderEnemyTypePill = (className = '') => {
+    if (!enemy || !enemy.enemyType) return null;
+    const typeColors = ENEMY_TYPE_COLORS[enemy.enemyType];
+    return (
+      <span
+        className={`${styles.enemyTypePill} ${className}`}
+        style={
+          {
+            '--enemy-type-bg': typeColors.bg,
+            '--enemy-type-border': typeColors.border,
+            '--enemy-type-text': typeColors.border,
+          } as CSSProperties
+        }
+        title={
+          activeEnemyBonusPct > 0
+            ? `Tu equipo le inflige +${activeEnemyBonusPct}% de daño`
+            : undefined
+        }
+      >
+        {ENEMY_TYPE_LABELS[enemy.enemyType]}
+      </span>
+    );
+  };
+  const renderHpBlock = (className = '') =>
+    enemy ? (
+      <div className={`${styles.hpWrap} ${className}`}>
+        {!isEliteEnemy && enemy.tier === 'boss' && <div className={styles.bossTag}>★ JEFE ★</div>}
+        {!isEliteEnemy && enemy.tier === 'semi' && (
+          <div className={styles.semiTag}>◆ SEMI-JEFE ◆</div>
+        )}
+
+        <div className={styles.hpBar}>
+          <div
+            className={`${styles.hpFill} ${
+              enemy.tier === 'boss'
+                ? styles.hpFillBoss
+                : enemy.tier === 'semi'
+                  ? styles.hpFillSemi
+                  : ''
+            }`}
+            style={{ width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%` }}
+          />
+          <div className={styles.hpText}>
+            {Math.max(0, Math.ceil(enemy.hp))} / {enemy.maxHp}
+          </div>
+          {bossFight && (
+            <div
+              className={`${styles.timerChip} ${lowOnTime ? styles.timerChipLow : ''}`}
+              aria-live="polite"
+              title={`Tiempo restante del ${bossFight.tier === 'boss' ? 'jefe' : 'semi-jefe'}`}
+            >
+              {remainingSec}s
+            </div>
+          )}
+        </div>
+
+        {bossFight && (
+          <div
+            className={`${styles.timerBar} ${lowOnTime ? styles.timerBarLow : ''}`}
+            aria-hidden="true"
+          >
+            <div className={styles.timerFill} style={{ width: `${remainingPct}%` }} />
+          </div>
+        )}
+      </div>
+    ) : null;
 
   return (
     <Panel
@@ -150,7 +228,13 @@ export function BattlePanel() {
           )}
         </div>
 
-        {loc?.isRest && <RestModeToggle current={restView} onChange={setRestView} />}
+        {showZoneToggle && (
+          <RestModeToggle
+            current={restView}
+            onChange={setRestView}
+            firstLabel={loc?.isRest ? 'Reclutar' : 'Combate'}
+          />
+        )}
 
         {loc?.isRest ? (
           restView === 'recruit' ? (
@@ -158,45 +242,44 @@ export function BattlePanel() {
           ) : (
             <RestShopPanel locId={loc.id} />
           )
-        ) : hasPendingCompanionsHere && !bossFight ? (
+        ) : loc?.hasShop && restView === 'shop' ? (
+          <RecruitPanel locCompanionIds={loc.companions ?? []} />
+        ) : hasPendingCompanionsHere && !loc?.hasShop && !bossFight ? (
           <RecruitPanel locCompanionIds={loc?.companions ?? []} />
         ) : enemy ? (
           <div className={styles.area}>
-            <div
-              className={`${styles.name} ${enemy.tier === 'boss' ? styles.boss : enemy.tier === 'semi' ? styles.semi : ''}`}
-            >
-              {enemy.name}
-              <span
-                className={styles.enemyTypePill}
-                style={
-                  {
-                    '--enemy-type-bg': ENEMY_TYPE_COLORS[enemy.enemyType].bg,
-                    '--enemy-type-border': ENEMY_TYPE_COLORS[enemy.enemyType].border,
-                    '--enemy-type-text': ENEMY_TYPE_COLORS[enemy.enemyType].border,
-                  } as CSSProperties
-                }
-                title={
-                  activeEnemyBonusPct > 0
-                    ? `Tu equipo le inflige +${activeEnemyBonusPct}% de daño`
-                    : undefined
-                }
-              >
-                {ENEMY_TYPE_LABELS[enemy.enemyType]}
-              </span>
-            </div>
-
             <button
               type="button"
-              className={`${styles.frame} ${shaking ? styles.shake : ''} ${deadAnim ? styles.dead : ''}`}
+              className={`${styles.frame} ${isEliteEnemy ? styles.eliteFrame : ''} ${shaking ? styles.shake : ''} ${deadAnim ? styles.dead : ''}`}
               onClick={clickEnemy}
               aria-label={`Atacar a ${enemy.name}`}
             >
               <img
                 src={ENEMIES[enemy.id]?.sprite ?? DEFAULT_ENEMY_SPRITE}
                 alt={enemy.name}
-                className={styles.sprite}
+                className={`${styles.sprite} ${isEliteEnemy ? styles.eliteSprite : ''}`}
                 draggable={false}
               />
+              {isEliteEnemy && (
+                <div className={styles.eliteOverlay} aria-hidden="true">
+                  <div
+                    className={`${styles.eliteTier} ${
+                      enemy.tier === 'boss' ? styles.eliteTierBoss : styles.eliteTierSemi
+                    }`}
+                  >
+                    {enemy.tier === 'boss' ? 'Jefe' : 'Semi-jefe'}
+                  </div>
+                  <div
+                    className={`${styles.eliteName} ${
+                      enemy.tier === 'boss' ? styles.boss : styles.semi
+                    }`}
+                  >
+                    {enemy.name}
+                  </div>
+                  {renderEnemyTypePill(styles.eliteTypePill)}
+                  {renderHpBlock(styles.eliteHpWrap)}
+                </div>
+              )}
               {dmgNums.map((d) => (
                 <div
                   key={d.id}
@@ -227,44 +310,14 @@ export function BattlePanel() {
               )}
             </button>
 
-            <div className={styles.hpWrap}>
-              {enemy.tier === 'boss' && <div className={styles.bossTag}>★ JEFE ★</div>}
-              {enemy.tier === 'semi' && <div className={styles.semiTag}>◆ SEMI-JEFE ◆</div>}
-
-              <div className={styles.hpBar}>
-                <div
-                  className={`${styles.hpFill} ${
-                    enemy.tier === 'boss'
-                      ? styles.hpFillBoss
-                      : enemy.tier === 'semi'
-                        ? styles.hpFillSemi
-                        : ''
-                  }`}
-                  style={{ width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%` }}
-                />
-                <div className={styles.hpText}>
-                  {Math.max(0, Math.ceil(enemy.hp))} / {enemy.maxHp}
-                </div>
-                {bossFight && (
-                  <div
-                    className={`${styles.timerChip} ${lowOnTime ? styles.timerChipLow : ''}`}
-                    aria-live="polite"
-                    title={`Tiempo restante del ${bossFight.tier === 'boss' ? 'jefe' : 'semi-jefe'}`}
-                  >
-                    {remainingSec}s
-                  </div>
-                )}
+            {!isEliteEnemy && (
+              <div className={styles.name}>
+                {enemy.name}
+                {renderEnemyTypePill()}
               </div>
+            )}
 
-              {bossFight && (
-                <div
-                  className={`${styles.timerBar} ${lowOnTime ? styles.timerBarLow : ''}`}
-                  aria-hidden="true"
-                >
-                  <div className={styles.timerFill} style={{ width: `${remainingPct}%` }} />
-                </div>
-              )}
-            </div>
+            {!isEliteEnemy && renderHpBlock()}
 
             {fightFailed && (
               <div className={styles.flash} role="status">
@@ -304,23 +357,26 @@ export function BattlePanel() {
           />
         )}
 
-        {!loc?.isRest && (semiUnlocked || bossUnlocked) && (
-          <FloatingActions
-            loc={loc}
-            kills={kills}
-            semiUnlocked={semiUnlocked}
-            bossUnlocked={bossUnlocked}
-            semiDone={semiDone}
-            bossDone={bossDone}
-            semiAvailable={semiAvailable}
-            bossAvailable={bossAvailable}
-            semiKillsNeeded={semiKillsNeeded}
-            bossKillsNeeded={bossKillsNeeded}
-            activeTier={bossFight?.tier ?? null}
-            onStart={startBossFight}
-            onAbandon={failBossFight}
-          />
-        )}
+        {!loc?.isRest &&
+          !(loc?.hasShop && restView === 'shop') &&
+          (semiUnlocked || bossUnlocked) && (
+            <FloatingActions
+              loc={loc}
+              kills={kills}
+              semiUnlocked={semiUnlocked}
+              bossUnlocked={bossUnlocked}
+              semiDone={semiDone}
+              bossDone={bossDone}
+              semiAvailable={semiAvailable}
+              bossAvailable={bossAvailable}
+              semiKillsNeeded={semiKillsNeeded}
+              bossKillsNeeded={bossKillsNeeded}
+              activeTier={bossFight?.tier ?? null}
+              equipped={state.equipped}
+              onStart={startBossFight}
+              onAbandon={failBossFight}
+            />
+          )}
 
         <NavArrow
           direction="prev"
@@ -389,6 +445,7 @@ interface RecruitPanelProps {
 function RecruitPanel({ locCompanionIds }: RecruitPanelProps) {
   const gold = useGameStore((s) => s.state.gold);
   const companions = useGameStore((s) => s.state.companions);
+  const bossDefeated = useGameStore((s) => s.state.bossDefeated);
   const recruitCompanion = useGameStore((s) => s.recruitCompanion);
 
   const roster = useMemo(
@@ -398,6 +455,7 @@ function RecruitPanel({ locCompanionIds }: RecruitPanelProps) {
         .filter((c): c is Companion => !!c),
     [locCompanionIds],
   );
+  const rosterKey = locCompanionIds.join('-');
 
   if (roster.length === 0) {
     return (
@@ -414,13 +472,14 @@ function RecruitPanel({ locCompanionIds }: RecruitPanelProps) {
 
   return (
     <div className={styles.recruitWrap}>
-      <div className={styles.recruitGrid} data-count={roster.length}>
+      <div className={styles.recruitGrid} data-count={roster.length} data-roster={rosterKey}>
         {roster.map((c) => (
           <RecruitCard
             key={c.id}
             companion={c}
             state={companions[c.id]}
             gold={gold}
+            bossDefeated={bossDefeated}
             onRecruit={() => recruitCompanion(c.id)}
           />
         ))}
@@ -433,27 +492,41 @@ interface RecruitCardProps {
   companion: Companion;
   state: CompanionState | undefined;
   gold: number;
+  bossDefeated: Record<string, boolean>;
   onRecruit: () => void;
 }
 
-function RecruitCard({ companion, state, gold, onRecruit }: RecruitCardProps) {
+function RecruitCard({ companion, state, gold, bossDefeated, onRecruit }: RecruitCardProps) {
   const recruited = !!state?.unlocked;
   const free = companion.recruitCost === 0;
   const canAfford = gold >= companion.recruitCost;
+  const bossGate = companion.requireBossDefeated;
+  const bossGateMet = !bossGate || !!bossDefeated[bossGate];
+  const gatedLocName = bossGate
+    ? (LOCATIONS.find((l) => l.id === bossGate)?.name ?? bossGate)
+    : null;
+  const canRecruit = canAfford && bossGateMet;
   const portrait = companion.portrait ?? DEFAULT_COMPANION_PORTRAIT;
-  const buyLabel = free
-    ? 'Reclutar · Gratis'
-    : `Reclutar · ${companion.recruitCost.toLocaleString('es-ES')} oro`;
+  const buyLabel = !bossGateMet
+    ? 'Vence al jefe primero'
+    : free
+      ? 'Reclutar · Gratis'
+      : `Reclutar · ${companion.recruitCost.toLocaleString('es-ES')} oro`;
+  const ariaLabel = !bossGateMet
+    ? `Reclutar a ${companion.name} bloqueado: derrota antes al jefe de ${gatedLocName}`
+    : `Reclutar a ${companion.name}${free ? ' gratis' : ` por ${companion.recruitCost} oro`}`;
 
   return (
     <div className={styles.recruitCard}>
       <div
         className={styles.recruitPortraitWrap}
-        style={
-          companion.portraitScale
-            ? ({ '--portrait-scale': companion.portraitScale } as CSSProperties)
-            : undefined
-        }
+        style={(() => {
+          const vars: Record<string, string | number> = {};
+          if (companion.portraitScale) vars['--portrait-scale'] = companion.portraitScale;
+          if (companion.portraitOffsetY)
+            vars['--portrait-offset-y'] = `${companion.portraitOffsetY}%`;
+          return Object.keys(vars).length ? (vars as CSSProperties) : undefined;
+        })()}
       >
         <img
           src={portrait}
@@ -466,21 +539,22 @@ function RecruitCard({ companion, state, gold, onRecruit }: RecruitCardProps) {
           <div className={styles.recruitName}>{companion.name}</div>
           <div className={styles.recruitTitle}>{companion.title}</div>
           <div className={styles.recruitDps}>DPS: {companion.baseDps}</div>
+          {recruited ? (
+            <div className={styles.recruitOwned}>✓ En la Comunidad</div>
+          ) : (
+            <button
+              type="button"
+              className={`${styles.recruitBuy} ${!canRecruit ? styles.recruitBuyPoor : ''}`}
+              onClick={onRecruit}
+              disabled={!canRecruit}
+              aria-label={ariaLabel}
+              title={!bossGateMet ? `Derrota antes al jefe de ${gatedLocName}` : undefined}
+            >
+              {buyLabel}
+            </button>
+          )}
         </div>
       </div>
-      {recruited ? (
-        <div className={styles.recruitOwned}>✓ En la Comunidad</div>
-      ) : (
-        <button
-          type="button"
-          className={`${styles.recruitBuy} ${!canAfford ? styles.recruitBuyPoor : ''}`}
-          onClick={onRecruit}
-          disabled={!canAfford}
-          aria-label={`Reclutar a ${companion.name}${free ? ' gratis' : ` por ${companion.recruitCost} oro`}`}
-        >
-          {buyLabel}
-        </button>
-      )}
     </div>
   );
 }
@@ -488,15 +562,17 @@ function RecruitCard({ companion, state, gold, onRecruit }: RecruitCardProps) {
 interface RestModeToggleProps {
   current: 'recruit' | 'shop';
   onChange: (next: 'recruit' | 'shop') => void;
+  /** Label for the non-shop tab. `Reclutar` in rest stops, `Combate` in combat zones with a merchant. */
+  firstLabel?: string;
 }
 
 /**
- * Two-pill toggle floating in the top-left of the rest scene. Switches the
- * panel body between the companion roster and the local merchant.
+ * Two-pill toggle floating in the top-left of the scene. Switches the panel
+ * body between the companion/combat view and the local merchant.
  */
-function RestModeToggle({ current, onChange }: RestModeToggleProps) {
+function RestModeToggle({ current, onChange, firstLabel = 'Reclutar' }: RestModeToggleProps) {
   return (
-    <div className={styles.restToggle} role="tablist" aria-label="Modo del refugio">
+    <div className={styles.restToggle} role="tablist" aria-label="Modo de la zona">
       <button
         type="button"
         role="tab"
@@ -504,7 +580,7 @@ function RestModeToggle({ current, onChange }: RestModeToggleProps) {
         className={`${styles.restToggleBtn} ${current === 'recruit' ? styles.restToggleActive : ''}`}
         onClick={() => onChange('recruit')}
       >
-        Reclutar
+        {firstLabel}
       </button>
       <button
         type="button"
@@ -589,9 +665,10 @@ interface RestShopCardProps {
 
 function RestShopCard({ item, ownedItem, equippedItem, gold, onBuy, onEquip }: RestShopCardProps) {
   const afford = gold >= item.cost;
-  const statValue =
-    item.slot === 'weapon' ? item.dmg : item.slot === 'armor' ? item.def : item.bonus;
-  const statLabel = STAT_LABELS[item.slot];
+  const statLine =
+    item.slot === 'armor'
+      ? formatArmorStatLine(item.def)
+      : `+${item.slot === 'weapon' ? item.dmg : item.bonus} ${STAT_LABELS[item.slot]}`;
   const icon = SLOT_ICONS[item.slot];
   const slotName = SLOT_LABELS[item.slot];
   const subtitle = item.desc ?? slotName;
@@ -608,9 +685,7 @@ function RestShopCard({ item, ownedItem, equippedItem, gold, onBuy, onEquip }: R
         <div className={styles.recruitOverlay}>
           <div className={styles.recruitName}>{item.name}</div>
           <div className={styles.recruitTitle}>{subtitle}</div>
-          <div className={styles.recruitDps}>
-            +{statValue ?? 0} {statLabel}
-          </div>
+          <div className={styles.recruitDps}>{statLine}</div>
         </div>
       </div>
       <BonusVsChips
@@ -687,6 +762,7 @@ interface FloatingActionsProps {
   semiKillsNeeded: number;
   bossKillsNeeded: number;
   activeTier: 'semi' | 'boss' | null;
+  equipped: EquippedItems;
   onStart: (tier: 'semi' | 'boss') => void;
   onAbandon: () => void;
 }
@@ -703,6 +779,7 @@ function FloatingActions({
   semiKillsNeeded,
   bossKillsNeeded,
   activeTier,
+  equipped,
   onStart,
   onAbandon,
 }: FloatingActionsProps) {
@@ -718,7 +795,7 @@ function FloatingActions({
           available={bossAvailable}
           kills={kills}
           needed={bossKillsNeeded}
-          timeLimitS={fightTimeLimitS(loc, 'boss')}
+          timeLimitS={fightTimeLimitForFight(loc, 'boss', equipped)}
           onClick={() => onStart('boss')}
           requireSemiFirst={semiUnlocked && !semiDone}
           isActive={activeTier === 'boss'}
@@ -733,7 +810,7 @@ function FloatingActions({
           available={semiAvailable}
           kills={kills}
           needed={semiKillsNeeded}
-          timeLimitS={fightTimeLimitS(loc, 'semi')}
+          timeLimitS={fightTimeLimitForFight(loc, 'semi', equipped)}
           onClick={() => onStart('semi')}
           isActive={activeTier === 'semi'}
           onAbandon={onAbandon}

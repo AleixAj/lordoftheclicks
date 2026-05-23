@@ -48,8 +48,9 @@ export function getEquippedItems(equipped: EquippedItems): ShopItem[] {
 
 export function calcEnemyTypeMultiplier(
   equipped: EquippedItems,
-  enemyType: EnemyType,
+  enemyType: EnemyType | undefined,
 ): number {
+  if (!enemyType) return 1;
   const bonus = getEquippedItems(equipped).reduce(
     (sum, item) => sum + (item.bonusVs?.[enemyType] ?? 0),
     0,
@@ -59,7 +60,7 @@ export function calcEnemyTypeMultiplier(
 
 export function calcActiveEnemyTypeBonusPct(
   equipped: EquippedItems,
-  enemyType: EnemyType,
+  enemyType: EnemyType | undefined,
 ): number {
   return Math.round((calcEnemyTypeMultiplier(equipped, enemyType) - 1) * 100);
 }
@@ -71,17 +72,24 @@ export function calcClickDamageAgainstEnemy(
   return calcClickDamage(state) * calcEnemyTypeMultiplier(state.equipped, enemy.enemyType);
 }
 
-export function calcDps(state: Pick<GameState, 'companions' | 'equipped'>): number {
+export function calcDps(state: Pick<GameState, 'companions'>): number {
   let dps = 0;
   for (const c of COMPANIONS) {
     const cs = state.companions[c.id];
     if (cs?.unlocked) dps += c.baseDps * cs.level;
   }
-  if (state.equipped.armor) {
-    const a = SHOP_ARMOR.find((x) => x.id === state.equipped.armor);
-    if (a?.def) dps += a.def;
-  }
   return dps;
+}
+
+/** +1 second on semi/boss fights per this many points of armor `def` in item data. */
+export const ARMOR_DEF_PER_FIGHT_SECOND = 5;
+
+/** Extra seconds on timed semi/boss fights from equipped armor. */
+export function armorFightTimeBonusS(equipped: EquippedItems): number {
+  if (!equipped.armor) return 0;
+  const armor = SHOP_ARMOR.find((x) => x.id === equipped.armor);
+  if (!armor?.def) return 0;
+  return Math.floor(armor.def / ARMOR_DEF_PER_FIGHT_SECOND);
 }
 
 export function calcDpsAgainstEnemy(

@@ -20,7 +20,6 @@ const ENEMY_TYPES: readonly EnemyType[] = [
   'troll',
   'mordor',
   'criatura_antigua',
-  'espiritual',
 ];
 
 describe('content integrity', () => {
@@ -43,8 +42,9 @@ describe('content integrity', () => {
     }
   });
 
-  it('all enemies have a valid enemy type', () => {
+  it('all enemies have a valid enemy type (or none)', () => {
     for (const enemy of Object.values(ENEMIES)) {
+      if (enemy.enemyType === undefined) continue;
       expect(validEnemyTypes.has(enemy.enemyType), enemy.id).toBe(true);
     }
   });

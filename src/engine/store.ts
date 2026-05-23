@@ -20,7 +20,7 @@ import { spawnBoss, spawnFromPool, spawnSemiBoss } from './spawn';
 import {
   bossKillThreshold,
   companionLevelCapForLocation,
-  fightTimeLimitS,
+  fightTimeLimitForFight,
   isUnlockGateMet,
   semiBossKillThreshold,
   unlockNextLocation,
@@ -204,7 +204,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           tier,
           locId: loc.id,
           startedAt: now,
-          deadlineMs: now + fightTimeLimitS(loc, tier) * 1000,
+          deadlineMs: now + fightTimeLimitForFight(loc, tier, current.equipped) * 1000,
         },
       },
       fightFailed: null,
@@ -264,6 +264,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const loc = LOCATIONS[current.locIdx];
     if (!loc?.companions?.includes(companionId)) return;
     if (current.gold < c.recruitCost) return;
+    // Optional gate: some allies (e.g. Rey de los Muertos) only join after
+    // the boss of a specific location is defeated.
+    if (c.requireBossDefeated && !current.bossDefeated[c.requireBossDefeated]) return;
 
     const nextCompanions = {
       ...current.companions,

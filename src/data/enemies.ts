@@ -113,13 +113,9 @@ const ENEMY_TYPES: Record<string, EnemyType> = {
   // Gorgoroth
   orco_elite: 'mordor',
   troll_elite_mordor: 'troll',
-  ojo_de_sauron: 'espiritual',
-  espiritu_de_sauron: 'espiritual',
 
   // Monte del Destino
   gollum_final: 'humano',
-  anillo: 'espiritual',
-
   // ============================================================
   // Definidos pero NO asignados a ninguna zona.
   // Mantenidos como reserva para futuras zonas o variantes.
@@ -341,6 +337,7 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     gold: 770,
     xp: 510,
     isBoss: true,
+    sprite: '/companions/king-dead.png',
   },
 
   // ============================================================
@@ -598,11 +595,8 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
 };
 
 export const ENEMIES: Record<EnemyId, Enemy> = Object.fromEntries(
-  Object.entries(ENEMY_DEFS).map(([id, enemy]) => [
-    id,
-    {
-      ...enemy,
-      enemyType: ENEMY_TYPES[id] ?? 'orco',
-    },
-  ]),
+  Object.entries(ENEMY_DEFS).map(([id, enemy]) => {
+    const type = ENEMY_TYPES[id];
+    return [id, { ...enemy, ...(type ? { enemyType: type } : {}) }];
+  }),
 ) as Record<EnemyId, Enemy>;

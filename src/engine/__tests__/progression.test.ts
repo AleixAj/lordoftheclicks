@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   companionLevelCapForLocation,
+  fightTimeLimitForFight,
   isUnlockGateMet,
   unlockNextLocation,
   updateReachQuestProgress,
@@ -8,6 +9,13 @@ import {
 import { LOCATIONS, QUESTS } from '@/data';
 
 describe('progression', () => {
+  it('fightTimeLimitForFight adds armor bonus to semi/boss timer', () => {
+    const loc = LOCATIONS.find((l) => l.boss)!;
+    const equipped = { weapon: null, armor: 'capa_elfica' as const, accessory: null };
+    expect(fightTimeLimitForFight(loc, 'boss', equipped)).toBe(31);
+    expect(fightTimeLimitForFight(loc, 'semi', equipped)).toBe(31);
+  });
+
   it('caps companion training by adventure progress', () => {
     expect(companionLevelCapForLocation(0)).toBe(5);
     expect(companionLevelCapForLocation(2)).toBe(8);

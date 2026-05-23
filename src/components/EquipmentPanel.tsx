@@ -1,6 +1,6 @@
 import { SHOP_ACCESS, SHOP_ARMOR, SHOP_WEAPONS } from '@/data';
 import { useGameStore } from '@/engine/store';
-import { SLOT_ICONS } from '@/lib/equipmentText';
+import { SLOT_ICONS, formatArmorStatLine } from '@/lib/equipmentText';
 import styles from '@/styles/panel.module.css';
 import type { EquipSlot, ShopItem } from '@/types/game';
 import { BonusVsChips } from './BonusVsChips';
@@ -56,7 +56,8 @@ export function EquipmentPanel() {
                   >
                     {slot.items.map((it) => (
                       <option key={it.id} value={it.id}>
-                        {it.name} (+{it[slot.stat]})
+                        {it.name} (
+                        {slot.key === 'armor' ? formatArmorStatLine(it.def) : `+${it[slot.stat]}`})
                       </option>
                     ))}
                   </select>
@@ -84,8 +85,9 @@ function EquippedItem({ slot, item }: EquippedItemProps) {
       <div className={styles.content}>
         <div className={`${styles.itemName} ${styles.itemNameGold}`}>{item.name}</div>
         <div className={styles.meta}>
-          +{item[slot.stat]}{' '}
-          {slot.key === 'weapon' ? 'daño' : slot.key === 'armor' ? 'defensa' : 'bonus'}
+          {slot.key === 'armor'
+            ? formatArmorStatLine(item.def)
+            : `+${item[slot.stat]} ${slot.key === 'weapon' ? 'daño' : 'bonus'}`}
         </div>
         <BonusVsChips item={item} />
       </div>

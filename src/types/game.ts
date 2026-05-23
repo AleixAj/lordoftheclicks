@@ -14,8 +14,7 @@ export type EnemyType =
   | 'humano'
   | 'troll'
   | 'mordor'
-  | 'criatura_antigua'
-  | 'espiritual';
+  | 'criatura_antigua';
 
 /** Rank of an encounter: normal mob, mid-zone semi-boss, or zone-final boss. */
 export type EnemyTier = 'normal' | 'semi' | 'boss';
@@ -26,8 +25,12 @@ export interface Enemy {
   hp: number;
   gold: number;
   xp: number;
-  /** Gameplay family used by equipment bonuses (e.g. +35% vs orcos). */
-  enemyType: EnemyType;
+  /**
+   * Gameplay family used by equipment bonuses (e.g. +35% vs orcos).
+   * Optional: enemies without a type take no equipment damage bonuses
+   * and don't display a type pill (used for final/unique foes).
+   */
+  enemyType?: EnemyType;
   /** @deprecated kept for backwards compatibility; prefer `tier`. */
   isBoss?: boolean;
   /** Optional sprite path (relative to /public). Falls back to a default placeholder. */
@@ -60,6 +63,12 @@ export interface Location {
    */
   unlockGate?: CompanionId[];
   isRest?: boolean;
+  /**
+   * Combat zones can opt-in to a local merchant. Adds the same Combate/Tienda
+   * toggle used in rest stops. Rest zones imply a shop already, so this is
+   * only needed for non-rest locations (e.g. Fangorn, where Bárbol trades).
+   */
+  hasShop?: boolean;
   isFinal?: boolean;
   /** Coordinate on the map image as percentage `[x, y]`. */
   pos: readonly [number, number];
@@ -89,12 +98,25 @@ export interface Companion {
    */
   portraitScale?: number;
   /**
+   * Vertical offset applied to the portrait, in percent of the wrapper
+   * height. Positive values push the figure downward so a tall portrait
+   * can be scaled up without clipping at the top of the card.
+   */
+  portraitOffsetY?: number;
+  /**
    * Optional focus for the small circular avatar in the "Comunidad" list.
    * `x`/`y` are percentages (0–100) for `object-position` and the zoom
    * origin. `scale` is the zoom factor (default 1.65). Use this to land
    * each face inside the round avatar even if the portrait is offset.
    */
   portraitFocus?: { x?: number; y?: number; scale?: number };
+  /**
+   * Optional gate: this companion can only be recruited after the player
+   * has defeated the boss of the given location. Used for "earned" allies
+   * like the King of the Dead, where the recruit only happens once the
+   * juramento is broken (the boss is beaten).
+   */
+  requireBossDefeated?: LocationId;
 }
 
 export interface ShopItem {
@@ -105,7 +127,7 @@ export interface ShopItem {
   desc?: string;
   /** Damage bonus (weapons). */
   dmg?: number;
-  /** Defense bonus, contributes to DPS (armors). */
+  /** Armor stat: +1s on semi/boss fights per 5 points (see `armorFightTimeBonusS`). */
   def?: number;
   /** Click damage bonus (accessories). */
   bonus?: number;
@@ -142,7 +164,7 @@ export interface EnemyInstance {
   name: string;
   hp: number;
   maxHp: number;
-  enemyType: EnemyType;
+  enemyType?: EnemyType;
   tier: EnemyTier;
   /** @deprecated mirrors `tier === 'boss'`; kept for legacy callers. */
   isBoss: boolean;

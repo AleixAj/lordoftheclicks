@@ -41,7 +41,7 @@ export const COMPANIONS: readonly Companion[] = [
     color: '#b8963a',
     recruitCost: 80,
     portrait: '/companions/merry.png',
-    portraitScale: 0.95,
+    portraitScale: 0.67,
   },
   {
     id: 'pippin',
@@ -52,7 +52,7 @@ export const COMPANIONS: readonly Companion[] = [
     color: '#c9843a',
     recruitCost: 80,
     portrait: '/companions/pippin.png',
-    portraitScale: 0.78,
+    portraitScale: 0.75,
   },
   {
     id: 'aragorn',
@@ -63,7 +63,7 @@ export const COMPANIONS: readonly Companion[] = [
     color: '#5a7a5a',
     recruitCost: 250,
     portrait: '/companions/aragorn.png',
-    portraitScale: 0.9,
+    portraitScale: 0.85,
   },
   {
     id: 'gandalf',
@@ -74,6 +74,7 @@ export const COMPANIONS: readonly Companion[] = [
     color: '#9a9aaa',
     recruitCost: 600,
     portrait: '/companions/gandalf.png',
+    portraitScale: 1.1,
   },
   {
     id: 'arwen',
@@ -135,6 +136,7 @@ export const COMPANIONS: readonly Companion[] = [
     color: '#c8c8d8',
     recruitCost: 6500,
     portrait: '/companions/celeborn.png',
+    portraitScale: 1.2,
   },
   {
     id: 'barbol',
@@ -145,6 +147,8 @@ export const COMPANIONS: readonly Companion[] = [
     color: '#5a7040',
     recruitCost: 12000,
     portrait: '/companions/barbol.png',
+    portraitScale: 1.4,
+    portraitOffsetY: 32,
   },
   {
     id: 'theoden',
@@ -155,6 +159,7 @@ export const COMPANIONS: readonly Companion[] = [
     color: '#c4a040',
     recruitCost: 18000,
     portrait: '/companions/theoden.png',
+    portraitScale: 0.8,
   },
   {
     id: 'eomer',
@@ -165,6 +170,7 @@ export const COMPANIONS: readonly Companion[] = [
     color: '#a08830',
     recruitCost: 20000,
     portrait: '/companions/eomer.png',
+    portraitScale: 0.9,
   },
   {
     id: 'eowyn',
@@ -175,6 +181,7 @@ export const COMPANIONS: readonly Companion[] = [
     color: '#d4b870',
     recruitCost: 22000,
     portrait: '/companions/eowyn.png',
+    portraitScale: 1.1,
   },
   {
     id: 'gandalf_blanco',
@@ -184,7 +191,21 @@ export const COMPANIONS: readonly Companion[] = [
     unlockAt: 'edoras',
     color: '#f0f0f0',
     recruitCost: 28000,
-    portrait: '/companions/gandalf.png',
+    portrait: '/companions/gandalf-white.png',
+    portraitScale: 1.35,
+  },
+  {
+    id: 'rey_muertos',
+    name: 'Rey de los Muertos',
+    title: 'Señor del Juramento Roto',
+    baseDps: 18,
+    unlockAt: 'paso_de_los_muertos',
+    color: '#8ea5b0',
+    recruitCost: 35000,
+    portrait: '/companions/king-dead.png',
+    requireBossDefeated: 'paso_de_los_muertos',
+    portraitScale: 1.4,
+    portraitOffsetY: 12,
   },
   {
     id: 'faramir',
@@ -198,7 +219,7 @@ export const COMPANIONS: readonly Companion[] = [
   },
   {
     id: 'rey_aragorn',
-    name: 'Aragorn',
+    name: 'Rey Aragorn',
     title: 'Rey de Gondor',
     baseDps: 15,
     unlockAt: 'minas_tirith',

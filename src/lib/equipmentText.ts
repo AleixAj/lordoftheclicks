@@ -2,15 +2,14 @@ import type { EnemyType, EquipSlot, ShopItem } from '@/types/game';
 
 export const ENEMY_TYPE_LABELS: Record<EnemyType, string> = {
   naturaleza: 'Naturaleza',
-  bestia: 'Bestias',
-  orco: 'Orcos',
+  bestia: 'Bestia',
+  orco: 'Orco',
   uruk_hai: 'Uruk-hai',
-  espectro: 'Espectros',
-  humano: 'Humanos',
-  troll: 'Trolls',
+  espectro: 'Espectro',
+  humano: 'Humano',
+  troll: 'Troll',
   mordor: 'Mordor',
-  criatura_antigua: 'Criaturas antiguas',
-  espiritual: 'Espiritual',
+  criatura_antigua: 'Criatura antigua',
 };
 
 export const ENEMY_TYPE_ABBR: Record<EnemyType, string> = {
@@ -23,7 +22,6 @@ export const ENEMY_TYPE_ABBR: Record<EnemyType, string> = {
   troll: 'Trl',
   mordor: 'Mor',
   criatura_antigua: 'Ant',
-  espiritual: 'Spr',
 };
 
 export const ENEMY_TYPE_COLORS: Record<EnemyType, { bg: string; border: string; text: string }> = {
@@ -36,7 +34,6 @@ export const ENEMY_TYPE_COLORS: Record<EnemyType, { bg: string; border: string; 
   troll: { bg: 'rgba(82, 82, 82, 0.22)', border: '#777', text: '#333' },
   mordor: { bg: 'rgba(136, 37, 27, 0.22)', border: '#9f3024', text: '#64170f' },
   criatura_antigua: { bg: 'rgba(98, 72, 130, 0.22)', border: '#73548e', text: '#43275c' },
-  espiritual: { bg: 'rgba(43, 123, 137, 0.2)', border: '#3c8795', text: '#1a5661' },
 };
 
 export interface BonusVsEntry {
@@ -61,9 +58,24 @@ export const SLOT_LABELS: Record<EquipSlot, string> = {
 
 export const STAT_LABELS: Record<EquipSlot, string> = {
   weapon: 'daño',
-  armor: 'defensa',
+  armor: 's en semi/jefe',
   accessory: 'bonus click',
 };
+
+/** +1 second on semi/boss fights per this many points of armor `def` in item data. */
+export const ARMOR_DEF_PER_FIGHT_SECOND = 5;
+
+/** Extra seconds on timed semi/boss fights from armor `def` value in data. */
+export function armorFightTimeBonusS(def: number | undefined): number {
+  if (!def || def <= 0) return 0;
+  return Math.floor(def / ARMOR_DEF_PER_FIGHT_SECOND);
+}
+
+/** Display line for armor stat in shop/equipment UI. */
+export function formatArmorStatLine(def: number | undefined): string {
+  const secs = armorFightTimeBonusS(def);
+  return `+${secs}s en semi/jefe`;
+}
 
 export function getBonusVsEntries(item: Pick<ShopItem, 'bonusVs'>): BonusVsEntry[] {
   if (!item.bonusVs) return [];

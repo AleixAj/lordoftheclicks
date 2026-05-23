@@ -35,7 +35,7 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 35,
     semiBoss: 'espectro_bosque',
     boss: 'nazgul_jinete',
-    pos: [39.5, 24.5],
+    pos: [40.1, 26.9],
     background: '/backgrounds/bosque-viejo.jpg',
   },
   {
@@ -46,7 +46,7 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 0,
     isRest: true,
     companions: ['gandalf', 'aragorn'],
-    pos: [44.0, 27.0],
+    pos: [42.4, 25.9],
     background: '/backgrounds/bree.png',
   },
   {
@@ -57,7 +57,7 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 80,
     semiBoss: 'khamul',
     boss: 'rey_brujo_amon',
-    pos: [50.0, 27.0],
+    pos: [45.5, 25.5],
     background: '/backgrounds/amon-sul.png',
   },
   {
@@ -68,7 +68,7 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 0,
     isRest: true,
     companions: ['arwen', 'legolas', 'gimli', 'boromir'],
-    pos: [57.0, 26.0],
+    pos: [51.3, 25.1],
     background: '/backgrounds/rivendel.png',
     backgroundPosition: 'center center',
     backgroundSize: 'auto 130%',
@@ -81,7 +81,7 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 90,
     semiBoss: 'bandada_crebain',
     boss: 'tormenta_caradhras',
-    pos: [57.5, 33.0],
+    pos: [51.8, 33.0],
     background: '/backgrounds/caradhras.jpg',
   },
   {
@@ -92,7 +92,7 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 150,
     semiBoss: 'orco_mayor',
     boss: 'troll_caverna',
-    pos: [58.5, 40.5],
+    pos: [51.2, 34.3],
     background: '/backgrounds/moria-balin.jpg',
   },
   {
@@ -103,7 +103,7 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 80,
     semiBoss: 'troll_caverna',
     boss: 'balrog',
-    pos: [59.8, 39.5],
+    pos: [52.0, 35.5],
     background: '/backgrounds/moria-khazad-dum.jpg',
   },
   {
@@ -114,7 +114,7 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 0,
     isRest: true,
     companions: ['galadriel', 'celeborn'],
-    pos: [65.0, 40.0],
+    pos: [54.6, 37.8],
     background: '/backgrounds/caras-galadhon.jpg',
   },
   {
@@ -125,7 +125,7 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 130,
     semiBoss: 'kraken_anduin',
     boss: 'hydra',
-    pos: [64.0, 44.0],
+    pos: [59.1, 44.0],
     background: '/backgrounds/anduin.jpg',
   },
   {
@@ -136,7 +136,7 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 140,
     semiBoss: 'capitan_amon',
     boss: 'lurtz',
-    pos: [66.0, 50.0],
+    pos: [58.3, 49.6],
     background: '/backgrounds/amon-hen.jpg',
   },
   {
@@ -148,7 +148,8 @@ export const LOCATIONS: readonly Location[] = [
     semiBoss: 'lobo_mayor',
     boss: 'urukhai_cazador',
     companions: ['barbol'],
-    pos: [63.0, 46.0],
+    hasShop: true,
+    pos: [52.7, 45.6],
     background: '/backgrounds/fangorn.jpg',
   },
   {
@@ -158,8 +159,8 @@ export const LOCATIONS: readonly Location[] = [
     enemies: [],
     killsNeeded: 0,
     isRest: true,
-    companions: ['theoden', 'gandalf_blanco'],
-    pos: [65.0, 55.0],
+    companions: ['gandalf_blanco', 'theoden'],
+    pos: [51.7, 53.5],
     background: '/backgrounds/edoras.jpg',
   },
   {
@@ -170,7 +171,7 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 110,
     semiBoss: 'huargo_alfa',
     boss: 'sharku',
-    pos: [63.0, 55.0],
+    pos: [50.2, 53.0],
     background: '/backgrounds/camino-edoras.jpg',
   },
   {
@@ -181,7 +182,7 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 220,
     semiBoss: 'capitan_uruk',
     boss: 'ugthak',
-    pos: [61.0, 55.0],
+    pos: [48.9, 51.8],
     background: '/backgrounds/abismo-helm.jpg',
   },
   {
@@ -192,7 +193,7 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 160,
     semiBoss: 'lengua_serpiente',
     boss: 'saruman',
-    pos: [61.0, 49.0],
+    pos: [49.1, 46.3],
     background: '/backgrounds/isengard.jpg',
   },
   {
@@ -202,8 +203,8 @@ export const LOCATIONS: readonly Location[] = [
     enemies: [],
     killsNeeded: 0,
     isRest: true,
-    companions: ['eomer', 'eowyn'],
-    pos: [66.5, 56.5],
+    companions: ['eowyn', 'eomer'],
+    pos: [52.2, 55.7],
     background: '/backgrounds/dunharrow.jpg',
   },
   {
@@ -214,7 +215,9 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 180,
     semiBoss: 'heraldo_muertos',
     boss: 'rey_muerto',
-    pos: [67.0, 60.0],
+    companions: ['rey_muertos'],
+    hasShop: true,
+    pos: [50.9, 56.5],
     background: '/backgrounds/sendero-muertos.jpg',
   },
   {
@@ -225,8 +228,8 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 180,
     semiBoss: 'maestre_corsario',
     boss: 'capitan_corsario',
-    pos: [72.0, 64.0],
-    background: '/backgrounds/pelargir.jpg',
+    pos: [58.7, 68.5],
+    background: '/backgrounds/pelargir.png',
   },
   {
     id: 'ithilien',
@@ -236,8 +239,8 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 0,
     isRest: true,
     companions: ['faramir'],
-    pos: [74.5, 56.0],
-    background: '/backgrounds/ithilien.jpg',
+    pos: [64.3, 56.3],
+    background: '/backgrounds/ithilien.png',
   },
   {
     id: 'osgiliath',
@@ -247,7 +250,7 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 180,
     semiBoss: 'capitan_orco',
     boss: 'nazgul_alado',
-    pos: [73.0, 58.5],
+    pos: [62.9, 61.7],
     background: '/backgrounds/osgiliath.jpg',
   },
   {
@@ -258,7 +261,7 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 220,
     semiBoss: 'troll_caverna_armadura',
     boss: 'ariete_lobo',
-    pos: [70.5, 60.3],
+    pos: [61.9, 61.0],
     background: '/backgrounds/minas-tirith-door.jpg',
   },
   {
@@ -269,7 +272,7 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 260,
     semiBoss: 'mumakil',
     boss: 'rey_brujo',
-    pos: [71.0, 60.8],
+    pos: [62.4, 60.5],
     background: '/backgrounds/pelennor.jpg',
   },
   {
@@ -280,8 +283,8 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 0,
     isRest: true,
     companions: ['rey_aragorn'],
-    pos: [70.0, 60.0],
-    background: '/backgrounds/minas-tirith.jpg',
+    pos: [61.4, 60.7],
+    background: '/backgrounds/minas-tirith.png',
   },
   {
     id: 'minas_morgul',
@@ -291,7 +294,7 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 210,
     semiBoss: 'dragon_nazgul',
     boss: 'gothmog',
-    pos: [76.5, 55.5],
+    pos: [65.5, 61.4],
     background: '/backgrounds/minas-morgul.png',
   },
   {
@@ -302,7 +305,7 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 220,
     semiBoss: 'arana_grande',
     boss: 'shelob',
-    pos: [77.3, 56.8],
+    pos: [65.9, 59.6],
     background: '/backgrounds/cirith-ungol.png',
   },
   {
@@ -313,7 +316,7 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 200,
     semiBoss: 'gorbag',
     boss: 'shagrat',
-    pos: [78.0, 58.0],
+    pos: [66.5, 59.9],
     background: '/backgrounds/cirith-ungol.png',
   },
   {
@@ -324,7 +327,7 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 240,
     semiBoss: 'orco_caverna_armadura',
     boss: 'boca_de_sauron',
-    pos: [76.0, 49.0],
+    pos: [66.8, 52.0],
     background: '/backgrounds/black-gate.png',
   },
   {
@@ -335,7 +338,7 @@ export const LOCATIONS: readonly Location[] = [
     killsNeeded: 300,
     semiBoss: 'ojo_de_sauron',
     boss: 'espiritu_de_sauron',
-    pos: [80.5, 54.0],
+    pos: [68.2, 58.3],
     background: '/backgrounds/gorgoroth.png',
   },
   {
@@ -349,7 +352,7 @@ export const LOCATIONS: readonly Location[] = [
     semiBoss: 'gollum_final',
     boss: 'anillo',
     isFinal: true,
-    pos: [81.0, 57.0],
-    background: '/backgrounds/monte-destino.png',
+    pos: [70.6, 57.8],
+    background: '/backgrounds/mount-doom.jpg',
   },
 ];

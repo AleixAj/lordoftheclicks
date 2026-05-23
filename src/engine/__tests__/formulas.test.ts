@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyLevelUps,
+  armorFightTimeBonusS,
   calcClickDamage,
   calcClickDamageAgainstEnemy,
   calcDps,
@@ -52,12 +53,15 @@ describe('formulas', () => {
     expect(base).toBe(6);
 
     const withWeapon = calcClickDamage(
-      makeState({ level: 5, equipped: { weapon: 'anduril', armor: null, accessory: null } }),
+      makeState({ level: 5, equipped: { weapon: 'hadhafang', armor: null, accessory: null } }),
     );
     expect(withWeapon).toBeGreaterThan(base);
 
     const withBoth = calcClickDamage(
-      makeState({ level: 5, equipped: { weapon: 'anduril', armor: null, accessory: 'palantir' } }),
+      makeState({
+        level: 5,
+        equipped: { weapon: 'hadhafang', armor: null, accessory: 'palantir' },
+      }),
     );
     expect(withBoth).toBeGreaterThan(withWeapon);
   });
@@ -72,12 +76,32 @@ describe('formulas', () => {
     expect(calcDps(state)).toBeGreaterThan(0);
   });
 
+  it('calcDps ignores equipped armor', () => {
+    const base = makeState({
+      companions: { frodo: { unlocked: true, level: 2 } },
+    });
+    const withArmor = makeState({
+      companions: { frodo: { unlocked: true, level: 2 } },
+      equipped: { weapon: null, armor: 'capa_elfica', accessory: null },
+      owned: ['capa_elfica'],
+    });
+    expect(calcDps(withArmor)).toBe(calcDps(base));
+  });
+
+  it('armorFightTimeBonusS adds 1s per 5 armor def', () => {
+    expect(armorFightTimeBonusS({ weapon: null, armor: null, accessory: null })).toBe(0);
+    expect(armorFightTimeBonusS({ weapon: null, armor: 'capa_elfica', accessory: null })).toBe(1);
+    expect(armorFightTimeBonusS({ weapon: null, armor: 'armadura_negra', accessory: null })).toBe(
+      5,
+    );
+  });
+
   it('calcEnemyTypeMultiplier sums equipped percentage bonuses', () => {
     const state = makeState({
       equipped: { weapon: 'dardo', armor: null, accessory: 'lembas' },
     });
 
-    expect(calcEnemyTypeMultiplier(state.equipped, 'orco')).toBeCloseTo(1.5);
+    expect(calcEnemyTypeMultiplier(state.equipped, 'orco')).toBeCloseTo(1.35);
     expect(calcEnemyTypeMultiplier(state.equipped, 'espectro')).toBeCloseTo(1.15);
   });
 

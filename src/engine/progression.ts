@@ -1,5 +1,13 @@
 import { LOCATIONS, QUESTS } from '@/data';
-import type { CompanionId, CompanionState, Location, LocationId, QuestId } from '@/types/game';
+import { armorFightTimeBonusS } from './formulas';
+import type {
+  CompanionId,
+  CompanionState,
+  EquippedItems,
+  Location,
+  LocationId,
+  QuestId,
+} from '@/types/game';
 
 const DEFAULT_SEMI_TIME_LIMIT_S = 30;
 const DEFAULT_BOSS_TIME_LIMIT_S = 30;
@@ -26,10 +34,19 @@ export function bossKillThreshold(loc: Location): number {
   return loc.bossAt ?? loc.killsNeeded;
 }
 
-/** Time limit (in seconds) for a semi-boss or boss encounter. */
+/** Base time limit (in seconds) for a semi-boss or boss encounter (no armor). */
 export function fightTimeLimitS(loc: Location, tier: 'semi' | 'boss'): number {
   if (tier === 'semi') return loc.semiBossTimeLimit ?? DEFAULT_SEMI_TIME_LIMIT_S;
   return loc.bossTimeLimit ?? DEFAULT_BOSS_TIME_LIMIT_S;
+}
+
+/** Total fight timer including armor bonus from equipped `def`. */
+export function fightTimeLimitForFight(
+  loc: Location,
+  tier: 'semi' | 'boss',
+  equipped: EquippedItems,
+): number {
+  return fightTimeLimitS(loc, tier) + armorFightTimeBonusS(equipped);
 }
 
 /**
