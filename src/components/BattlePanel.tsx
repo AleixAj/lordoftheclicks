@@ -1,11 +1,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useGameStore } from '@/engine/store';
 import { calcActiveEnemyTypeBonusPct, calcDps } from '@/engine/formulas';
-import {
-  bossKillThreshold,
-  fightTimeLimitS,
-  semiBossKillThreshold,
-} from '@/engine/progression';
+import { bossKillThreshold, fightTimeLimitS, semiBossKillThreshold } from '@/engine/progression';
 import {
   COMPANIONS,
   ENEMIES,
@@ -19,18 +15,13 @@ import { Panel } from './Panel';
 import styles from '@/styles/battle.module.css';
 import {
   ENEMY_TYPE_LABELS,
+  ENEMY_TYPE_COLORS,
   SLOT_ICONS,
   SLOT_LABELS,
   STAT_LABELS,
-  formatBonusVs,
 } from '@/lib/equipmentText';
-import type {
-  Companion,
-  CompanionState,
-  EquipSlot,
-  ItemId,
-  ShopItem,
-} from '@/types/game';
+import type { Companion, CompanionState, EquipSlot, ItemId, ShopItem } from '@/types/game';
+import { BonusVsChips } from './BonusVsChips';
 
 const DEFAULT_ENEMY_SPRITE = '/orc.png';
 const DEFAULT_COMPANION_PORTRAIT = '/companions/gandalf.png';
@@ -44,6 +35,7 @@ export function BattlePanel() {
   const fightFailed = useGameStore((s) => s.fightFailed);
   const clickEnemy = useGameStore((s) => s.clickEnemy);
   const startBossFight = useGameStore((s) => s.startBossFight);
+  const failBossFight = useGameStore((s) => s.failBossFight);
   const travelTo = useGameStore((s) => s.travelTo);
   const acceptQuests = useGameStore((s) => s.acceptQuests);
 
@@ -58,9 +50,7 @@ export function BattlePanel() {
   const activeEnemyBonusPct = enemy
     ? calcActiveEnemyTypeBonusPct(state.equipped, enemy.enemyType)
     : 0;
-  const hasPendingCompanionsHere = !!loc?.companions?.some(
-    (id) => !state.companions[id]?.unlocked,
-  );
+  const hasPendingCompanionsHere = !!loc?.companions?.some((id) => !state.companions[id]?.unlocked);
   const bg = loc?.background;
 
   // Force a re-render every 250ms while a fight is active so the countdown bar
@@ -91,10 +81,7 @@ export function BattlePanel() {
   // longer disables the button.
   const semiAvailable = semiUnlocked && kills >= semiKillsNeeded && !bossFight;
   const bossAvailable =
-    bossUnlocked &&
-    (!semiUnlocked || semiDone) &&
-    kills >= bossKillsNeeded &&
-    !bossFight;
+    bossUnlocked && (!semiUnlocked || semiDone) && kills >= bossKillsNeeded && !bossFight;
 
   // Countdown computed on every render while the fight is active.
   const totalMs = bossFight ? bossFight.deadlineMs - bossFight.startedAt : 0;
@@ -120,10 +107,8 @@ export function BattlePanel() {
   const nextIdx = state.locIdx + 1;
   const prevLoc = prevIdx >= 0 ? LOCATIONS[prevIdx] : undefined;
   const nextLoc = nextIdx < LOCATIONS.length ? LOCATIONS[nextIdx] : undefined;
-  const canPrev =
-    !bossFight && !!prevLoc && state.unlockedLocs.includes(prevLoc.id);
-  const canNext =
-    !bossFight && !!nextLoc && state.unlockedLocs.includes(nextLoc.id);
+  const canPrev = !bossFight && !!prevLoc && state.unlockedLocs.includes(prevLoc.id);
+  const canNext = !bossFight && !!nextLoc && state.unlockedLocs.includes(nextLoc.id);
 
   return (
     <Panel
@@ -180,12 +165,23 @@ export function BattlePanel() {
             <div
               className={`${styles.name} ${enemy.tier === 'boss' ? styles.boss : enemy.tier === 'semi' ? styles.semi : ''}`}
             >
-              {enemy.tier === 'boss' && <span className={styles.bossTag}>★ JEFE ★</span>}
-              {enemy.tier === 'semi' && <span className={styles.semiTag}>◆ SEMI-JEFE ◆</span>}
               {enemy.name}
-              <span className={styles.enemyTypePill}>
+              <span
+                className={styles.enemyTypePill}
+                style={
+                  {
+                    '--enemy-type-bg': ENEMY_TYPE_COLORS[enemy.enemyType].bg,
+                    '--enemy-type-border': ENEMY_TYPE_COLORS[enemy.enemyType].border,
+                    '--enemy-type-text': ENEMY_TYPE_COLORS[enemy.enemyType].border,
+                  } as CSSProperties
+                }
+                title={
+                  activeEnemyBonusPct > 0
+                    ? `Tu equipo le inflige +${activeEnemyBonusPct}% de daño`
+                    : undefined
+                }
+              >
                 {ENEMY_TYPE_LABELS[enemy.enemyType]}
-                {activeEnemyBonusPct > 0 ? ` · +${activeEnemyBonusPct}% equipo` : ''}
               </span>
             </div>
 
@@ -231,36 +227,63 @@ export function BattlePanel() {
               )}
             </button>
 
-            <div className={styles.hpBar}>
-              <div
-                className={styles.hpFill}
-                style={{ width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%` }}
-              />
-              <div className={styles.hpText}>
-                {Math.max(0, Math.ceil(enemy.hp))} / {enemy.maxHp}
-              </div>
-            </div>
+            <div className={styles.hpWrap}>
+              {enemy.tier === 'boss' && <div className={styles.bossTag}>★ JEFE ★</div>}
+              {enemy.tier === 'semi' && <div className={styles.semiTag}>◆ SEMI-JEFE ◆</div>}
 
-            {bossFight && (
-              <div
-                className={`${styles.timer} ${lowOnTime ? styles.timerLow : ''}`}
-                aria-live="polite"
-              >
-                <div className={styles.timerLabel}>
-                  {bossFight.tier === 'boss' ? 'JEFE' : 'SEMI-JEFE'} · {remainingSec}s
+              <div className={styles.hpBar}>
+                <div
+                  className={`${styles.hpFill} ${
+                    enemy.tier === 'boss'
+                      ? styles.hpFillBoss
+                      : enemy.tier === 'semi'
+                        ? styles.hpFillSemi
+                        : ''
+                  }`}
+                  style={{ width: `${Math.max(0, (enemy.hp / enemy.maxHp) * 100)}%` }}
+                />
+                <div className={styles.hpText}>
+                  {Math.max(0, Math.ceil(enemy.hp))} / {enemy.maxHp}
                 </div>
-                <div className={styles.timerBar}>
+                {bossFight && (
+                  <div
+                    className={`${styles.timerChip} ${lowOnTime ? styles.timerChipLow : ''}`}
+                    aria-live="polite"
+                    title={`Tiempo restante del ${bossFight.tier === 'boss' ? 'jefe' : 'semi-jefe'}`}
+                  >
+                    {remainingSec}s
+                  </div>
+                )}
+              </div>
+
+              {bossFight && (
+                <div
+                  className={`${styles.timerBar} ${lowOnTime ? styles.timerBarLow : ''}`}
+                  aria-hidden="true"
+                >
                   <div className={styles.timerFill} style={{ width: `${remainingPct}%` }} />
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {fightFailed && (
               <div className={styles.flash} role="status">
-                El {fightFailed === 'boss' ? 'jefe' : 'semi-jefe'} ha escapado. Vuelve a intentarlo
-                cuando estés listo.
+                El {fightFailed === 'boss' ? 'jefe' : 'semi-jefe'} ha escapado.
               </div>
             )}
+          </div>
+        ) : loc && loc.enemies.length === 0 && (loc.semiBoss || loc.boss) ? (
+          <div className={styles.statePanel}>
+            <div className={styles.stateInner}>
+              <div className={styles.stateTitle}>
+                {loc.isFinal ? 'Asalto final' : 'Sin enemigos en el paso'}
+              </div>
+              <div className={styles.stateDesc}>
+                {loc.isFinal
+                  ? 'Solo el destino aguarda. Lanza el desafío cuando estés listo.'
+                  : 'No hay tropas que enfrentar. Reta directamente al semi-jefe o al jefe.'}
+              </div>
+            </div>
           </div>
         ) : (
           <div className={styles.statePanel}>
@@ -281,7 +304,7 @@ export function BattlePanel() {
           />
         )}
 
-        {!loc?.isRest && !bossFight && (semiUnlocked || bossUnlocked) && (
+        {!loc?.isRest && (semiUnlocked || bossUnlocked) && (
           <FloatingActions
             loc={loc}
             kills={kills}
@@ -293,7 +316,9 @@ export function BattlePanel() {
             bossAvailable={bossAvailable}
             semiKillsNeeded={semiKillsNeeded}
             bossKillsNeeded={bossKillsNeeded}
+            activeTier={bossFight?.tier ?? null}
             onStart={startBossFight}
+            onAbandon={failBossFight}
           />
         )}
 
@@ -328,9 +353,7 @@ interface QuestPickupProps {
  */
 function QuestPickup({ count, locName, onClick }: QuestPickupProps) {
   const label =
-    count === 1
-      ? `Aceptar misión de ${locName}`
-      : `Aceptar ${count} misiones de ${locName}`;
+    count === 1 ? `Aceptar misión de ${locName}` : `Aceptar ${count} misiones de ${locName}`;
   return (
     <div className={styles.questPickupWrap}>
       <button
@@ -529,8 +552,7 @@ function RestShopPanel({ locId }: RestShopPanelProps) {
         <div className={styles.stateInner}>
           <div className={styles.stateTitle}>Tienda cerrada</div>
           <div className={styles.stateDesc}>
-            No hay mercader en este refugio. Explora otras zonas seguras para
-            encontrar mercancía.
+            No hay mercader en este refugio. Explora otras zonas seguras para encontrar mercancía.
           </div>
         </div>
       </div>
@@ -539,7 +561,6 @@ function RestShopPanel({ locId }: RestShopPanelProps) {
 
   return (
     <div className={styles.recruitWrap}>
-      <div className={styles.recruitHeader}>Mercader</div>
       <div className={styles.recruitGrid} data-count={items.length}>
         {items.map((item) => (
           <RestShopCard
@@ -566,14 +587,7 @@ interface RestShopCardProps {
   onEquip: () => void;
 }
 
-function RestShopCard({
-  item,
-  ownedItem,
-  equippedItem,
-  gold,
-  onBuy,
-  onEquip,
-}: RestShopCardProps) {
+function RestShopCard({ item, ownedItem, equippedItem, gold, onBuy, onEquip }: RestShopCardProps) {
   const afford = gold >= item.cost;
   const statValue =
     item.slot === 'weapon' ? item.dmg : item.slot === 'armor' ? item.def : item.bonus;
@@ -581,7 +595,6 @@ function RestShopCard({
   const icon = SLOT_ICONS[item.slot];
   const slotName = SLOT_LABELS[item.slot];
   const subtitle = item.desc ?? slotName;
-  const bonusText = formatBonusVs(item);
 
   return (
     <div className={styles.recruitCard}>
@@ -598,9 +611,13 @@ function RestShopCard({
           <div className={styles.recruitDps}>
             +{statValue ?? 0} {statLabel}
           </div>
-          {bonusText && <div className={styles.shopBonus}>{bonusText}</div>}
         </div>
       </div>
+      <BonusVsChips
+        item={item}
+        className={styles.shopBonusChips}
+        chipClassName={styles.shopBonusChip}
+      />
       {ownedItem ? (
         equippedItem ? (
           <div className={styles.recruitOwned}>✓ Equipado</div>
@@ -631,8 +648,7 @@ function RestShopCard({
 
 function NavArrow({ direction, loc, enabled, inFight, onClick }: NavArrowProps) {
   if (!loc) return null;
-  const label =
-    direction === 'prev' ? `Zona anterior: ${loc.name}` : `Zona siguiente: ${loc.name}`;
+  const label = direction === 'prev' ? `Zona anterior: ${loc.name}` : `Zona siguiente: ${loc.name}`;
   const hint = !enabled
     ? inFight
       ? 'Termina el combate antes de viajar'
@@ -670,7 +686,9 @@ interface FloatingActionsProps {
   bossAvailable: boolean;
   semiKillsNeeded: number;
   bossKillsNeeded: number;
+  activeTier: 'semi' | 'boss' | null;
   onStart: (tier: 'semi' | 'boss') => void;
+  onAbandon: () => void;
 }
 
 function FloatingActions({
@@ -684,7 +702,9 @@ function FloatingActions({
   bossAvailable,
   semiKillsNeeded,
   bossKillsNeeded,
+  activeTier,
   onStart,
+  onAbandon,
 }: FloatingActionsProps) {
   if (!loc) return null;
 
@@ -701,6 +721,8 @@ function FloatingActions({
           timeLimitS={fightTimeLimitS(loc, 'boss')}
           onClick={() => onStart('boss')}
           requireSemiFirst={semiUnlocked && !semiDone}
+          isActive={activeTier === 'boss'}
+          onAbandon={onAbandon}
         />
       )}
       {semiUnlocked && (
@@ -713,6 +735,8 @@ function FloatingActions({
           needed={semiKillsNeeded}
           timeLimitS={fightTimeLimitS(loc, 'semi')}
           onClick={() => onStart('semi')}
+          isActive={activeTier === 'semi'}
+          onAbandon={onAbandon}
         />
       )}
     </div>
@@ -728,7 +752,9 @@ interface EncounterChipProps {
   needed: number;
   timeLimitS: number;
   requireSemiFirst?: boolean;
+  isActive?: boolean;
   onClick: () => void;
+  onAbandon: () => void;
 }
 
 function EncounterChip({
@@ -740,12 +766,42 @@ function EncounterChip({
   needed,
   timeLimitS,
   requireSemiFirst = false,
+  isActive = false,
   onClick,
+  onAbandon,
 }: EncounterChipProps) {
   const label = tier === 'boss' ? 'jefe' : 'semi-jefe';
   const iconSrc = tier === 'boss' ? '/boss.png' : '/semiboss.png';
   const tierClass = tier === 'boss' ? styles.encBoss : styles.encSemi;
-  const stateClass = !available ? styles.encLocked : '';
+  const stateClass = !available && !isActive ? styles.encLocked : '';
+
+  if (isActive) {
+    return (
+      <div className={styles.encWrap}>
+        <button
+          type="button"
+          className={`${styles.encChip} ${tierClass} ${styles.encActive}`}
+          onClick={onAbandon}
+          aria-label={`Abandonar combate contra ${label} ${name}`}
+        >
+          <img
+            src={iconSrc}
+            alt=""
+            aria-hidden="true"
+            className={styles.encIcon}
+            draggable={false}
+          />
+          <span className={styles.encAbandonOverlay} aria-hidden="true">
+            ✕
+          </span>
+        </button>
+        <div className={styles.encTooltip} role="tooltip">
+          <div className={styles.encTooltipTitle}>{name}</div>
+          <div className={styles.encTooltipBody}>Abandonar combate</div>
+        </div>
+      </div>
+    );
+  }
 
   const tooltipTitle = name;
   let tooltipBody: string;
@@ -775,13 +831,7 @@ function EncounterChip({
         disabled={!available}
         aria-label={ariaContext}
       >
-        <img
-          src={iconSrc}
-          alt=""
-          aria-hidden="true"
-          className={styles.encIcon}
-          draggable={false}
-        />
+        <img src={iconSrc} alt="" aria-hidden="true" className={styles.encIcon} draggable={false} />
         {done && (
           <span className={styles.encDoneBadge} aria-hidden="true">
             ✓

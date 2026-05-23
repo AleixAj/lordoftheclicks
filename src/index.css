@@ -1,23 +1,20 @@
 @import 'tailwindcss';
 
 /*
- * Aniron is the typeface used in the Lord of the Rings film logo.
- * Drop the font file at /public/fonts/aniron.woff2 (and optionally .woff) to
- * load it automatically. Until then we fall back to MedievalSharp (Google
- * Fonts) which is the closest free LotR-feel typeface, and finally to Cinzel.
+ * Ringbearer gives the title its LotR-inspired feel.
+ * Drop the font file at /public/fonts/ringbearer.woff2 (or ringbearer.ttf)
+ * to load it automatically. Until then we fall back to MedievalSharp, then Cinzel.
  */
 @font-face {
-  font-family: 'Aniron';
-  src:
-    url('/fonts/aniron.woff2') format('woff2'),
-    url('/fonts/aniron.woff') format('woff');
-  font-weight: 400 900;
+  font-family: 'Ringbearer';
+  src: url('/fonts/ringbearer.ttf') format('truetype');
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @theme {
-  --font-display: 'Aniron', 'MedievalSharp', 'Cinzel Decorative', serif;
+  --font-display: 'Ringbearer', 'MedievalSharp', 'Cinzel Decorative', serif;
   --font-heading: 'Cinzel', serif;
   --font-body: 'Crimson Pro', serif;
 
@@ -109,4 +106,8 @@ body::after {
     opacity: 1;
     transform: scale(1);
   }
+}
+
+.app-title {
+  font-family: 'Ringbearer', 'MedievalSharp', 'Cinzel Decorative', serif;
 }

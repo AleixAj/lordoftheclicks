@@ -19,6 +19,7 @@ import { dealDamage } from './combat';
 import { spawnBoss, spawnFromPool, spawnSemiBoss } from './spawn';
 import {
   bossKillThreshold,
+  companionLevelCapForLocation,
   fightTimeLimitS,
   isUnlockGateMet,
   semiBossKillThreshold,
@@ -69,7 +70,11 @@ interface GameStore {
 
 let dmgIdSeq = 0;
 
-function pushDamageNumber(set: (fn: (s: GameStore) => Partial<GameStore>) => void, value: number, crit: boolean) {
+function pushDamageNumber(
+  set: (fn: (s: GameStore) => Partial<GameStore>) => void,
+  value: number,
+  crit: boolean,
+) {
   const id = ++dmgIdSeq;
   const offsetX = (Math.random() - 0.5) * 60;
   const offsetY = Math.random() * -20;
@@ -294,6 +299,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const current = get().state;
     const cs = current.companions[companionId];
     if (!cs?.unlocked) return;
+    const cap = companionLevelCapForLocation(current.locIdx);
+    if (cs.level >= cap) return;
     const cost = companionUpgradeCost(cs.level);
     if (current.gold < cost) return;
     set({

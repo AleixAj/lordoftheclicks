@@ -49,7 +49,7 @@ export interface Location {
   bossAt?: number;
   /** Seconds the player has to defeat the semi-boss before it escapes. Defaults to 30. */
   semiBossTimeLimit?: number;
-  /** Seconds the player has to defeat the boss before it escapes. Defaults to 60. */
+  /** Seconds the player has to defeat the boss before it escapes. Defaults to 30. */
   bossTimeLimit?: number;
   companions?: CompanionId[];
   /**
@@ -88,6 +88,13 @@ export interface Companion {
    * appear as tall as humans/elves when placed side-by-side.
    */
   portraitScale?: number;
+  /**
+   * Optional focus for the small circular avatar in the "Comunidad" list.
+   * `x`/`y` are percentages (0–100) for `object-position` and the zoom
+   * origin. `scale` is the zoom factor (default 1.65). Use this to land
+   * each face inside the round avatar even if the portrait is offset.
+   */
+  portraitFocus?: { x?: number; y?: number; scale?: number };
 }
 
 export interface ShopItem {

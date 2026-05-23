@@ -229,7 +229,7 @@ Y una nueva zona de combate con semi-jefe y jefe:
   semiBossAt: 40,            // opcional, por defecto floor(killsNeeded/2)
   bossAt: 80,                // opcional, por defecto killsNeeded
   semiBossTimeLimit: 30,     // opcional, por defecto 30s
-  bossTimeLimit: 60,         // opcional, por defecto 60s
+  bossTimeLimit: 30,         // opcional, por defecto 30s
   pos: [54.0, 32.5],
   background: '/backgrounds/eregion.jpg',
 },

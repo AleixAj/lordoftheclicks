@@ -19,6 +19,7 @@ export const COMPANIONS: readonly Companion[] = [
     color: '#5b8abf',
     recruitCost: 0,
     portrait: '/companions/frodo.png',
+    portraitFocus: { x: 60, y: 0, scale: 1.7 },
   },
   {
     id: 'sam',
@@ -29,6 +30,7 @@ export const COMPANIONS: readonly Companion[] = [
     color: '#6b9a4a',
     recruitCost: 0,
     portrait: '/companions/sam.png',
+    portraitFocus: { x: 40, y: 0, scale: 1.7 },
   },
   {
     id: 'merry',
@@ -132,6 +134,7 @@ export const COMPANIONS: readonly Companion[] = [
     unlockAt: 'lothlorien',
     color: '#c8c8d8',
     recruitCost: 6500,
+    portrait: '/companions/celeborn.png',
   },
   {
     id: 'barbol',
@@ -141,6 +144,7 @@ export const COMPANIONS: readonly Companion[] = [
     unlockAt: 'fangorn',
     color: '#5a7040',
     recruitCost: 12000,
+    portrait: '/companions/barbol.png',
   },
   {
     id: 'theoden',
@@ -150,6 +154,7 @@ export const COMPANIONS: readonly Companion[] = [
     unlockAt: 'edoras',
     color: '#c4a040',
     recruitCost: 18000,
+    portrait: '/companions/theoden.png',
   },
   {
     id: 'eomer',
@@ -159,6 +164,7 @@ export const COMPANIONS: readonly Companion[] = [
     unlockAt: 'edoras',
     color: '#a08830',
     recruitCost: 20000,
+    portrait: '/companions/eomer.png',
   },
   {
     id: 'eowyn',
@@ -168,6 +174,7 @@ export const COMPANIONS: readonly Companion[] = [
     unlockAt: 'edoras',
     color: '#d4b870',
     recruitCost: 22000,
+    portrait: '/companions/eowyn.png',
   },
   {
     id: 'gandalf_blanco',
@@ -187,6 +194,7 @@ export const COMPANIONS: readonly Companion[] = [
     unlockAt: 'ithilien',
     color: '#7080a0',
     recruitCost: 45000,
+    portrait: '/companions/faramir.png',
   },
   {
     id: 'rey_aragorn',
@@ -196,6 +204,6 @@ export const COMPANIONS: readonly Companion[] = [
     unlockAt: 'minas_tirith',
     color: '#5a7a5a',
     recruitCost: 90000,
-    portrait: '/companions/aragorn.png',
+    portrait: '/companions/king-aragorn.png',
   },
 ];

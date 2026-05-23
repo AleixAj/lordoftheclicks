@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  companionLevelCapForLocation,
   isUnlockGateMet,
   unlockNextLocation,
   updateReachQuestProgress,
@@ -7,6 +8,26 @@ import {
 import { LOCATIONS, QUESTS } from '@/data';
 
 describe('progression', () => {
+  it('caps companion training by adventure progress', () => {
+    expect(companionLevelCapForLocation(0)).toBe(5);
+    expect(companionLevelCapForLocation(2)).toBe(8);
+    expect(companionLevelCapForLocation(4)).toBe(12);
+    expect(companionLevelCapForLocation(9)).toBe(15);
+    expect(companionLevelCapForLocation(13)).toBe(18);
+    expect(companionLevelCapForLocation(18)).toBe(21);
+    expect(companionLevelCapForLocation(23)).toBe(24);
+    expect(companionLevelCapForLocation(28)).toBe(28);
+    expect(companionLevelCapForLocation(32)).toBe(30);
+  });
+
+  it('keeps the previous companion cap before reaching the next milestone', () => {
+    expect(companionLevelCapForLocation(1)).toBe(5);
+    expect(companionLevelCapForLocation(3)).toBe(8);
+    expect(companionLevelCapForLocation(8)).toBe(12);
+    expect(companionLevelCapForLocation(12)).toBe(15);
+    expect(companionLevelCapForLocation(17)).toBe(18);
+  });
+
   it('unlockNextLocation adds the next location id', () => {
     const next = unlockNextLocation(['comarca'], 0);
     expect(next).toContain(LOCATIONS[1].id);

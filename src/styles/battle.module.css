@@ -15,7 +15,8 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(ellipse at center, transparent 45%, rgba(10, 8, 4, 0.55) 100%),
+  background:
+    radial-gradient(ellipse at center, transparent 45%, rgba(10, 8, 4, 0.55) 100%),
     linear-gradient(
       to bottom,
       rgba(10, 8, 4, 0.15) 0%,
@@ -66,8 +67,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 0;
   min-height: 0;
+  padding: 64px 0 80px;
 }
 
 .statePanel {
@@ -161,8 +163,15 @@
   font-weight: 700;
   text-align: center;
   color: #fff;
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
   font-size: clamp(18px, 2vw, 26px);
+  text-shadow:
+    0 3px 3px #000,
+    0 0 7px #000,
+    0 0 14px #000,
+    2px 2px 2px #000,
+    -2px 2px 2px #000,
+    2px -2px 2px #000,
+    -2px -2px 2px #000;
 }
 .boss {
   color: #ff7a4a;
@@ -170,41 +179,117 @@
 .semi {
   color: #ffd17a;
 }
+.bossTag,
+.semiTag {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  margin-bottom: 4px;
+  text-align: center;
+  pointer-events: none;
+  text-shadow:
+    0 3px 3px #000,
+    0 0 7px #000,
+    0 0 13px #000,
+    2px 2px 2px #000,
+    -2px 2px 2px #000,
+    2px -2px 2px #000,
+    -2px -2px 2px #000;
+}
 .bossTag {
-  display: block;
   font-size: clamp(11px, 1vw, 14px);
   letter-spacing: 3px;
   color: var(--color-danger);
-  margin-bottom: 4px;
 }
 .semiTag {
-  display: block;
   font-size: clamp(10px, 0.9vw, 13px);
   letter-spacing: 2.5px;
   color: var(--color-gold);
-  margin-bottom: 4px;
 }
 
 .enemyTypePill {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
   width: fit-content;
   max-width: min(360px, 90vw);
-  margin: 5px auto 0;
+  margin: 8px auto 0;
+  padding: 7px 16px;
+  border-radius: 14px;
+  border: 2px solid var(--enemy-type-border, rgba(201, 164, 74, 0.72));
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.08), transparent 70%),
+    rgba(6, 4, 2, 0.78);
+  backdrop-filter: blur(6px) saturate(0.85);
+  -webkit-backdrop-filter: blur(6px) saturate(0.85);
+  color: var(--enemy-type-text, #fff7d0);
+  font-family: var(--font-heading);
+  font-size: clamp(14px, 1.2vw, 17px);
+  font-weight: 900;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+  text-shadow:
+    0 1px 2px #000,
+    0 0 8px rgba(0, 0, 0, 0.95);
+  box-shadow:
+    0 0 16px color-mix(in srgb, var(--enemy-type-border, #c9a44a) 30%, transparent),
+    inset 0 0 14px rgba(0, 0, 0, 0.55);
+}
+
+.enemyTypeBonus {
+  display: inline-flex;
+  align-items: center;
   padding: 3px 9px;
   border-radius: 999px;
-  border: 1px solid rgba(201, 164, 74, 0.42);
-  background: rgba(8, 6, 3, 0.68);
-  color: #f4e4bc;
+  background: rgba(0, 0, 0, 0.55);
+  color: #ffe89a;
   font-family: var(--font-body);
-  font-size: clamp(11px, 0.95vw, 13px);
-  font-style: italic;
+  font-size: clamp(10px, 0.85vw, 12px);
   font-weight: 600;
-  letter-spacing: 0.3px;
+  font-style: italic;
+  letter-spacing: 0.4px;
   text-transform: none;
 }
 
-.hpBar {
+.timerChip {
+  position: absolute;
+  top: 50%;
+  left: 4px;
+  transform: translateY(-50%);
+  min-width: 48px;
+  height: calc(100% - 6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  background: rgba(8, 6, 3, 0.88);
+  border: 1px solid rgba(201, 164, 74, 0.7);
+  border-radius: 3px;
+  font-family: var(--font-heading);
+  font-size: clamp(12px, 1vw, 15px);
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: var(--color-gold);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+  z-index: 1;
+}
+
+.timerChipLow {
+  color: #ff7a4a;
+  border-color: rgba(255, 122, 74, 0.85);
+  animation: timerPulse 0.6s ease-in-out infinite;
+}
+
+.hpWrap {
+  flex: 0 0 auto;
   width: min(80%, 460px);
+  position: relative;
+}
+
+.hpBar {
+  width: 100%;
   height: 28px;
   position: relative;
   overflow: hidden;
@@ -220,6 +305,14 @@
   height: 100%;
   background: linear-gradient(180deg, #d83838 0%, var(--hp-fill) 50%, #6a1818 100%);
   transition: width 0.15s ease;
+}
+
+.hpFillSemi {
+  background: linear-gradient(180deg, #ff8a3a 0%, #ee4d18 50%, #a02410 100%);
+}
+
+.hpFillBoss {
+  background: linear-gradient(180deg, #ffe066 0%, #f5a020 50%, #a85f10 100%);
 }
 
 .hpText {
@@ -346,7 +439,10 @@
   }
   100% {
     opacity: 0;
-    transform: translate(calc(cos(var(--angle)) * var(--dist)), calc(sin(var(--angle)) * var(--dist)))
+    transform: translate(
+        calc(cos(var(--angle)) * var(--dist)),
+        calc(sin(var(--angle)) * var(--dist))
+      )
       scale(0.3);
   }
 }
@@ -549,9 +645,36 @@
 }
 
 .encLocked .encIcon {
-  filter: grayscale(0.9) brightness(0.55)
-    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+  filter: grayscale(0.9) brightness(0.55) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
   animation: none !important;
+}
+
+.encActive .encIcon {
+  filter: brightness(0.45) saturate(0.6) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+  animation: none !important;
+}
+
+.encAbandonOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-size: 64px;
+  font-weight: 900;
+  line-height: 1;
+  color: #ff3a2a;
+  text-shadow:
+    0 0 10px rgba(0, 0, 0, 0.95),
+    0 2px 6px rgba(0, 0, 0, 0.95),
+    0 0 18px rgba(255, 58, 42, 0.6);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.encActive:hover .encAbandonOverlay {
+  color: #ff7a4a;
 }
 
 .encDoneBadge {
@@ -634,13 +757,11 @@
 @keyframes encPulseSemi {
   0%,
   100% {
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6))
-      drop-shadow(0 0 5px rgba(255, 215, 0, 0.4))
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 5px rgba(255, 215, 0, 0.4))
       drop-shadow(0 0 10px rgba(255, 215, 0, 0.18));
   }
   50% {
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6))
-      drop-shadow(0 0 10px rgba(255, 215, 0, 0.85))
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 10px rgba(255, 215, 0, 0.85))
       drop-shadow(0 0 18px rgba(255, 215, 0, 0.45));
   }
 }
@@ -648,13 +769,11 @@
 @keyframes encPulseBoss {
   0%,
   100% {
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6))
-      drop-shadow(0 0 6px rgba(255, 90, 60, 0.5))
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 6px rgba(255, 90, 60, 0.5))
       drop-shadow(0 0 12px rgba(255, 90, 60, 0.22));
   }
   50% {
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6))
-      drop-shadow(0 0 12px rgba(255, 90, 60, 0.95))
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 12px rgba(255, 90, 60, 0.95))
       drop-shadow(0 0 22px rgba(255, 90, 60, 0.5));
   }
 }
@@ -678,8 +797,12 @@
 }
 
 .timerBar {
-  width: 100%;
-  height: 10px;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 3px;
+  height: 6px;
   background: rgba(20, 14, 8, 0.8);
   border: 1px solid rgba(201, 164, 74, 0.45);
   border-radius: 4px;
@@ -693,11 +816,7 @@
   transition: width 0.25s linear;
 }
 
-.timerLow .timerLabel {
-  color: #ff7a4a;
-  animation: timerPulse 0.6s ease-in-out infinite;
-}
-.timerLow .timerFill {
+.timerBarLow .timerFill {
   background: linear-gradient(90deg, #ff5b3a 0%, #8c1c0a 100%);
 }
 
@@ -714,16 +833,25 @@
 /* ---------- Fight-failed flash ---------- */
 
 .flash {
-  margin-top: 6px;
-  padding: 6px 14px;
-  background: rgba(70, 18, 6, 0.7);
-  border: 1px solid rgba(255, 90, 60, 0.55);
-  border-radius: 4px;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  max-width: 240px;
+  padding: 8px 12px;
+  background: rgba(70, 18, 6, 0.92);
+  border: 1px solid rgba(255, 90, 60, 0.7);
+  border-radius: 6px;
   font-family: var(--font-body);
   font-style: italic;
   font-size: clamp(11px, 1vw, 13px);
-  color: #f4d8c8;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  color: #ffe0d2;
+  text-align: right;
+  line-height: 1.25;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.55),
+    0 0 14px rgba(255, 90, 60, 0.3);
+  z-index: 5;
   animation: flashIn 0.25s ease-out;
 }
 
@@ -862,14 +990,12 @@
 .recruitPortraitSilhouette {
   /* Pure-black silhouette via brightness(0). A subtle gold rim glow lifts
      the shape off the background without giving away identity. */
-  filter: brightness(0) saturate(0)
-    drop-shadow(0 2px 6px rgba(0, 0, 0, 0.85))
+  filter: brightness(0) saturate(0) drop-shadow(0 2px 6px rgba(0, 0, 0, 0.85))
     drop-shadow(0 0 4px rgba(201, 164, 74, 0.4));
 }
 
 .recruitPortraitColor {
-  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.85))
-    drop-shadow(0 0 6px rgba(201, 164, 74, 0.35));
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 6px rgba(201, 164, 74, 0.35));
 }
 
 /* Text container sits at the bottom of the portrait. The dark background
@@ -881,11 +1007,11 @@
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 14px 10px 10px;
+  padding: 10px 8px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
   pointer-events: none;
 }
 
@@ -939,18 +1065,46 @@
     -2px -2px 2px #000;
 }
 
-.shopBonus {
-  max-width: 92%;
-  margin-top: 2px;
-  color: #c8e6ff;
-  font-family: var(--font-body);
-  font-size: clamp(10px, 0.85vw, 12px);
-  font-style: italic;
-  line-height: 1.1;
-  text-align: center;
+.shopBonusChips {
+  max-width: 100%;
+  margin-top: 0;
+  gap: 3px;
+  justify-content: center;
+  /* Lives between the portrait card and the buy button in normal flow. */
+  padding: 0 4px;
+  align-self: stretch;
+}
+
+.shopBonusChip {
+  max-width: none !important;
+  padding: 1px 6px !important;
+  gap: 3px !important;
+  font-size: 10px !important;
+  line-height: 1.15 !important;
+  letter-spacing: 0.3px;
+  border-width: 1px !important;
+  background: rgba(4, 3, 1, 0.78) !important;
+  color: var(--bonus-text, #fff2b8) !important;
+  border-color: var(--bonus-border, rgba(244, 212, 122, 0.65)) !important;
+  box-shadow:
+    0 0 6px color-mix(in srgb, var(--bonus-border, #c9a44a) 26%, transparent),
+    inset 0 0 6px rgba(0, 0, 0, 0.45);
   text-shadow:
     0 1px 3px rgba(0, 0, 0, 0.98),
-    0 0 4px rgba(0, 0, 0, 0.85);
+    0 0 6px rgba(0, 0, 0, 0.9);
+}
+
+.shopBonusChip .bonusChipPct,
+.shopBonusChip [class*='bonusChipPct'] {
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.shopBonusChip .bonusChipType,
+.shopBonusChip [class*='bonusChipType'] {
+  font-size: 10px;
+  opacity: 1;
+  letter-spacing: 0.6px;
 }
 
 .recruitBuy {
