@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { UPGRADES } from '@/data';
 import { upgradeCost } from '@/engine/store';
 import { upgradeEffectValue } from '@/engine/formulas';
@@ -31,6 +31,22 @@ export function ForgeModal({ open, mithril, upgrades, onBuy, onReset, onClose }:
     return sum + cost;
   }, 0);
 
+  // Esc closes the Forja. If the confirm dialog is open, Esc dismisses that
+  // first so the player doesn't lose the modal entirely with one keypress.
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      if (confirmReset) {
+        setConfirmReset(false);
+      } else {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [open, confirmReset, onClose]);
+
   if (!open) return null;
 
   const handleConfirmReset = () => {
@@ -40,6 +56,12 @@ export function ForgeModal({ open, mithril, upgrades, onBuy, onReset, onClose }:
 
   return (
     <div className={styles.overlay} role="presentation">
+      <button
+        type="button"
+        className={styles.overlayBackdrop}
+        aria-label="Cerrar Forja"
+        onClick={onClose}
+      />
       <section
         className={styles.modal}
         role="dialog"

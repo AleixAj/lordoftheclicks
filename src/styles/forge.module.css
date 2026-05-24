@@ -11,6 +11,19 @@
   backdrop-filter: blur(4px);
 }
 
+.overlayBackdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: default;
+}
+
 .modal {
   width: min(1120px, 94vw);
   height: auto;
@@ -19,6 +32,7 @@
   flex-direction: column;
   overflow: hidden;
   position: relative;
+  z-index: 1;
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 6px;
   background:
