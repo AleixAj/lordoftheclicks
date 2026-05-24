@@ -558,24 +558,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
 
     const companions: Record<CompanionId, CompanionState> = {};
-    for (const c of COMPANIONS) companions[c.id] = { unlocked: true, level: 10 };
+    for (const c of COMPANIONS) companions[c.id] = { unlocked: true, level: 1 };
 
     const allItems = [...SHOP_WEAPONS, ...SHOP_ARMOR, ...SHOP_ACCESS];
     const owned: ItemId[] = allItems.map((i) => i.id);
-
-    const bestOf = <T extends { id: ItemId; dmg?: number; def?: number; bonus?: number }>(
-      list: readonly T[],
-      key: 'dmg' | 'def' | 'bonus',
-    ): ItemId | null => {
-      if (!list.length) return null;
-      return list.reduce((a, b) => ((a[key] ?? 0) >= (b[key] ?? 0) ? a : b)).id;
-    };
-
-    const equipped = {
-      weapon: bestOf(SHOP_WEAPONS, 'dmg'),
-      armor: bestOf(SHOP_ARMOR, 'def'),
-      accessory: bestOf(SHOP_ACCESS, 'bonus'),
-    };
 
     const questProgress: Record<QuestId, number> = {};
     const questsDone: QuestId[] = [];
@@ -596,7 +582,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       enemy: null,
       bossFight: null,
       companions,
-      equipped,
+      equipped: { weapon: null, armor: null, accessory: null },
       owned,
       locKills,
       totalKills,

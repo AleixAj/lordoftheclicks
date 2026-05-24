@@ -90,4 +90,14 @@ describe('store dev cheats', () => {
     useGameStore.getState().travelTo(1);
     expect(useGameStore.getState().state.locIdx).toBe(1);
   });
+
+  it('completeAll keeps passive damage low for manual testing', () => {
+    useGameStore.setState({ state: createInitialState() });
+
+    useGameStore.getState().completeAll();
+    const afterComplete = useGameStore.getState().state;
+
+    expect(Object.values(afterComplete.companions).every((c) => c.level === 1)).toBe(true);
+    expect(afterComplete.equipped).toEqual({ weapon: null, armor: null, accessory: null });
+  });
 });

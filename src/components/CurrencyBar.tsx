@@ -4,6 +4,12 @@ import type { GameState } from '@/types/game';
 import styles from '@/styles/currency.module.css';
 import { ForgeButton } from './ForgeButton';
 
+const integerFormatter = new Intl.NumberFormat('es-ES', {
+  maximumFractionDigits: 0,
+});
+
+const formatInteger = (value: number) => integerFormatter.format(Math.floor(value));
+
 interface CurrencyBarProps {
   state: GameState;
   onOpenForge: () => void;
@@ -14,6 +20,7 @@ export function CurrencyBar({ state, onOpenForge }: CurrencyBarProps) {
   const xpPct = (state.xp / xpNeeded) * 100;
   const forgeLocked = !state.forgeUnlocked;
   const forgeHighlight = state.forgeUnlocked && !state.forgeSeen;
+  const goldValue = formatInteger(state.gold);
 
   return (
     <div className={styles.bar}>
@@ -23,16 +30,11 @@ export function CurrencyBar({ state, onOpenForge }: CurrencyBarProps) {
         onClick={onOpenForge}
         className={styles.forgeButtonDesktopOnly}
       />
-      <Currency
-        iconSrc="/gold-button.png"
-        iconAlt="Oro"
-        value={state.gold.toLocaleString()}
-        label="Oro"
-      />
+      <Currency iconSrc="/gold-button.png" iconAlt="Oro" value={goldValue} label="Oro" />
       <Currency
         iconSrc="/mithril-button.png"
         iconAlt="Mithril"
-        value={state.mithril.toLocaleString()}
+        value={formatInteger(state.mithril)}
         label="Mithril"
       />
       <Currency
@@ -48,7 +50,7 @@ export function CurrencyBar({ state, onOpenForge }: CurrencyBarProps) {
       <Currency
         iconSrc="/kills-button.png"
         iconAlt="Enemigos derrotados"
-        value={state.totalKills.toLocaleString()}
+        value={formatInteger(state.totalKills)}
         label="Enemigos"
       />
     </div>
