@@ -30,6 +30,7 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
     locKills: {},
     totalKills: 0,
     unlockedLocs: ['comarca'],
+    visitedLocs: ['comarca'],
     bossDefeated: {},
     semiBossDefeated: {},
     questProgress: {},

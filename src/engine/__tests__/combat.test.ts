@@ -27,6 +27,7 @@ function freshState(locIdx = COMBAT_IDX): GameState {
     locKills: {},
     totalKills: 0,
     unlockedLocs: [LOCATIONS[locIdx].id],
+    visitedLocs: [LOCATIONS[locIdx].id],
     bossDefeated: {},
     semiBossDefeated: {},
     questProgress: {},
