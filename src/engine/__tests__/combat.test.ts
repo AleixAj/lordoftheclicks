@@ -33,6 +33,8 @@ function freshState(locIdx = COMBAT_IDX): GameState {
     questsDone: [],
     questsAccepted: [],
     upgrades: {},
+    forgeUnlocked: false,
+    forgeSeen: false,
   };
 }
 

@@ -36,6 +36,8 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
     questsDone: [],
     questsAccepted: [],
     upgrades: {},
+    forgeUnlocked: false,
+    forgeSeen: false,
     ...overrides,
   };
 }

@@ -46,11 +46,10 @@ export function upgradeEffectValue(
 
 export function companionUpgradeCost(
   companionLevel: number,
-  upgrades?: Pick<GameState, 'upgrades'> | Partial<Record<UpgradeId, number>>,
+  upgrades?: Partial<Record<UpgradeId, number>>,
 ): number {
   const base = Math.floor(15 * Math.pow(1.4, companionLevel - 1));
-  const upgradeRecord = 'upgrades' in (upgrades ?? {}) ? upgrades?.upgrades : upgrades;
-  const reduction = Math.max(-0.5, upgradeEffectValue(upgradeRecord, 'companion_cost_pct'));
+  const reduction = Math.max(-0.5, upgradeEffectValue(upgrades, 'companion_cost_pct'));
   return Math.max(1, Math.floor(base * (1 + reduction)));
 }
 

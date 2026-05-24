@@ -304,11 +304,14 @@
 }
 
 .nodeSelected::before {
-  border-color: #fff;
+  border-color: #ffe89a;
+  background:
+    linear-gradient(135deg, rgba(255, 240, 196, 0.18), transparent 50%), rgba(20, 16, 8, 0.92);
   box-shadow:
-    0 0 0 4px rgba(255, 255, 255, 0.12),
-    0 0 18px rgba(255, 255, 255, 0.42),
-    0 4px 12px rgba(0, 0, 0, 0.75);
+    0 0 0 2px rgba(0, 0, 0, 0.55),
+    0 0 18px rgba(255, 220, 140, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+    0 6px 16px rgba(0, 0, 0, 0.8);
 }
 
 .nodeLocked {
@@ -325,12 +328,27 @@
     0 4px 12px rgba(0, 0, 0, 0.75);
 }
 
+.nodeOwned::before {
+  border-color: rgba(255, 255, 255, 0.88);
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.55),
+    0 0 14px rgba(255, 255, 255, 0.38),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+    0 4px 12px rgba(0, 0, 0, 0.75);
+}
+
 .nodeMaxed {
   color: #f7fff0;
 }
 
 .nodeMaxed::before {
   border-color: #9cff69;
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.55),
+    0 0 18px rgba(255, 255, 255, 0.5),
+    0 0 10px rgba(156, 255, 105, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22),
+    0 4px 12px rgba(0, 0, 0, 0.75);
 }
 
 .buy {

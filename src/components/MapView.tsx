@@ -7,7 +7,7 @@ import { MapPaths } from './MapPaths';
 import styles from '@/styles/map.module.css';
 
 const MAP_ASPECT = 3000 / 1713;
-export const DEFAULT_MAP_ZOOM = 4.3;
+export const DEFAULT_MAP_ZOOM = 5.2;
 const MAP_SRC = '/middle-earth-map.jpg';
 
 interface MapViewProps {

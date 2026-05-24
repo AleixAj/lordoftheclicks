@@ -102,6 +102,7 @@ export function ForgeModal({ open, mithril, upgrades, onBuy, onReset, onClose }:
           >
             {UPGRADES.flatMap((upgrade) =>
               Object.entries(upgrade.requires ?? {}).map(([requiredId, requiredRank]) => {
+                if (requiredRank === undefined) return null;
                 const parent = UPGRADES.find((candidate) => candidate.id === requiredId);
                 if (!parent) return null;
                 const unlocked = (upgrades[requiredId] ?? 0) >= requiredRank;
@@ -130,7 +131,9 @@ export function ForgeModal({ open, mithril, upgrades, onBuy, onReset, onClose }:
                 type="button"
                 className={`${styles.node} ${styles[`branch_${upgrade.branch}`]} ${
                   selected.id === upgrade.id ? styles.nodeSelected : ''
-                } ${locked ? styles.nodeLocked : ''} ${maxed ? styles.nodeMaxed : ''}`}
+                } ${locked ? styles.nodeLocked : ''} ${rank > 0 ? styles.nodeOwned : ''} ${
+                  maxed ? styles.nodeMaxed : ''
+                }`}
                 style={{
                   left: `${upgrade.position.x}%`,
                   top: `${upgrade.position.y}%`,
@@ -245,12 +248,14 @@ function formatEffectTotal(
 }
 
 function isLocked(upgrade: UpgradeDefinition, upgrades: Record<UpgradeId, number>) {
-  return Object.entries(upgrade.requires ?? {}).some(([id, rank]) => (upgrades[id] ?? 0) < rank);
+  return Object.entries(upgrade.requires ?? {}).some(
+    ([id, rank]) => rank !== undefined && (upgrades[id] ?? 0) < rank,
+  );
 }
 
 function formatRequirements(upgrade: UpgradeDefinition, upgrades: Record<UpgradeId, number>) {
   return Object.entries(upgrade.requires ?? {})
-    .filter(([id, rank]) => (upgrades[id] ?? 0) < rank)
+    .filter(([id, rank]) => rank !== undefined && (upgrades[id] ?? 0) < rank)
     .map(([id, rank]) => {
       const required = UPGRADES.find((candidate) => candidate.id === id);
       return `${required?.name ?? id} rango ${rank}`;
