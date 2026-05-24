@@ -1,17 +1,17 @@
 .map {
-  height: 240px;
+  height: 170px;
   flex-shrink: 0;
 }
 
 @media (max-width: 1180px) {
   .map {
-    height: clamp(110px, 18vh, 180px);
+    height: clamp(90px, 14vh, 140px);
   }
 }
 
 @media (max-width: 760px) and (orientation: landscape) {
   .map {
-    height: clamp(80px, 16vh, 130px);
+    height: clamp(70px, 12vh, 110px);
   }
 }
 
@@ -96,6 +96,10 @@
   line-height: 1;
   pointer-events: none;
   user-select: none;
+  z-index: 3;
+  box-shadow:
+    0 0 6px rgba(255, 220, 110, 0.85),
+    0 1px 2px rgba(0, 0, 0, 0.55);
   box-shadow:
     0 0 6px rgba(255, 215, 0, 0.9),
     0 1px 3px rgba(0, 0, 0, 0.7);

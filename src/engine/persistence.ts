@@ -2,10 +2,10 @@ import type { GameState } from '@/types/game';
 import { calcClickDamage } from './formulas';
 import { spawnInitial } from './spawn';
 
-// Bumped to v8 after introducing the quest pickup flow: quests are no
-// longer active from the start; the player picks them up via the map's
-// "!" badge. Adds a new `questsAccepted` field.
-const SAVE_KEY = 'lotc_save_v8';
+// Bumped to v10 after gating the Forja behind a Rivendel visit. Adds the
+// `forgeUnlocked` / `forgeSeen` flags used by the unlock notice and the
+// header button highlight.
+const SAVE_KEY = 'lotc_save_v10';
 
 export function createInitialState(): GameState {
   return {
@@ -28,6 +28,9 @@ export function createInitialState(): GameState {
     questProgress: {},
     questsDone: [],
     questsAccepted: [],
+    upgrades: {},
+    forgeUnlocked: false,
+    forgeSeen: false,
   };
 }
 
@@ -43,27 +46,35 @@ export function loadGame(): GameState {
     // Quests in old saves were implicitly accepted. Preserve that for any
     // quest the player has already completed or made progress on, so the
     // active list doesn't suddenly empty out for returning players.
-    const legacyAccepted =
-      parsed.questsAccepted ??
-      [
-        ...(parsed.questsDone ?? []),
-        ...Object.entries(parsed.questProgress ?? {})
-          .filter(([, v]) => (v ?? 0) > 0)
-          .map(([k]) => k),
-      ];
+    const legacyAccepted = parsed.questsAccepted ?? [
+      ...(parsed.questsDone ?? []),
+      ...Object.entries(parsed.questProgress ?? {})
+        .filter(([, v]) => (v ?? 0) > 0)
+        .map(([k]) => k),
+    ];
     const questsAccepted = Array.from(new Set(legacyAccepted));
+
+    // Legacy saves predate the Rivendel gate. Default the new flags to
+    // false so every player goes through the unlock flow once; visiting
+    // Rivendel (a rest zone) is a quick, lossless tap on the map.
+    const forgeUnlocked = parsed.forgeUnlocked ?? false;
+    const forgeSeen = parsed.forgeSeen ?? false;
 
     return {
       ...base,
       ...parsed,
       semiBossDefeated: parsed.semiBossDefeated ?? {},
       questsAccepted,
+      upgrades: parsed.upgrades ?? {},
+      forgeUnlocked,
+      forgeSeen,
       // Boss fights are real-time: a save mid-fight would carry a stale
       // deadline. Always reset on load.
       bossFight: null,
       clickDmg: calcClickDamage({
         level: parsed.level ?? base.level,
         equipped: parsed.equipped ?? base.equipped,
+        upgrades: parsed.upgrades ?? {},
       }),
     };
   } catch {

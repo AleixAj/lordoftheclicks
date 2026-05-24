@@ -694,8 +694,9 @@
 }
 
 /* On mobile/tablet: split the boss/semi chips so the boss lives in the
-   top-left and the semi in the top-right. We give the wrapper full width
-   and let the inner chips justify to either side. */
+   top-left and the semi in the top-right. Chips are smaller than on
+   desktop so they share horizontal space comfortably with the quest
+   pickup that sits under the semi-boss. */
 @media (max-width: 1180px) {
   .actionsFloat {
     left: 8px;
@@ -708,11 +709,6 @@
 
   .actionsFloat > * {
     pointer-events: auto;
-  }
-
-  .encChip {
-    width: 64px;
-    height: 64px;
   }
 }
 
@@ -996,6 +992,42 @@
     0 0 14px rgba(255, 90, 60, 0.3);
   z-index: 5;
   animation: flashIn 0.25s ease-out;
+}
+
+/* Forja-unlocked notice. Lives inside the BattlePanel's scene, top-right
+   corner, mirroring the fight-failed flash but in amber. Persistent: only
+   disappears once the player opens the Forja for the first time. */
+.unlockToast {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  max-width: 30%;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(40, 28, 6, 0.95);
+  border: 1px solid rgba(255, 220, 130, 0.7);
+  border-radius: 8px;
+  color: #fff6d4;
+  font-family: var(--font-body);
+  font-size: clamp(13px, 1.2vw, 15px);
+  text-align: right;
+  line-height: 1.35;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.55),
+    0 0 22px rgba(255, 200, 110, 0.45);
+  z-index: 5;
+  animation: flashIn 0.32s ease-out;
+}
+
+.unlockToast strong {
+  font-family: var(--font-heading);
+  font-size: clamp(14px, 1.4vw, 18px);
+  letter-spacing: 0.5px;
+  color: #ffe89a;
+  text-transform: uppercase;
 }
 
 @keyframes flashIn {
@@ -1554,17 +1586,28 @@
 .restToggle {
   display: flex;
   justify-content: center;
-  gap: 4px;
-  padding: 5px;
+  gap: 3px;
+  padding: 3px;
   z-index: 2;
   background: rgba(8, 6, 3, 0.85);
-  border: 1.5px solid rgba(201, 164, 74, 0.55);
-  border-radius: 10px;
+  border: 1px solid rgba(201, 164, 74, 0.55);
+  border-radius: 8px;
   width: fit-content;
   margin: -2px auto 4px;
   box-shadow:
-    0 4px 14px rgba(0, 0, 0, 0.6),
-    inset 0 0 8px rgba(0, 0, 0, 0.45);
+    0 3px 10px rgba(0, 0, 0, 0.55),
+    inset 0 0 6px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+}
+
+/* The header variant is mobile-only; hide it on desktop where the
+   in-scene floating chip already exists. */
+.restToggleHeader {
+  display: none;
+}
+
+.restToggleHeaderSlot {
+  display: inline-flex;
   pointer-events: auto;
 }
 
@@ -1573,13 +1616,13 @@
   border: none;
   background: transparent;
   font-family: var(--font-heading);
-  font-size: clamp(15px, 1.3vw, 18px);
+  font-size: clamp(12px, 1vw, 14px);
   font-weight: 700;
-  letter-spacing: 1.1px;
+  letter-spacing: 0.9px;
   text-transform: uppercase;
   color: #b8a070;
-  padding: 10px 26px;
-  border-radius: 6px;
+  padding: 5px 14px;
+  border-radius: 5px;
   cursor: pointer;
   transition:
     background 0.15s ease,
@@ -1609,20 +1652,35 @@
 }
 
 @media (max-width: 1180px) {
-  /* Compact the rest-zone toggle so it doesn't eat vertical space that the
-     recruit/shop cards need on mobile. */
-  .restToggle {
-    padding: 3px;
-    gap: 2px;
-    margin: 0 auto 2px;
-    border-radius: 8px;
+  /* On mobile, hide the in-scene floating toggle: the header copy takes
+     over and sits inline in the panel title bar. */
+  .restToggleFloating {
+    display: none;
   }
 
-  .restToggleBtn {
-    font-size: 12px;
-    letter-spacing: 0.6px;
-    padding: 5px 14px;
-    border-radius: 5px;
+  /* Header copy becomes visible and compact, designed to live in the
+     dark title bar next to the zone name. */
+  .restToggleHeader {
+    display: inline-flex;
+    margin: 0;
+    padding: 2px;
+    gap: 2px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.35);
+    border-color: rgba(201, 164, 74, 0.45);
+    box-shadow: none;
+  }
+
+  .restToggleHeader .restToggleBtn {
+    font-size: 10px;
+    letter-spacing: 0.4px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    color: #e6c889;
+  }
+
+  .restToggleHeader .restToggleActive {
+    color: #1a1208;
   }
 }
 
@@ -1670,29 +1728,38 @@
   pointer-events: auto;
 }
 
+/* Rest zones never spawn boss/semi chips, so the quest pickup gets the
+   prime top-right slot instead of sitting in the stacked column. */
+.questPickupWrapRest {
+  right: 14px;
+  top: 14px;
+}
+
 .questPickup {
-  width: 72px;
-  height: 72px;
+  width: 116px;
+  height: 116px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border: 2px solid #6b4912;
+  border: 3px solid #6b4912;
   appearance: none;
   padding: 0;
   position: relative;
   font-family: var(--font-heading);
   font-weight: 900;
-  font-size: 44px;
+  font-size: 88px;
   line-height: 1;
   color: #1a1000;
-  text-shadow: 0 1px 0 rgba(255, 240, 180, 0.4);
+  text-shadow:
+    0 1px 0 rgba(255, 240, 180, 0.55),
+    0 0 12px rgba(255, 220, 130, 0.55);
   background: radial-gradient(circle at 32% 28%, #ffe46a 0%, #d39a23 55%, #8a5a10 100%);
   box-shadow:
-    inset 0 1px 4px rgba(255, 255, 200, 0.5),
-    inset 0 -3px 6px rgba(0, 0, 0, 0.35),
-    0 2px 6px rgba(0, 0, 0, 0.5);
+    inset 0 2px 6px rgba(255, 255, 200, 0.55),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.4),
+    0 3px 10px rgba(0, 0, 0, 0.55);
   transition: transform 0.12s ease;
   animation: questPickupPulse 1.6s ease-in-out infinite;
 }
@@ -1715,36 +1782,104 @@
   position: absolute;
   bottom: -4px;
   right: -4px;
-  min-width: 24px;
-  height: 24px;
-  padding: 0 6px;
-  border-radius: 12px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: 15px;
   background: #1a0f00;
   color: #ffd96a;
-  border: 1.5px solid #6b4912;
+  border: 2px solid #6b4912;
   font-family: var(--font-heading);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
   line-height: 1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.55);
 }
 
 @keyframes questPickupPulse {
   0%,
   100% {
     box-shadow:
-      inset 0 1px 4px rgba(255, 255, 200, 0.5),
-      inset 0 -3px 6px rgba(0, 0, 0, 0.35),
-      0 2px 6px rgba(0, 0, 0, 0.5),
-      0 0 0 0 rgba(255, 210, 80, 0.55);
+      inset 0 2px 6px rgba(255, 255, 200, 0.55),
+      inset 0 -4px 8px rgba(0, 0, 0, 0.4),
+      0 3px 10px rgba(0, 0, 0, 0.55),
+      0 0 12px 2px rgba(255, 210, 80, 0.55),
+      0 0 28px 6px rgba(255, 210, 80, 0.28);
   }
   50% {
     box-shadow:
-      inset 0 1px 4px rgba(255, 255, 200, 0.5),
-      inset 0 -3px 6px rgba(0, 0, 0, 0.35),
-      0 2px 6px rgba(0, 0, 0, 0.5),
-      0 0 18px 8px rgba(255, 210, 80, 0);
+      inset 0 2px 6px rgba(255, 255, 200, 0.55),
+      inset 0 -4px 8px rgba(0, 0, 0, 0.4),
+      0 3px 10px rgba(0, 0, 0, 0.55),
+      0 0 22px 8px rgba(255, 210, 80, 0.85),
+      0 0 44px 14px rgba(255, 210, 80, 0.4);
+  }
+}
+
+@media (max-width: 1180px) {
+  /* Must live after base .encChip / .questPickup so these sizes win. */
+  .encChip {
+    width: 72px;
+    height: 72px;
+  }
+
+  .encAbandonOverlay {
+    font-size: 48px;
+  }
+
+  .encDoneBadge {
+    width: 22px;
+    height: 22px;
+    font-size: 13px;
+  }
+
+  /* Stacked under the semi-boss chip (top-right on every combat zone). */
+  .questPickupWrap {
+    left: auto;
+    right: 8px;
+    top: 92px;
+  }
+
+  /* Rest zones: no boss/semi above, so dock at the very top-right. */
+  .questPickupWrapRest {
+    top: 8px;
+  }
+
+  .questPickup {
+    width: 56px;
+    height: 56px;
+    font-size: 42px;
+    border-width: 2px;
+    animation: questPickupPulseMobile 1.6s ease-in-out infinite;
+  }
+
+  .questPickupCount {
+    min-width: 22px;
+    height: 22px;
+    padding: 0 5px;
+    border-radius: 11px;
+    border-width: 1.5px;
+    font-size: 12px;
+  }
+}
+
+@keyframes questPickupPulseMobile {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 2px 6px rgba(255, 255, 200, 0.55),
+      inset 0 -4px 8px rgba(0, 0, 0, 0.4),
+      0 3px 8px rgba(0, 0, 0, 0.55),
+      0 0 8px 1px rgba(255, 210, 80, 0.5);
+  }
+  50% {
+    box-shadow:
+      inset 0 2px 6px rgba(255, 255, 200, 0.55),
+      inset 0 -4px 8px rgba(0, 0, 0, 0.4),
+      0 3px 8px rgba(0, 0, 0, 0.55),
+      0 0 14px 3px rgba(255, 210, 80, 0.7);
   }
 }

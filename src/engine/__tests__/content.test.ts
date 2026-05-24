@@ -7,6 +7,7 @@ import {
   SHOP_ACCESS,
   SHOP_ARMOR,
   SHOP_WEAPONS,
+  UPGRADES,
 } from '@/data';
 import type { EnemyType } from '@/types/game';
 
@@ -64,6 +65,23 @@ describe('content integrity', () => {
       expect(locationIds.has(quest.loc), `${quest.id}:loc`).toBe(true);
       if (quest.pickupLoc) {
         expect(locationIds.has(quest.pickupLoc), `${quest.id}:pickupLoc`).toBe(true);
+      }
+    }
+  });
+
+  it('quests do not award mithril directly', () => {
+    for (const quest of QUESTS) {
+      expect(quest.reward.mithril ?? 0, quest.id).toBe(0);
+    }
+  });
+
+  it('forge upgrades reference valid prerequisite nodes', () => {
+    const upgradeIds = new Set(UPGRADES.map((upgrade) => upgrade.id));
+    for (const upgrade of UPGRADES) {
+      expect(upgrade.maxRank, upgrade.id).toBeGreaterThan(0);
+      expect(upgrade.baseCost, upgrade.id).toBeGreaterThan(0);
+      for (const requiredId of Object.keys(upgrade.requires ?? {})) {
+        expect(upgradeIds.has(requiredId), `${upgrade.id}:${requiredId}`).toBe(true);
       }
     }
   });

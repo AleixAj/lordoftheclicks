@@ -5,6 +5,7 @@ import { BattlePanel } from '@/components/BattlePanel';
 import { CompanionsPanel } from '@/components/CompanionsPanel';
 import { CurrencyBar } from '@/components/CurrencyBar';
 import { EquipmentPanel } from '@/components/EquipmentPanel';
+import { ForgeModal } from '@/components/ForgeModal';
 import { MapPanel } from '@/components/MapPanel';
 import { QuestsPanel } from '@/components/QuestsPanel';
 import { ShopPanel } from '@/components/ShopPanel';
@@ -21,12 +22,24 @@ export function App() {
   const [hasStarted, setHasStarted] = useState(false);
   const [openDrawer, setOpenDrawer] = useState<DrawerSide | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [forgeOpen, setForgeOpen] = useState(false);
   const state = useGameStore((s) => s.state);
   const resetGame = useGameStore((s) => s.resetGame);
   const unlockAll = useGameStore((s) => s.unlockAll);
   const completeAll = useGameStore((s) => s.completeAll);
   const completeCurrentZone = useGameStore((s) => s.completeCurrentZone);
   const giveGold = useGameStore((s) => s.giveGold);
+  const buyUpgrade = useGameStore((s) => s.buyUpgrade);
+  const resetUpgrades = useGameStore((s) => s.resetUpgrades);
+  const markForgeSeen = useGameStore((s) => s.markForgeSeen);
+  const dismissForgeUnlockFlash = useGameStore((s) => s.dismissForgeUnlockFlash);
+
+  const openForge = () => {
+    if (!state.forgeUnlocked) return;
+    setForgeOpen(true);
+    markForgeSeen();
+    dismissForgeUnlockFlash();
+  };
 
   if (!hasStarted) {
     return <WelcomeScreen onStart={() => setHasStarted(true)} />;
@@ -85,9 +98,9 @@ export function App() {
             type="button"
             onClick={runAndClose(() => giveGold(1_000_000))}
             className={`${devHeaderButtonClass} ${styles.devAction}`}
-            title="Test: añadir 1.000.000 de oro al monedero"
+            title="Test: añadir 1.000.000 de oro y 1.000.000 de mithril"
           >
-            ⛀ +1M G
+            ⛀ +1M G/M
           </button>
           <button
             type="button"
@@ -119,7 +132,7 @@ export function App() {
         </div>
       </header>
 
-      <CurrencyBar state={state} />
+      <CurrencyBar state={state} onOpenForge={openForge} />
 
       <main className={styles.layout}>
         <aside className={styles.sideColumn}>
@@ -200,6 +213,14 @@ export function App() {
           </div>
         </aside>
       )}
+      <ForgeModal
+        open={forgeOpen}
+        mithril={state.mithril}
+        upgrades={state.upgrades}
+        onBuy={buyUpgrade}
+        onReset={resetUpgrades}
+        onClose={() => setForgeOpen(false)}
+      />
     </div>
   );
 }
@@ -212,9 +233,13 @@ function WelcomeScreen({ onStart }: WelcomeScreenProps) {
   return (
     <main className={styles.welcomeShell}>
       <section className={styles.welcomeCard} aria-labelledby="welcome-title">
-        <div className={styles.welcomeSigil} aria-hidden="true">
-          LOTC
-        </div>
+        <img
+          src="/onering-gif.gif"
+          alt=""
+          aria-hidden="true"
+          className={styles.welcomeSigil}
+          draggable={false}
+        />
         <p className={styles.welcomeKicker}>Un viaje incremental por la Tierra Media</p>
         <h1 id="welcome-title" className={`app-title ${styles.welcomeTitle}`}>
           Lord of the Clicks

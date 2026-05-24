@@ -132,6 +132,30 @@
   .headerDesc {
     display: none;
   }
+
+  /* Compact header: arrow pinned left, title text hidden, headerExtra
+     centered so a tab toggle owns the bar. Only kicks in when the
+     panel opts in via `compactHeaderOnMobile`. */
+  .headerCompact .headerTitle {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    gap: 0;
+    max-width: none;
+  }
+
+  .headerCompact .headerTitleText {
+    display: none;
+  }
+
+  .headerCompact .headerExtra {
+    position: static;
+    transform: none;
+    max-width: 100%;
+    overflow: visible;
+    margin: 0 auto;
+  }
 }
 
 .headerBadges {

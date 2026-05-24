@@ -1,6 +1,11 @@
 import { ENEMIES, LOCATIONS, QUESTS } from '@/data';
 import type { GameState } from '@/types/game';
-import { applyLevelUps, calcClickDamage } from './formulas';
+import {
+  applyLevelUps,
+  applyRewardMultiplier,
+  calcClickDamage,
+  mithrilRewardForTier,
+} from './formulas';
 import { unlockNextLocation, updateReachQuestProgress } from './progression';
 import { spawnFromPool } from './spawn';
 
@@ -17,7 +22,11 @@ import { spawnFromPool } from './spawn';
  *  - If a semi/boss dies the active `bossFight` is cleared so a new pool
  *    mob can spawn.
  */
-export function dealDamage(state: GameState, amount: number, rng: () => number = Math.random): GameState {
+export function dealDamage(
+  state: GameState,
+  amount: number,
+  rng: () => number = Math.random,
+): GameState {
   if (!state.enemy) return state;
 
   const newHp = state.enemy.hp - amount;
@@ -26,26 +35,27 @@ export function dealDamage(state: GameState, amount: number, rng: () => number =
   }
 
   const tmpl = ENEMIES[state.enemy.id];
-  const goldEarned = tmpl?.gold ?? 1;
-  const xpEarned = tmpl?.xp ?? 1;
+  const baseGold = tmpl?.gold ?? 1;
+  const baseXp = tmpl?.xp ?? 1;
   const enemyTier = state.enemy.tier;
-  // Bosses drop the most mithril; semi-bosses a third of that; pool mobs none.
-  const mithrilEarned =
-    enemyTier === 'boss'
-      ? Math.floor(goldEarned / 3)
-      : enemyTier === 'semi'
-        ? Math.floor(goldEarned / 9)
-        : 0;
 
   const loc = LOCATIONS[state.locIdx];
   const locId = loc?.id ?? '';
   const wasBossFight = state.bossFight != null;
+  const firstClear =
+    enemyTier === 'boss'
+      ? !state.bossDefeated[locId]
+      : enemyTier === 'semi'
+        ? !state.semiBossDefeated[locId]
+        : false;
+  const goldEarned = applyRewardMultiplier(baseGold, state.upgrades, 'gold_pct');
+  const xpEarned = applyRewardMultiplier(baseXp, state.upgrades, 'xp_pct');
+  const mithrilEarned = mithrilRewardForTier(enemyTier, state.locIdx, state.upgrades, firstClear);
 
   // Pool kills increment locKills. Semi/boss kills don't (they're gated by it).
-  const newKills =
-    wasBossFight
-      ? state.locKills
-      : { ...state.locKills, [locId]: (state.locKills[locId] ?? 0) + 1 };
+  const newKills = wasBossFight
+    ? state.locKills
+    : { ...state.locKills, [locId]: (state.locKills[locId] ?? 0) + 1 };
   const newTotal = wasBossFight ? state.totalKills : state.totalKills + 1;
 
   const { xp: newXp, level: newLevel } = applyLevelUps(state.xp + xpEarned, state.level);
@@ -59,11 +69,7 @@ export function dealDamage(state: GameState, amount: number, rng: () => number =
 
   // Defeating the zone-final boss unlocks the next location.
   let newUnlocked = [...state.unlockedLocs];
-  if (
-    loc?.boss &&
-    state.enemy.id === loc.boss &&
-    state.locIdx < LOCATIONS.length - 1
-  ) {
+  if (loc?.boss && state.enemy.id === loc.boss && state.locIdx < LOCATIONS.length - 1) {
     newUnlocked = unlockNextLocation(newUnlocked, state.locIdx);
   }
 
@@ -90,7 +96,11 @@ export function dealDamage(state: GameState, amount: number, rng: () => number =
     mithril: state.mithril + mithrilEarned,
     xp: newXp,
     level: newLevel,
-    clickDmg: calcClickDamage({ level: newLevel, equipped: state.equipped }),
+    clickDmg: calcClickDamage({
+      level: newLevel,
+      equipped: state.equipped,
+      upgrades: state.upgrades,
+    }),
     enemy: nextEnemy,
     bossFight: null,
     locKills: newKills,

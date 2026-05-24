@@ -2,9 +2,18 @@
  * Pure calculation helpers shared across the engine and the UI.
  * Keeping them isolated makes them trivially unit-testable.
  */
-import { SHOP_ACCESS, SHOP_ARMOR, SHOP_WEAPONS } from '@/data';
+import { SHOP_ACCESS, SHOP_ARMOR, SHOP_WEAPONS, UPGRADES } from '@/data';
 import { COMPANIONS } from '@/data/companions';
-import type { EnemyInstance, EnemyType, EquippedItems, GameState, ShopItem } from '@/types/game';
+import type {
+  EnemyInstance,
+  EnemyTier,
+  EnemyType,
+  EquippedItems,
+  GameState,
+  ShopItem,
+  UpgradeEffect,
+  UpgradeId,
+} from '@/types/game';
 
 const ENEMY_TYPE_MULTIPLIER_CAP = 2.35;
 
@@ -12,11 +21,42 @@ export function xpForLevel(level: number): number {
   return Math.floor(20 * Math.pow(1.6, level - 1));
 }
 
-export function companionUpgradeCost(companionLevel: number): number {
-  return Math.floor(15 * Math.pow(1.4, companionLevel - 1));
+export function upgradeRank(
+  upgrades: Partial<Record<UpgradeId, number>> | undefined,
+  id: UpgradeId,
+): number {
+  return upgrades?.[id] ?? 0;
 }
 
-export function calcClickDamage(state: Pick<GameState, 'level' | 'equipped'>): number {
+export function upgradeCost(id: UpgradeId, rank: number): number {
+  const upgrade = UPGRADES.find((candidate) => candidate.id === id);
+  if (!upgrade) return Infinity;
+  return Math.ceil(upgrade.baseCost * Math.pow(upgrade.costGrowth, rank));
+}
+
+export function upgradeEffectValue(
+  upgrades: Partial<Record<UpgradeId, number>> | undefined,
+  effect: UpgradeEffect,
+): number {
+  return UPGRADES.filter((upgrade) => upgrade.effect === effect).reduce(
+    (sum, upgrade) => sum + upgradeRank(upgrades, upgrade.id) * upgrade.valuePerRank,
+    0,
+  );
+}
+
+export function companionUpgradeCost(
+  companionLevel: number,
+  upgrades?: Pick<GameState, 'upgrades'> | Partial<Record<UpgradeId, number>>,
+): number {
+  const base = Math.floor(15 * Math.pow(1.4, companionLevel - 1));
+  const upgradeRecord = 'upgrades' in (upgrades ?? {}) ? upgrades?.upgrades : upgrades;
+  const reduction = Math.max(-0.5, upgradeEffectValue(upgradeRecord, 'companion_cost_pct'));
+  return Math.max(1, Math.floor(base * (1 + reduction)));
+}
+
+export function calcClickDamage(
+  state: Pick<GameState, 'level' | 'equipped'> & Partial<Pick<GameState, 'upgrades'>>,
+): number {
   let dmg = 1 + state.level;
   if (state.equipped.weapon) {
     const w = SHOP_WEAPONS.find((x) => x.id === state.equipped.weapon);
@@ -26,7 +66,7 @@ export function calcClickDamage(state: Pick<GameState, 'level' | 'equipped'>): n
     const a = SHOP_ACCESS.find((x) => x.id === state.equipped.accessory);
     if (a?.bonus) dmg += a.bonus;
   }
-  return dmg;
+  return dmg * (1 + upgradeEffectValue(state.upgrades, 'click_damage_pct'));
 }
 
 export function getEquippedItems(equipped: EquippedItems): ShopItem[] {
@@ -66,7 +106,7 @@ export function calcActiveEnemyTypeBonusPct(
 }
 
 export function calcClickDamageAgainstEnemy(
-  state: Pick<GameState, 'level' | 'equipped'>,
+  state: Pick<GameState, 'level' | 'equipped'> & Partial<Pick<GameState, 'upgrades'>>,
   enemy: Pick<EnemyInstance, 'enemyType'>,
 ): number {
   return calcClickDamage(state) * calcEnemyTypeMultiplier(state.equipped, enemy.enemyType);
@@ -107,4 +147,26 @@ export function applyLevelUps(xp: number, level: number): { xp: number; level: n
     nextLevel++;
   }
   return { xp: nextXp, level: nextLevel };
+}
+
+export function applyRewardMultiplier(
+  amount: number,
+  upgrades: Partial<Record<UpgradeId, number>> | undefined,
+  effect: 'gold_pct' | 'xp_pct',
+): number {
+  return Math.max(0, Math.floor(amount * (1 + upgradeEffectValue(upgrades, effect))));
+}
+
+export function mithrilRewardForTier(
+  tier: EnemyTier,
+  locIdx: number,
+  upgrades: Partial<Record<UpgradeId, number>> | undefined,
+  firstClear: boolean,
+): number {
+  if (tier === 'normal') return 0;
+  const progress = Math.max(0, locIdx);
+  const base = tier === 'boss' ? 4 + Math.floor(progress / 2) : 2 + Math.floor(progress / 4);
+  const firstClearBonus = firstClear ? (tier === 'boss' ? 2 : 1) : 0;
+  const forgeBonus = upgradeEffectValue(upgrades, 'mithril_flat');
+  return Math.max(0, Math.round(base + firstClearBonus + forgeBonus));
 }

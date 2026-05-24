@@ -32,6 +32,7 @@ function freshState(locIdx = COMBAT_IDX): GameState {
     questProgress: {},
     questsDone: [],
     questsAccepted: [],
+    upgrades: {},
   };
 }
 
@@ -94,6 +95,7 @@ describe('combat.dealDamage', () => {
     // After the semi-boss falls a fresh pool mob takes over.
     expect(after.enemy).not.toBeNull();
     expect(after.enemy!.tier).toBe('normal');
+    expect(after.mithril).toBeGreaterThan(0);
   });
 
   it('defeating the zone boss unlocks the next location and clears the fight', () => {
@@ -113,5 +115,12 @@ describe('combat.dealDamage', () => {
     expect(after.unlockedLocs).toContain(LOCATIONS[COMBAT_IDX + 1].id);
     expect(after.bossFight).toBeNull();
     expect(ENEMIES[boss!.id]).toBeDefined();
+    expect(after.mithril).toBeGreaterThan(0);
+  });
+
+  it('pool enemies do not award mithril', () => {
+    const before = freshState();
+    const after = dealDamage(before, before.enemy!.hp + 999, () => 0);
+    expect(after.mithril).toBe(0);
   });
 });

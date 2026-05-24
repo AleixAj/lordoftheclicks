@@ -3,6 +3,7 @@ export type EnemyId = string;
 export type CompanionId = string;
 export type ItemId = string;
 export type QuestId = string;
+export type UpgradeId = string;
 
 export type EquipSlot = 'weapon' | 'armor' | 'accessory';
 export type EnemyType =
@@ -182,6 +183,30 @@ export interface Quest {
   reward: QuestReward;
 }
 
+export type UpgradeEffect =
+  | 'click_damage_pct'
+  | 'gold_pct'
+  | 'xp_pct'
+  | 'fight_time_s'
+  | 'companion_cap'
+  | 'companion_cost_pct'
+  | 'mithril_flat';
+
+export interface UpgradeDefinition {
+  id: UpgradeId;
+  name: string;
+  shortName: string;
+  desc: string;
+  maxRank: number;
+  baseCost: number;
+  costGrowth: number;
+  effect: UpgradeEffect;
+  valuePerRank: number;
+  requires?: Partial<Record<UpgradeId, number>>;
+  position: { x: number; y: number };
+  branch: 'core' | 'damage' | 'wealth' | 'wisdom' | 'time' | 'companions' | 'mithril';
+}
+
 export interface EnemyInstance {
   id: EnemyId;
   name: string;
@@ -244,4 +269,10 @@ export interface GameState {
    * map marker.
    */
   questsAccepted: QuestId[];
+  /** Permanent upgrades bought in the Forja de Rivendel. */
+  upgrades: Record<UpgradeId, number>;
+  /** True once the player has visited Rivendel for the first time. Unlocks the Forge UI. */
+  forgeUnlocked: boolean;
+  /** True once the player has opened the Forge modal at least once. Used to stop the unlock-glow highlight. */
+  forgeSeen: boolean;
 }

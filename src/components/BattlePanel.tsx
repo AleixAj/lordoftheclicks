@@ -46,6 +46,7 @@ export function BattlePanel() {
   const deadAnim = useGameStore((s) => s.deadAnim);
   const goldBurst = useGameStore((s) => s.goldBurst);
   const fightFailed = useGameStore((s) => s.fightFailed);
+  const forgeUnlockFlash = useGameStore((s) => s.forgeUnlockFlash);
   const clickEnemy = useGameStore((s) => s.clickEnemy);
   const startBossFight = useGameStore((s) => s.startBossFight);
   const abandonBossFight = useGameStore((s) => s.abandonBossFight);
@@ -194,7 +195,22 @@ export function BattlePanel() {
     <Panel
       className="flex-1"
       title={loc?.name ?? '???'}
-      headerExtra={loc?.desc ? <span className={panelStyles.headerDesc}>{loc.desc}</span> : null}
+      compactHeaderOnMobile={showZoneToggle}
+      headerExtra={
+        <>
+          {loc?.desc && <span className={panelStyles.headerDesc}>{loc.desc}</span>}
+          {showZoneToggle && (
+            <span className={styles.restToggleHeaderSlot}>
+              <RestModeToggle
+                current={restView}
+                onChange={setRestView}
+                firstLabel={loc?.isRest ? 'Reclutar' : 'Combate'}
+                variant="header"
+              />
+            </span>
+          )}
+        </>
+      }
       bodyClassName="p-0"
     >
       <div
@@ -211,6 +227,15 @@ export function BattlePanel() {
             : undefined
         }
       >
+        {forgeUnlockFlash && (
+          <div className={styles.unlockToast} role="status">
+            <strong>¡Forja desbloqueada!</strong>
+            <span>
+              Has llegado a Rivendel. Gasta tu mithril en la Forja para desbloquear nuevas mejoras
+              permanentes.
+            </span>
+          </div>
+        )}
         <div className={styles.stats}>
           <span>
             Daño click<b>{state.clickDmg}</b>
@@ -235,6 +260,7 @@ export function BattlePanel() {
             current={restView}
             onChange={setRestView}
             firstLabel={loc?.isRest ? 'Reclutar' : 'Combate'}
+            variant="floating"
           />
         )}
 
@@ -365,6 +391,7 @@ export function BattlePanel() {
           <QuestPickup
             count={pendingQuestsHere}
             locName={loc.name}
+            isRest={!!loc.isRest}
             onClick={() => acceptQuests(loc.id)}
           />
         )}
@@ -385,6 +412,7 @@ export function BattlePanel() {
               bossKillsNeeded={bossKillsNeeded}
               activeTier={bossFight?.tier ?? null}
               equipped={state.equipped}
+              upgrades={state.upgrades}
               onStart={startBossFight}
               onAbandon={abandonBossFight}
             />
@@ -412,18 +440,20 @@ export function BattlePanel() {
 interface QuestPickupProps {
   count: number;
   locName: string;
+  isRest: boolean;
   onClick: () => void;
 }
 
 /**
- * Top-left floating button to accept all pending quests of the current zone.
- * Visually mirrors the boss/semi pickups in the top-right corner.
+ * Floating "!" button to accept all pending quests of the current zone.
+ * On combat zones it sits under the semi-boss chip; on rest zones (where
+ * there's no semi/boss) it docks at the top-right corner instead.
  */
-function QuestPickup({ count, locName, onClick }: QuestPickupProps) {
+function QuestPickup({ count, locName, isRest, onClick }: QuestPickupProps) {
   const label =
     count === 1 ? `Aceptar misión de ${locName}` : `Aceptar ${count} misiones de ${locName}`;
   return (
-    <div className={styles.questPickupWrap}>
+    <div className={`${styles.questPickupWrap} ${isRest ? styles.questPickupWrapRest : ''}`}>
       <button
         type="button"
         className={styles.questPickup}
@@ -523,8 +553,8 @@ function RecruitCard({ companion, state, gold, bossDefeated, onRecruit }: Recrui
   const buyLabelFull = !bossGateMet
     ? 'Vence al jefe primero'
     : free
-      ? 'Reclutar · Gratis'
-      : `Reclutar · ${recruitCostStr} oro`;
+      ? 'Gratis'
+      : `${recruitCostStr} oro`;
   const buyLabelMini = !bossGateMet ? 'Bloqueado' : free ? 'Gratis' : `${recruitCostStr} G`;
   const ariaLabel = !bossGateMet
     ? `Reclutar a ${companion.name} bloqueado: derrota antes al jefe de ${gatedLocName}`
@@ -567,8 +597,8 @@ function RecruitCard({ companion, state, gold, bossDefeated, onRecruit }: Recrui
           )}
           {recruited ? (
             <div className={styles.recruitOwned}>
-              <span data-form="full">✓ En la Comunidad</span>
-              <span data-form="mini" aria-label="En la Comunidad">
+              <span data-form="full">✓ Reclutado</span>
+              <span data-form="mini" aria-label="Reclutado">
                 ✓
               </span>
             </div>
@@ -596,15 +626,30 @@ interface RestModeToggleProps {
   onChange: (next: 'recruit' | 'shop') => void;
   /** Label for the non-shop tab. `Reclutar` in rest stops, `Combate` in combat zones with a merchant. */
   firstLabel?: string;
+  /**
+   * `floating` is the original in-scene chip (visible only on desktop).
+   * `header` is the compact variant rendered inside the panel header bar
+   * and shown only on mobile.
+   */
+  variant?: 'floating' | 'header';
 }
 
 /**
- * Two-pill toggle floating in the top-left of the scene. Switches the panel
- * body between the companion/combat view and the local merchant.
+ * Two-pill toggle that switches the panel body between the companion/combat
+ * view and the local merchant. We render two copies (floating + header) and
+ * let CSS show the right one per viewport so state stays in sync.
  */
-function RestModeToggle({ current, onChange, firstLabel = 'Reclutar' }: RestModeToggleProps) {
+function RestModeToggle({
+  current,
+  onChange,
+  firstLabel = 'Reclutar',
+  variant = 'floating',
+}: RestModeToggleProps) {
+  const wrapperClass = `${styles.restToggle} ${
+    variant === 'header' ? styles.restToggleHeader : styles.restToggleFloating
+  }`;
   return (
-    <div className={styles.restToggle} role="tablist" aria-label="Modo de la zona">
+    <div className={wrapperClass} role="tablist" aria-label="Modo de la zona">
       <button
         type="button"
         role="tab"
@@ -801,6 +846,7 @@ interface FloatingActionsProps {
   bossKillsNeeded: number;
   activeTier: 'semi' | 'boss' | null;
   equipped: EquippedItems;
+  upgrades: Record<string, number>;
   onStart: (tier: 'semi' | 'boss') => void;
   onAbandon: () => void;
 }
@@ -818,6 +864,7 @@ function FloatingActions({
   bossKillsNeeded,
   activeTier,
   equipped,
+  upgrades,
   onStart,
   onAbandon,
 }: FloatingActionsProps) {
@@ -833,7 +880,7 @@ function FloatingActions({
           available={bossAvailable}
           kills={kills}
           needed={bossKillsNeeded}
-          timeLimitS={fightTimeLimitForFight(loc, 'boss', equipped)}
+          timeLimitS={fightTimeLimitForFight(loc, 'boss', equipped, upgrades)}
           onClick={() => onStart('boss')}
           requireSemiFirst={semiUnlocked && !semiDone}
           isActive={activeTier === 'boss'}
@@ -848,7 +895,7 @@ function FloatingActions({
           available={semiAvailable}
           kills={kills}
           needed={semiKillsNeeded}
-          timeLimitS={fightTimeLimitForFight(loc, 'semi', equipped)}
+          timeLimitS={fightTimeLimitForFight(loc, 'semi', equipped, upgrades)}
           onClick={() => onStart('semi')}
           isActive={activeTier === 'semi'}
           onAbandon={onAbandon}

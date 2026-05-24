@@ -1,5 +1,5 @@
 import { LOCATIONS, QUESTS } from '@/data';
-import { armorFightTimeBonusS } from './formulas';
+import { armorFightTimeBonusS, upgradeEffectValue } from './formulas';
 import type {
   CompanionId,
   CompanionState,
@@ -7,6 +7,7 @@ import type {
   Location,
   LocationId,
   QuestId,
+  UpgradeId,
 } from '@/types/game';
 
 const DEFAULT_SEMI_TIME_LIMIT_S = 30;
@@ -45,8 +46,13 @@ export function fightTimeLimitForFight(
   loc: Location,
   tier: 'semi' | 'boss',
   equipped: EquippedItems,
+  upgrades?: Partial<Record<UpgradeId, number>>,
 ): number {
-  return fightTimeLimitS(loc, tier) + armorFightTimeBonusS(equipped);
+  return (
+    fightTimeLimitS(loc, tier) +
+    armorFightTimeBonusS(equipped) +
+    upgradeEffectValue(upgrades, 'fight_time_s')
+  );
 }
 
 /**
@@ -54,13 +60,16 @@ export function fightTimeLimitForFight(
  * early-zone farming from trivialising later bosses while still letting the
  * player improve the Fellowship throughout the journey.
  */
-export function companionLevelCapForLocation(locIdx: number): number {
+export function companionLevelCapForLocation(
+  locIdx: number,
+  upgrades?: Partial<Record<UpgradeId, number>>,
+): number {
   let cap = COMPANION_LEVEL_CAPS[0].cap;
   for (const entry of COMPANION_LEVEL_CAPS) {
     if (locIdx < entry.locIdx) break;
     cap = entry.cap;
   }
-  return cap;
+  return cap + upgradeEffectValue(upgrades, 'companion_cap');
 }
 
 export function unlockNextLocation(unlockedLocs: LocationId[], locIdx: number): LocationId[] {

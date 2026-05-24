@@ -6,6 +6,13 @@ interface PanelProps {
   className?: string;
   bodyClassName?: string;
   headerExtra?: ReactNode;
+  /**
+   * When true, on mobile viewports the title text is hidden (the collapse
+   * arrow stays anchored to the left) and `headerExtra` is centered inside
+   * the header bar. Useful when the extra content (e.g. a tab toggle)
+   * already conveys context.
+   */
+  compactHeaderOnMobile?: boolean;
   children: ReactNode;
 }
 
@@ -14,6 +21,7 @@ export function Panel({
   className = '',
   bodyClassName = '',
   headerExtra,
+  compactHeaderOnMobile = false,
   children,
 }: PanelProps) {
   const [collapsed, setCollapsed] = useState(false);
@@ -69,7 +77,7 @@ export function Panel({
       {title !== undefined && (
         <button
           type="button"
-          className={styles.header}
+          className={`${styles.header} ${compactHeaderOnMobile ? styles.headerCompact : ''}`}
           onClick={() => setCollapsed((current) => !current)}
           aria-expanded={!collapsed}
           title={collapsed ? 'Abrir panel' : 'Cerrar panel'}
@@ -78,7 +86,7 @@ export function Panel({
             <span className={styles.collapseIcon} aria-hidden="true">
               {collapsed ? '▸' : '▾'}
             </span>
-            {title}
+            <span className={styles.headerTitleText}>{title}</span>
           </span>
           {headerExtra && <span className={styles.headerExtra}>{headerExtra}</span>}
         </button>

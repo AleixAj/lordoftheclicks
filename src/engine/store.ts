@@ -1,5 +1,13 @@
 import { create } from 'zustand';
-import { COMPANIONS, LOCATIONS, SHOP_ACCESS, SHOP_ARMOR, SHOP_WEAPONS, QUESTS } from '@/data';
+import {
+  COMPANIONS,
+  LOCATIONS,
+  QUESTS,
+  SHOP_ACCESS,
+  SHOP_ARMOR,
+  SHOP_WEAPONS,
+  UPGRADES,
+} from '@/data';
 import type {
   CompanionState,
   EquipSlot,
@@ -8,12 +16,14 @@ import type {
   LocationId,
   QuestId,
   CompanionId,
+  UpgradeId,
 } from '@/types/game';
 import {
   calcClickDamage,
   calcClickDamageAgainstEnemy,
   calcDpsAgainstEnemy,
   companionUpgradeCost,
+  upgradeCost,
 } from './formulas';
 import { dealDamage } from './combat';
 import { spawnBoss, spawnFromPool, spawnSemiBoss } from './spawn';
@@ -44,6 +54,8 @@ interface GameStore {
   goldBurst: boolean;
   /** Transient UI flag: set briefly after a semi/boss escapes on timeout. */
   fightFailed: 'semi' | 'boss' | null;
+  /** Transient UI flag: set briefly when the Forja is first unlocked (Rivendel visit). */
+  forgeUnlockFlash: boolean;
 
   clickEnemy: () => void;
   tick: () => void;
@@ -61,6 +73,13 @@ interface GameStore {
   /** Pick up every pending quest anchored at `locId` (the "!" badge on the map). */
   acceptQuests: (locId: LocationId) => void;
   claimQuest: (questId: QuestId) => void;
+  buyUpgrade: (upgradeId: UpgradeId) => void;
+  /** Refunds every mithril spent in the Forja and clears all upgrade ranks. */
+  resetUpgrades: () => void;
+  /** Marks the Forja as opened so the unlock highlight stops glowing. */
+  markForgeSeen: () => void;
+  /** Dismisses the transient Forja-unlocked flash banner. */
+  dismissForgeUnlockFlash: () => void;
   resetGame: () => void;
   /** Dev cheat: unlock every location and complete `reach` quests. */
   unlockAll: () => void;
@@ -109,6 +128,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   deadAnim: false,
   goldBurst: false,
   fightFailed: null,
+  forgeUnlockFlash: false,
 
   clickEnemy: () => {
     const current = get().state;
@@ -164,6 +184,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     const enemy = loc.isRest ? null : spawnFromPool(loc);
 
+    // First visit to Rivendel unlocks the Forja and fires a transient
+    // "unlocked" notice in the top-right corner. The notice auto-dismisses
+    // after 5s; the button's highlight stays until the player opens the
+    // Forja for the first time (see `markForgeSeen`).
+    const unlocksForge = loc.id === 'rivendel' && !current.forgeUnlocked;
+
     set({
       state: applyPostMutations({
         ...current,
@@ -172,8 +198,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
         bossFight: null,
         unlockedLocs,
         questProgress,
+        forgeUnlocked: current.forgeUnlocked || unlocksForge,
       }),
       fightFailed: null,
+      ...(unlocksForge ? { forgeUnlockFlash: true } : {}),
     });
   },
 
@@ -211,7 +239,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
           tier,
           locId: loc.id,
           startedAt: now,
-          deadlineMs: now + fightTimeLimitForFight(loc, tier, current.equipped) * 1000,
+          deadlineMs:
+            now + fightTimeLimitForFight(loc, tier, current.equipped, current.upgrades) * 1000,
         },
       },
       fightFailed: null,
@@ -320,9 +349,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const current = get().state;
     const cs = current.companions[companionId];
     if (!cs?.unlocked) return;
-    const cap = companionLevelCapForLocation(current.locIdx);
+    const cap = companionLevelCapForLocation(current.locIdx, current.upgrades);
     if (cs.level >= cap) return;
-    const cost = companionUpgradeCost(cs.level);
+    const cost = companionUpgradeCost(cs.level, current.upgrades);
     if (current.gold < cost) return;
     set({
       state: {
@@ -372,10 +401,64 @@ export const useGameStore = create<GameStore>((set, get) => ({
       state: {
         ...current,
         gold: current.gold + (q.reward.gold ?? 0),
-        mithril: current.mithril + (q.reward.mithril ?? 0),
         questsDone: [...current.questsDone, questId],
       },
     });
+  },
+
+  buyUpgrade: (upgradeId) => {
+    const current = get().state;
+    const upgrade = UPGRADES.find((candidate) => candidate.id === upgradeId);
+    if (!upgrade) return;
+    const currentRank = current.upgrades[upgradeId] ?? 0;
+    if (currentRank >= upgrade.maxRank) return;
+    for (const [requiredId, requiredRank] of Object.entries(upgrade.requires ?? {})) {
+      if (requiredRank === undefined) continue;
+      if ((current.upgrades[requiredId] ?? 0) < requiredRank) return;
+    }
+    const cost = upgradeCost(upgradeId, currentRank);
+    if (current.mithril < cost) return;
+
+    const nextState: GameState = {
+      ...current,
+      mithril: current.mithril - cost,
+      upgrades: {
+        ...current.upgrades,
+        [upgradeId]: currentRank + 1,
+      },
+    };
+    nextState.clickDmg = calcClickDamage(nextState);
+    set({ state: nextState });
+  },
+
+  resetUpgrades: () => {
+    const current = get().state;
+    let refund = 0;
+    for (const upgrade of UPGRADES) {
+      const rank = current.upgrades[upgrade.id] ?? 0;
+      for (let r = 0; r < rank; r++) {
+        refund += upgradeCost(upgrade.id, r);
+      }
+    }
+    if (refund === 0 && Object.keys(current.upgrades).length === 0) return;
+    const nextState: GameState = {
+      ...current,
+      mithril: current.mithril + refund,
+      upgrades: {},
+    };
+    nextState.clickDmg = calcClickDamage(nextState);
+    set({ state: nextState });
+  },
+
+  markForgeSeen: () => {
+    const current = get().state;
+    if (current.forgeSeen) return;
+    set({ state: { ...current, forgeSeen: true } });
+  },
+
+  dismissForgeUnlockFlash: () => {
+    if (!get().forgeUnlockFlash) return;
+    set({ forgeUnlockFlash: false });
   },
 
   resetGame: () => {
@@ -390,13 +473,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
       state: applyPostMutations({
         ...current,
         unlockedLocs: allIds,
+        forgeUnlocked: true,
+        forgeSeen: true,
       }),
     });
   },
 
   giveGold: (amount = 1_000_000) => {
     const current = get().state;
-    set({ state: { ...current, gold: current.gold + amount } });
+    set({
+      state: {
+        ...current,
+        gold: current.gold + amount,
+        mithril: current.mithril + amount,
+      },
+    });
   },
 
   completeCurrentZone: () => {
@@ -508,6 +599,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       questProgress,
       questsDone,
       questsAccepted: QUESTS.map((q) => q.id),
+      upgrades: Object.fromEntries(UPGRADES.map((upgrade) => [upgrade.id, upgrade.maxRank])),
+      forgeUnlocked: true,
+      forgeSeen: true,
     };
     baseState.clickDmg = calcClickDamage(baseState);
     baseState.enemy = spawnFromPool(LOCATIONS[0]);
@@ -523,6 +617,8 @@ export {
   calcDps,
   calcDpsAgainstEnemy,
   companionUpgradeCost,
+  upgradeCost,
+  upgradeEffectValue,
 } from './formulas';
 export { xpForLevel } from './formulas';
 export type { LocationId };

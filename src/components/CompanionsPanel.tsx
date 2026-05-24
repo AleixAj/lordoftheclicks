@@ -22,7 +22,7 @@ export function CompanionsPanel() {
 
   const unlocked = COMPANIONS.filter((c) => state.companions[c.id]?.unlocked);
   const locked = COMPANIONS.filter((c) => !state.companions[c.id]?.unlocked);
-  const levelCap = companionLevelCapForLocation(state.locIdx);
+  const levelCap = companionLevelCapForLocation(state.locIdx, state.upgrades);
 
   return (
     <Panel
@@ -37,7 +37,7 @@ export function CompanionsPanel() {
     >
       {unlocked.map((c) => {
         const cs = state.companions[c.id];
-        const cost = companionUpgradeCost(cs.level);
+        const cost = companionUpgradeCost(cs.level, state.upgrades);
         const atCap = cs.level >= levelCap;
         const canUpgrade = !atCap && state.gold >= cost;
         const dps = (c.baseDps * cs.level).toFixed(1);

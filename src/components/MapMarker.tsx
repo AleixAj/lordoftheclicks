@@ -108,12 +108,12 @@ function MapMarkerImpl({
           aria-hidden="true"
           title={`${loc.name} tiene misiones pendientes`}
           style={{
-            width: Math.max(14, 12 * scale),
-            height: Math.max(14, 12 * scale),
-            fontSize: Math.max(10, 10 * scale),
-            top: scaled * 0.45,
+            width: Math.max(12, scaled * 0.85),
+            height: Math.max(12, scaled * 0.85),
+            fontSize: Math.max(9, scaled * 0.65),
+            top: '50%',
             left: '50%',
-            transform: 'translateX(-50%)',
+            transform: 'translate(-50%, -50%)',
           }}
         >
           !

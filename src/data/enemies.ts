@@ -596,9 +596,62 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   },
 };
 
+const BALANCED_ELITE_HP: Partial<Record<EnemyId, number>> = {
+  espectro_bosque: 260,
+  nazgul_jinete: 620,
+  khamul: 720,
+  rey_brujo_amon: 1500,
+  bandada_crebain: 720,
+  tormenta_caradhras: 1450,
+  orco_mayor: 640,
+  troll_caverna: 1250,
+  balrog: 5200,
+  kraken_anduin: 1600,
+  hydra: 2450,
+  capitan_amon: 1550,
+  lurtz: 3150,
+  lobo_mayor: 1400,
+  urukhai_cazador: 3000,
+  huargo_alfa: 1450,
+  sharku: 3200,
+  capitan_uruk: 2200,
+  ugthak: 4300,
+  lengua_serpiente: 2500,
+  saruman: 5600,
+  heraldo_muertos: 2650,
+  rey_muerto: 5200,
+  maestre_corsario: 2500,
+  capitan_corsario: 5400,
+  capitan_orco: 2400,
+  nazgul_alado: 5200,
+  troll_caverna_armadura: 3200,
+  ariete_lobo: 5800,
+  mumakil: 4200,
+  rey_brujo: 7800,
+  dragon_nazgul: 3800,
+  gothmog: 7200,
+  arana_grande: 4000,
+  shelob: 7600,
+  gorbag: 3900,
+  shagrat: 8000,
+  orco_caverna_armadura: 4300,
+  boca_de_sauron: 8500,
+  ojo_de_sauron: 5400,
+  espiritu_de_sauron: 9800,
+  gollum_final: 3600,
+  anillo: 12000,
+};
+
 export const ENEMIES: Record<EnemyId, Enemy> = Object.fromEntries(
   Object.entries(ENEMY_DEFS).map(([id, enemy]) => {
     const type = ENEMY_TYPES[id];
-    return [id, { ...enemy, ...(type ? { enemyType: type } : {}) }];
+    return [
+      id,
+      {
+        ...enemy,
+        ...(BALANCED_ELITE_HP[id] ? { hp: BALANCED_ELITE_HP[id] } : {}),
+        ...(type ? { enemyType: type } : {}),
+      },
+    ];
   }),
 ) as Record<EnemyId, Enemy>;

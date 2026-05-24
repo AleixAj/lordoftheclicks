@@ -8,6 +8,8 @@ import {
   calcDpsAgainstEnemy,
   calcEnemyTypeMultiplier,
   companionUpgradeCost,
+  mithrilRewardForTier,
+  upgradeCost,
   xpForLevel,
 } from '../formulas';
 import type { GameState } from '@/types/game';
@@ -33,6 +35,7 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
     questProgress: {},
     questsDone: [],
     questsAccepted: [],
+    upgrades: {},
     ...overrides,
   };
 }
@@ -46,6 +49,22 @@ describe('formulas', () => {
   it('companionUpgradeCost grows exponentially', () => {
     expect(companionUpgradeCost(1)).toBe(15);
     expect(companionUpgradeCost(2)).toBeGreaterThan(companionUpgradeCost(1));
+  });
+
+  it('forge upgrades affect click damage and companion costs', () => {
+    const base = makeState({ level: 5 });
+    const upgraded = makeState({ level: 5, upgrades: { golpe_elfico: 2, forja_ligera: 2 } });
+    expect(calcClickDamage(upgraded)).toBeGreaterThan(calcClickDamage(base));
+    expect(companionUpgradeCost(5, upgraded.upgrades)).toBeLessThan(companionUpgradeCost(5));
+  });
+
+  it('mithril rewards only apply to semi-bosses and bosses', () => {
+    expect(mithrilRewardForTier('normal', 10, {}, true)).toBe(0);
+    expect(mithrilRewardForTier('semi', 10, {}, true)).toBeGreaterThan(0);
+    expect(mithrilRewardForTier('boss', 10, {}, true)).toBeGreaterThan(
+      mithrilRewardForTier('semi', 10, {}, true),
+    );
+    expect(upgradeCost('golpe_elfico', 0)).toBeGreaterThan(0);
   });
 
   it('calcClickDamage adds weapon and accessory bonuses', () => {
