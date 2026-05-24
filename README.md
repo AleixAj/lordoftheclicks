@@ -1,12 +1,14 @@
 # Lord of the Clicks
 
-> Clicker incremental ambientado en _El Señor de los Anillos_, pensado como
-> **pieza de portfolio frontend de nivel producción**. El gameplay (mapa
-> interactivo, combate por click, jefes con timer, reclutamiento, equipo
-> situacional, misiones, árbol de mejoras de la Forja) es la excusa: el
-> objetivo real es demostrar arquitectura React/TS sostenible, dominio puro
-> testeable, estado global desacoplado, accesibilidad, responsive de verdad
-> y tooling de equipo.
+> Clicker incremental ambientado en _El Señor de los Anillos_. Nació como un
+> proyecto personal para mezclar dos cosas que disfruto: los juegos
+> incrementales y construir interfaces con buen detalle visual. La idea es
+> recorrer la Tierra Media, desbloquear zonas, reclutar compañeros, mejorar el
+> equipo y enfrentarse a semi-jefes y jefes con temporizador.
+>
+> Aunque el origen es lúdico, lo he tratado como una app frontend completa:
+> dominio separado de React, TypeScript estricto, estado global con Zustand,
+> responsive real, tests de lógica, accesibilidad y deploy en Cloudflare.
 
 [![CI](https://img.shields.io/badge/CI-passing-brightgreen)](./.github/workflows/ci.yml)
 [![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
@@ -19,23 +21,30 @@
 
 ---
 
-## Para reclutadores / tech leads en 60 segundos
+## Por qué este proyecto
 
-Si vienes a evaluar el perfil frontend, esto es lo que el repo demuestra:
+Quería hacer un juego pequeño pero con suficiente profundidad como para que
+obligase a resolver problemas reales de producto: economía, progresión,
+guardado, migraciones, responsive, contenido data-driven y una UI que no se
+rompiera en móvil.
 
-| Competencia                          | Dónde verlo                                                                                                                                                                       |
-| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Arquitectura escalable**           | Motor de juego puro (`src/engine/`) totalmente desacoplado de React. Store Zustand sólo orquesta. Componentes sólo pintan.                                                        |
-| **TypeScript estricto**              | `strict`, `noUnusedLocals`, `noUnusedParameters`. Modelo de dominio tipado (`GameState`, `EnemyType`, `UpgradeDefinition`, `BossFightState`…).                                    |
-| **Testing del dominio**              | **39 tests Vitest** en 6 archivos cubriendo fórmulas, combate, progresión, store, game-loop e integridad de contenido. Sin tests frágiles de UI.                                  |
-| **Performance consciente**           | Pan/zoom del mapa con `translate3d` + `requestAnimationFrame` directo al DOM. Selectors granulares de Zustand. `useMemo` en listas pesadas. Precarga inteligente de fondos.       |
-| **Responsive de verdad**             | Layout desktop de 3 columnas que muta a drawers mutuamente exclusivos en mobile/tablet. Compactación de copy y controles por viewport.                                            |
-| **Accesibilidad por defecto**        | `<button>` semánticos, `aria-label`, `focus-visible`, `eslint-plugin-jsx-a11y` activo en CI bloqueando el lint.                                                                   |
-| **Tooling de equipo**                | ESLint 9 flat + typescript-eslint + jsx-a11y, Prettier, Husky + lint-staged en pre-commit, GitHub Actions con `lint + typecheck + test + build`.                                  |
-| **Persistencia y migraciones**       | Save versionado en `localStorage` (`v11`) con migraciones documentadas (p. ej. v10 → v11 reconstruyendo `visitedLocs` desde `locIdx` para sanear quests `reach` mal completadas). |
-| **Decisiones de producto razonadas** | Cada feature está justificada por una decisión de diseño documentada (cap de nivel, armaduras como tiempo, forja de Rivendel, `visitedLocs` vs `unlockedLocs`, etc.).             |
+El resultado no busca ser una demo aislada ni una landing de portfolio, sino un
+proyecto jugable que voy iterando poco a poco. Aun así, el código deja ver
+varias decisiones que me interesan como frontend:
 
-Vista rápida:
+- **Separar reglas de juego y UI.** La lógica importante vive en
+  `src/engine/` como TypeScript puro; React se encarga de representar estado y
+  lanzar acciones.
+- **Construir con datos.** Zonas, enemigos, compañeros, equipo, misiones y
+  upgrades viven en `src/data/`; añadir contenido no requiere tocar la UI.
+- **Cuidar el responsive de verdad.** Desktop usa tres columnas; mobile reduce
+  el foco al combate, drawers laterales y controles compactos.
+- **Hacer el estado persistente y migrable.** El save usa claves versionadas y
+  migraciones para corregir cambios de modelo sin romper partidas.
+- **Probar lo que puede romper el juego.** Hay tests para fórmulas, combate,
+  progreso, store, contenido y el game loop.
+
+Para probarlo en local:
 
 ```bash
 pnpm install && pnpm dev   # http://localhost:5173
@@ -154,7 +163,7 @@ src/
 │   ├── spawn.ts               #   generación de enemigos / semi-bosses / bosses
 │   ├── persistence.ts         #   save/load + migraciones por SAVE_KEY versionada (v10 → v11)
 │   ├── store.ts               #   Zustand store (datos + actions: startBossFight, buyUpgrade, resetUpgrades…)
-│   └── __tests__/             #   37 tests unitarios del motor (engine + content + store)
+│   └── __tests__/             #   tests unitarios del motor (engine + content + store)
 ├── hooks/                     # Hooks reutilizables
 │   ├── useGameLoop.ts         #   tick de DPS, auto-save, deadline de boss-fight, resync en visibility/pageshow
 │   ├── __tests__/             #   tests del game loop (deadline + activación)
@@ -274,20 +283,20 @@ src/
   `data-form="full"` por `data-form="mini"` vía media queries,
   manteniendo el HTML igual en ambos tamaños (mejor para tests y a11y).
 
-## Qué demuestra técnicamente
+## Lectura técnica del proyecto
 
-### Frontend architecture
+### Arquitectura frontend
 
-- Componentes con responsabilidad clara y comunicación vía store.
-- Zustand con **selectors granulares** (`useGameStore((s) => s.state.gold)`)
-  para minimizar re-renders.
-- Dominio desacoplado de React → ejecutable fuera del navegador y
-  testeable sin jsdom para lógica pura.
-- Side effects aislados en hooks (`useGameLoop`, `useMapInteraction`).
+- Componentes con responsabilidad acotada y comunicación vía store.
+- Zustand con **selectors granulares** para evitar re-renders innecesarios.
+- Dominio desacoplado de React: ejecutable fuera del navegador y testeable
+  sin montar componentes.
+- Side effects aislados en hooks (`useGameLoop`, `useMapInteraction`), no en
+  módulos globales.
 
 ### TypeScript
 
-- `strict` activo. `noUnusedLocals`, `noUnusedParameters`.
+- `strict` activo, `noUnusedLocals` y `noUnusedParameters`.
 - Tipos de dominio explícitos (`EnemyType`, `BossFightState`, `Quest`,
   `Location`, `ShopItem`, `Companion`, `UpgradeDefinition`).
 - `Partial<Record<…>>` cuando corresponde, con guards explícitos al
@@ -312,8 +321,26 @@ src/
 - CI corre **lint + typecheck + test + build** en cada push/PR a `main`.
 - `ErrorBoundary` global para evitar pantallas en blanco.
 - Guardado en `localStorage` con migraciones y autosave debounced.
-- **39 tests Vitest** en 6 archivos cubriendo combate, fórmulas,
+- **40 tests Vitest** en 6 archivos cubriendo combate, fórmulas,
   progresión, store, game-loop y contenido.
+
+### Cosas que todavía quiero mejorar
+
+No lo considero "terminado". Algunas partes funcionan bien pero tienen margen:
+
+- `BattlePanel.tsx` concentra demasiado código (combate, reclutamiento,
+  tienda local y chips de encuentro). Quiero extraer subcomponentes para
+  reducir tamaño y facilitar tests.
+- Faltan tests de interacción visual con Testing Library para mapa, drawers,
+  modales y flujo de reclutamiento.
+- El balance económico se ajusta a mano; sería útil un simulador de TTK y
+  recompensas por zona.
+- Hay sprites temporales y placeholders; quiero reemplazarlos por arte más
+  coherente.
+- La persistencia en `localStorage` es suficiente para el alcance actual, pero
+  IndexedDB encajaría mejor si el save creciera o añadiera más metadatos.
+- El proyecto está en español; una i18n ES/EN haría el código de textos más
+  mantenible.
 
 ## 🚀 Desarrollo
 
@@ -356,7 +383,9 @@ producción):
 - **⛀ +1M G/M** — añade 1M de oro y 1M de mithril al monedero.
 - **⏭ Complete zone** — completa la zona actual (kills al máximo, boss
   - semi-boss derrotados, siguiente zona desbloqueada).
-- **★ Complete game** — simula una partida completada al 100%.
+- **★ Complete game** — simula una partida completada al 100%, dejando los
+  héroes a nivel 1 y sin equipo equipado para poder probar sin DPS pasivo
+  exagerado.
 
 ## 📋 Añadir contenido
 
@@ -484,7 +513,7 @@ ver [`IDEAS.md`](./IDEAS.md).
 
 ## 🧪 Testing
 
-39 tests Vitest distribuidos entre el motor y los hooks:
+40 tests Vitest distribuidos entre el motor y los hooks:
 
 - **`engine/__tests__/formulas.test.ts`** — daño, XP, level-up, coste
   de subida de compañeros, bonus por tipo, bonus de armor en el timer
@@ -499,7 +528,8 @@ ver [`IDEAS.md`](./IDEAS.md).
   y el caso de regresión "reclutar Frodo + Sam no completa la quest de
   Bosque Viejo hasta haber viajado". También cubre el cheat
   `completeAll` (todas las zonas quedan desbloqueadas, visitadas y
-  navegables).
+  navegables, héroes a nivel 1 y sin equipo equipado para facilitar
+  pruebas manuales sin DPS pasivo excesivo).
 - **`engine/__tests__/content.test.ts`** — integridad: referencias
   válidas entre `locations`, `enemies`, `quests`, `shop`, `companions`
   y `upgrades`; cada `enemyType` está en el set permitido.
