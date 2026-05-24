@@ -258,6 +258,13 @@
     display: none;
   }
 
+  /* The CurrencyBar's Forja chip is moved into the mobile actions row
+     (between Inventario and Misiones), so hide the in-bar copy on mobile
+     to avoid having two Forja buttons stacked. */
+  .forgeButtonDesktopOnly {
+    display: none !important;
+  }
+
   .forgeIcon {
     width: 22px;
     height: 22px;

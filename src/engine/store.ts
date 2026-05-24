@@ -117,7 +117,7 @@ function applyPostMutations(state: GameState): GameState {
     questProgress: updateReachQuestProgress(
       state.questProgress,
       state.questsDone,
-      state.unlockedLocs,
+      state.visitedLocs,
       state.questsAccepted,
     ),
   };
@@ -146,11 +146,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     const willKill = current.enemy.hp - finalDmg <= 0;
     const nextState = applyPostMutations(dealDamage(current, finalDmg));
-    set({ state: nextState });
 
     if (willKill) {
-      set({ deadAnim: true, goldBurst: true });
-      window.setTimeout(() => set({ deadAnim: false, goldBurst: false }), 500);
+      // Keep the dying enemy on screen during the death animation so the
+      // new enemy doesn't inherit the fade-out. Rewards (gold, xp, kills)
+      // are already in nextState; we temporarily pin the enemy to the dead
+      // one (hp 0) until the animation finishes.
+      const dyingEnemy = { ...current.enemy, hp: 0 };
+      set({ state: { ...nextState, enemy: dyingEnemy }, deadAnim: true, goldBurst: true });
+      window.setTimeout(() => {
+        set({ state: nextState, deadAnim: false, goldBurst: false });
+      }, 500);
+    } else {
+      set({ state: nextState });
     }
   },
 
@@ -169,19 +177,18 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (!loc || !current.unlockedLocs.includes(loc.id)) return;
 
     let unlockedLocs = current.unlockedLocs;
-    let questProgress = current.questProgress;
-    // Rest zones without an explicit `unlockGate` keep the legacy behaviour
-    // of auto-unlocking the next location on first visit. Zones with a
-    // gate (e.g. La Comarca → requires Frodo + Sam) only advance through
-    // the recruit action.
+    // Mark the destination as visited so reach quests for this location
+    // can be credited. visitedLocs is the source of truth for reach quests,
+    // separate from unlockedLocs (which can grow without a physical visit).
+    const visitedLocs = current.visitedLocs.includes(loc.id)
+      ? current.visitedLocs
+      : [...current.visitedLocs, loc.id];
+
+    // Rest zones without an explicit `unlockGate` auto-unlock the next
+    // location on first visit. Gated zones (e.g. La Comarca) only advance
+    // through the recruit action.
     if (loc.isRest && !loc.unlockGate) {
       unlockedLocs = unlockNextLocation(unlockedLocs, locIdx);
-      questProgress = updateReachQuestProgress(
-        questProgress,
-        current.questsDone,
-        unlockedLocs,
-        current.questsAccepted,
-      );
     }
 
     const enemy = loc.isRest ? null : spawnFromPool(loc);
@@ -199,7 +206,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         enemy,
         bossFight: null,
         unlockedLocs,
-        questProgress,
+        visitedLocs,
         forgeUnlocked: current.forgeUnlocked || unlocksForge,
       }),
       fightFailed: null,
@@ -321,15 +328,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // If this rest zone has an unlock gate and recruiting this companion
     // completes it, advance the world map automatically.
     let unlockedLocs = current.unlockedLocs;
-    let questProgress = current.questProgress;
+    const questProgress = current.questProgress;
     if (loc.unlockGate && isUnlockGateMet(loc.unlockGate, nextCompanions)) {
       unlockedLocs = unlockNextLocation(unlockedLocs, current.locIdx);
-      questProgress = updateReachQuestProgress(
-        questProgress,
-        current.questsDone,
-        unlockedLocs,
-        current.questsAccepted,
-      );
+      // Do NOT call updateReachQuestProgress here: the newly unlocked
+      // location hasn't been visited yet, so any "reach X" quest targeting
+      // it must wait until the player actually travels there.
     }
 
     set({
@@ -597,6 +601,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       locKills,
       totalKills,
       unlockedLocs: allLocIds,
+      visitedLocs: allLocIds,
       bossDefeated,
       semiBossDefeated,
       questProgress,

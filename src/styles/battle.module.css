@@ -36,7 +36,6 @@
   background-position: center 70%;
   background-repeat: no-repeat;
   background-color: #0e0a06;
-  image-rendering: pixelated;
 }
 
 .stats {
@@ -240,27 +239,38 @@
   z-index: 2;
 }
 
-.eliteTier {
-  font-family: var(--font-heading);
-  font-size: clamp(18px, 1.8vw, 26px);
-  font-weight: 900;
-  letter-spacing: 3.5px;
-  text-transform: uppercase;
-  line-height: 1;
-  margin-bottom: 6px;
-  text-shadow:
-    0 3px 3px #000,
-    0 0 8px #000,
-    2px 2px 2px #000,
-    -2px 2px 2px #000;
-}
-
 .eliteTierBoss {
   color: var(--color-danger);
 }
 
 .eliteTierSemi {
   color: var(--color-gold);
+}
+
+/* Top banner that announces the elite encounter. Sits just below the stats
+   bar at the top of the scene; replaces the in-overlay "Jefe / Semi-jefe"
+   label so the player has an unmissable cue without crowding the sprite. */
+.eliteTopBadge {
+  align-self: center;
+  margin: 4px auto 0;
+  padding: 4px 18px;
+  max-width: max-content;
+  font-family: var(--font-heading);
+  font-size: clamp(13px, 1.4vw, 18px);
+  font-weight: 900;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  line-height: 1;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: rgba(10, 8, 4, 0.7);
+  box-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.55),
+    0 0 14px color-mix(in srgb, currentColor 35%, transparent);
+  text-shadow:
+    0 2px 3px #000,
+    0 0 8px #000;
+  animation: flashIn 0.32s ease-out;
 }
 
 .eliteName {
@@ -745,15 +755,28 @@
     width: auto;
     max-width: 100%;
   }
+
+  /* Compact the elite top badge so it doesn't take a chunk of the
+     narrow scene — drop lateral padding, tighter letter-spacing. */
+  .eliteTopBadge {
+    padding: 4px 8px;
+    letter-spacing: 1.6px;
+  }
 }
 
 .encWrap {
   position: relative;
 }
 
+/* Fluid size for the floating encounter chips. Bottom of the curve
+   matches the original mobile size (72px); the top is kept moderate
+   (~96px) so the chips don't dominate the scene on mid-large desktops.
+   The CSS custom prop is reused by `.encAbandonOverlay` and
+   `.encDoneBadge` so their inner glyph tracks the chip size. */
 .encChip {
-  width: 116px;
-  height: 116px;
+  --enc-chip-size: clamp(72px, 6vw, 96px);
+  width: var(--enc-chip-size);
+  height: var(--enc-chip-size);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -834,7 +857,7 @@
   align-items: center;
   justify-content: center;
   font-family: var(--font-heading);
-  font-size: 64px;
+  font-size: clamp(48px, 3.6vw, 54px);
   font-weight: 900;
   line-height: 1;
   color: #ff3a2a;
@@ -854,8 +877,8 @@
   position: absolute;
   bottom: 0;
   right: 0;
-  width: 26px;
-  height: 26px;
+  width: clamp(22px, 1.85vw, 24px);
+  height: clamp(22px, 1.85vw, 24px);
   border-radius: 50%;
   background: rgba(80, 180, 80, 0.95);
   color: #08160a;
@@ -1055,6 +1078,28 @@
   color: #ff8e74;
 }
 
+/* Mobile/tablet: the fail toast spans the whole scene width and sits
+   above the boss/semi floating chips so the player can't miss it and
+   doesn't have it competing with the encounter buttons in the corner. */
+@media (max-width: 1180px) {
+  .failToast {
+    left: 8px;
+    right: 8px;
+    top: 8px;
+    max-width: none;
+    width: auto;
+    text-align: center;
+    align-items: center;
+    padding: 10px 8px;
+    z-index: 60;
+  }
+
+  .failToast .toastClose {
+    top: 2px;
+    right: 2px;
+  }
+}
+
 .toastClose {
   position: absolute;
   top: 4px;
@@ -1169,7 +1214,9 @@
 .recruitGrid[data-roster='frodo-sam-merry-pippin'],
 .recruitGrid[data-roster='gandalf-aragorn'],
 .recruitGrid[data-roster='gandalf_blanco-theoden'],
-.recruitGrid[data-roster='eowyn-eomer'] {
+.recruitGrid[data-roster='eowyn-eomer'],
+.recruitGrid[data-roster='faramir'],
+.recruitGrid[data-roster='rey_aragorn'] {
   transform: translateY(-7vh);
 }
 
@@ -1192,6 +1239,14 @@
   .recruitGrid[data-roster='gandalf_blanco-theoden'],
   .recruitGrid[data-roster='eowyn-eomer'] {
     transform: none;
+  }
+
+  /* Single-companion rest zones (Faramir / Rey Aragorn) keep a smaller lift
+     on mobile because they too use `align-items: end` and would otherwise
+     sit pegged to the overlay/buy-button band. */
+  .recruitGrid[data-roster='faramir'],
+  .recruitGrid[data-roster='rey_aragorn'] {
+    transform: translateY(-4vh);
   }
 }
 
@@ -1307,6 +1362,16 @@
   /* Cap upscaled portraits to keep them inside their box on small screens. */
   .recruitPortrait {
     transform: translateY(var(--portrait-offset-y, 0)) scale(min(var(--portrait-scale, 1), 1.05));
+  }
+
+  /* In 1-, 2- and 3-card layouts there's enough vertical room to honor the
+     full per-companion scale, so wide silhouettes (Celeborn, Théoden…) don't
+     look short next to narrow ones (Galadriel, Éowyn…). The 4+ rule below
+     still clamps denser grids. */
+  .recruitGrid[data-count='1'] .recruitPortrait,
+  .recruitGrid[data-count='2'] .recruitPortrait,
+  .recruitGrid[data-count='3'] .recruitPortrait {
+    transform: translateY(var(--portrait-offset-y, 0)) scale(min(var(--portrait-scale, 1), 1.2));
   }
 
   /* In a 2x2 grid we cannot afford the extra offset/scale that pushes
@@ -1728,11 +1793,12 @@
   }
 
   .restToggleHeader .restToggleBtn {
-    font-size: 10px;
-    letter-spacing: 0.4px;
-    padding: 3px 8px;
-    border-radius: 4px;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    padding: 7px 14px;
+    border-radius: 5px;
     color: #e6c889;
+    min-height: 32px;
   }
 
   .restToggleHeader .restToggleActive {
@@ -1876,27 +1942,20 @@
 }
 
 @media (max-width: 1180px) {
-  /* Must live after base .encChip / .questPickup so these sizes win. */
-  .encChip {
-    width: 72px;
-    height: 72px;
-  }
-
-  .encAbandonOverlay {
-    font-size: 48px;
-  }
-
+  /* The encounter chips and their badge sizes are fluid (clamp) at the
+     base rule, so no per-breakpoint override is needed here. The quest
+     pickup below is positioned relative to the chip size via a CSS calc
+     so it never overlaps the floating action chips. */
   .encDoneBadge {
-    width: 22px;
-    height: 22px;
     font-size: 13px;
   }
 
-  /* Stacked under the semi-boss chip (top-right on every combat zone). */
+  /* Stacked under the semi-boss chip (top-right on every combat zone).
+     Top offset = chip height + top inset + a small breathing gap. */
   .questPickupWrap {
     left: auto;
     right: 8px;
-    top: 92px;
+    top: calc(clamp(72px, 6vw, 96px) + 16px);
   }
 
   /* Rest zones: no boss/semi above, so dock at the very top-right. */

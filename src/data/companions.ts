@@ -63,7 +63,7 @@ export const COMPANIONS: readonly Companion[] = [
     color: '#5a7a5a',
     recruitCost: 250,
     portrait: '/companions/aragorn.png',
-    portraitScale: 0.85,
+    portraitScale: 0.75,
   },
   {
     id: 'gandalf',
@@ -74,7 +74,6 @@ export const COMPANIONS: readonly Companion[] = [
     color: '#9a9aaa',
     recruitCost: 600,
     portrait: '/companions/gandalf.png',
-    portraitScale: 1.1,
   },
   {
     id: 'arwen',
@@ -151,8 +150,6 @@ export const COMPANIONS: readonly Companion[] = [
     color: '#5a7040',
     recruitCost: 12000,
     portrait: '/companions/barbol.png',
-    portraitScale: 1.4,
-    portraitOffsetY: 22,
   },
   {
     id: 'theoden',
@@ -222,6 +219,7 @@ export const COMPANIONS: readonly Companion[] = [
     color: '#7080a0',
     recruitCost: 45000,
     portrait: '/companions/faramir.png',
+    portraitScale: 0.75,
   },
   {
     id: 'rey_aragorn',
@@ -232,5 +230,6 @@ export const COMPANIONS: readonly Companion[] = [
     color: '#5a7a5a',
     recruitCost: 90000,
     portrait: '/companions/king-aragorn.png',
+    portraitScale: 0.75,
   },
 ];

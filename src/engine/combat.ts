@@ -85,7 +85,7 @@ export function dealDamage(
       qp[q.id] = 1;
     }
   }
-  qp = updateReachQuestProgress(qp, state.questsDone, newUnlocked, state.questsAccepted);
+  qp = updateReachQuestProgress(qp, state.questsDone, state.visitedLocs, state.questsAccepted);
 
   // After any kill, fall back to a fresh pool mob (or null if at rest).
   const nextEnemy = loc ? spawnFromPool(loc, rng) : null;

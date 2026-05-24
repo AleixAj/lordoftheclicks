@@ -34,9 +34,9 @@
 }
 
 :root {
-  --bg-primary: #0e1118;
-  --bg-gradient-a: #161c2a;
-  --bg-gradient-b: #0e1118;
+  --bg-primary: #141414;
+  --bg-gradient-a: #232323;
+  --bg-gradient-b: #0f0f0f;
   --hp-fill: #8b2222;
   --hp-bg: #2a1010;
 }

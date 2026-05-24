@@ -114,7 +114,7 @@ export const SHOP_ARMOR: readonly ShopItem[] = [
     name: 'Cota de Mithril',
     def: 20,
     cost: 1550,
-    loc: 'lothlorien',
+    loc: 'rivendel',
     desc: 'Ligera como pluma, dura como escama de dragón',
     bonusVs: { orco: 0.2, troll: 0.25, bestia: 0.15 },
   },
@@ -162,14 +162,6 @@ export const SHOP_ACCESS: readonly ShopItem[] = [
     loc: 'lothlorien',
     desc: 'Luz en la oscuridad',
     bonusVs: { espectro: 0.45, criatura_antigua: 0.25 },
-  },
-  {
-    id: 'evenstar',
-    name: 'Estrella de la Tarde',
-    bonus: 12,
-    cost: 950,
-    loc: 'rivendel',
-    bonusVs: { espectro: 0.25, humano: 0.15 },
   },
   {
     id: 'cuerno_gondor',

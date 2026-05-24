@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { xpForLevel } from '@/engine/store';
 import type { GameState } from '@/types/game';
 import styles from '@/styles/currency.module.css';
+import { ForgeButton } from './ForgeButton';
 
 interface CurrencyBarProps {
   state: GameState;
@@ -16,29 +17,12 @@ export function CurrencyBar({ state, onOpenForge }: CurrencyBarProps) {
 
   return (
     <div className={styles.bar}>
-      <button
-        type="button"
-        className={`${styles.forgeButton} ${forgeLocked ? styles.forgeButtonLocked : ''} ${
-          forgeHighlight ? styles.forgeButtonHighlight : ''
-        }`}
+      <ForgeButton
+        locked={forgeLocked}
+        highlight={forgeHighlight}
         onClick={onOpenForge}
-        disabled={forgeLocked}
-        aria-disabled={forgeLocked}
-        title={
-          forgeLocked
-            ? 'La Forja de Rivendel todavía no está disponible. Llega a Rivendel para desbloquearla.'
-            : 'Abrir la Forja de Rivendel'
-        }
-      >
-        <img
-          src="/forge-icon.png"
-          alt=""
-          aria-hidden="true"
-          className={styles.forgeIcon}
-          draggable={false}
-        />
-        <span>Forja</span>
-      </button>
+        className={styles.forgeButtonDesktopOnly}
+      />
       <Currency
         iconSrc="/gold-button.png"
         iconAlt="Oro"

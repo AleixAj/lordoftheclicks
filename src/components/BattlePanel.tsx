@@ -39,6 +39,16 @@ import { BonusVsChips } from './BonusVsChips';
 
 const DEFAULT_ENEMY_SPRITE = '/orc.png';
 const DEFAULT_COMPANION_PORTRAIT = '/companions/gandalf.png';
+const preloadedBackgrounds = new Set<string>();
+
+function preloadBackground(src: string | undefined) {
+  if (!src || preloadedBackgrounds.has(src)) return;
+  preloadedBackgrounds.add(src);
+
+  const image = new Image();
+  image.decoding = 'async';
+  image.src = src;
+}
 
 export function BattlePanel() {
   const state = useGameStore((s) => s.state);
@@ -66,6 +76,16 @@ export function BattlePanel() {
   const isEliteEnemy = enemy?.tier === 'boss' || enemy?.tier === 'semi';
   const hasPendingCompanionsHere = !!loc?.companions?.some((id) => !state.companions[id]?.unlocked);
   const bg = loc?.background;
+
+  useEffect(() => {
+    preloadBackground(bg);
+
+    for (const nearbyIdx of [state.locIdx - 1, state.locIdx + 1]) {
+      const nearbyLoc = LOCATIONS[nearbyIdx];
+      if (!nearbyLoc || !state.unlockedLocs.includes(nearbyLoc.id)) continue;
+      preloadBackground(nearbyLoc.background);
+    }
+  }, [bg, state.locIdx, state.unlockedLocs]);
 
   // Re-render every 250ms during a boss fight so the countdown stays smooth when
   // DPS is 0, and end the encounter as soon as the deadline passes (same cadence
@@ -282,6 +302,18 @@ export function BattlePanel() {
           DPS<b>{dps.toFixed(1)}</b>
         </div>
 
+        {isEliteEnemy && (
+          <div
+            className={`${styles.eliteTopBadge} ${
+              enemy?.tier === 'boss' ? styles.eliteTierBoss : styles.eliteTierSemi
+            }`}
+            role="status"
+            aria-label={enemy?.tier === 'boss' ? 'Encuentro de jefe' : 'Encuentro de semi-jefe'}
+          >
+            {enemy?.tier === 'boss' ? '★ JEFE ★' : '◆ SEMI-JEFE ◆'}
+          </div>
+        )}
+
         {showZoneToggle && (
           <RestModeToggle
             current={restView}
@@ -366,13 +398,6 @@ export function BattlePanel() {
             {isEliteEnemy && (
               <div className={styles.eliteHpAnchor}>
                 <div className={styles.eliteLabels} aria-hidden="true">
-                  <div
-                    className={`${styles.eliteTier} ${
-                      enemy.tier === 'boss' ? styles.eliteTierBoss : styles.eliteTierSemi
-                    }`}
-                  >
-                    {enemy.tier === 'boss' ? 'Jefe' : 'Semi-jefe'}
-                  </div>
                   <div
                     className={`${styles.eliteName} ${
                       enemy.tier === 'boss' ? styles.boss : styles.semi

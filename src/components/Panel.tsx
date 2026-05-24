@@ -75,21 +75,23 @@ export function Panel({
         aria-label="Redimensionar panel desde arriba"
       />
       {title !== undefined && (
-        <button
-          type="button"
-          className={`${styles.header} ${compactHeaderOnMobile ? styles.headerCompact : ''}`}
-          onClick={() => setCollapsed((current) => !current)}
-          aria-expanded={!collapsed}
-          title={collapsed ? 'Abrir panel' : 'Cerrar panel'}
-        >
-          <span className={styles.headerTitle}>
-            <span className={styles.collapseIcon} aria-hidden="true">
-              {collapsed ? '▸' : '▾'}
+        <div className={`${styles.header} ${compactHeaderOnMobile ? styles.headerCompact : ''}`}>
+          <button
+            type="button"
+            className={styles.headerCollapseBtn}
+            onClick={() => setCollapsed((current) => !current)}
+            aria-expanded={!collapsed}
+            title={collapsed ? 'Abrir panel' : 'Cerrar panel'}
+          >
+            <span className={styles.headerTitle}>
+              <span className={styles.collapseIcon} aria-hidden="true">
+                {collapsed ? '▸' : '▾'}
+              </span>
+              <span className={styles.headerTitleText}>{title}</span>
             </span>
-            <span className={styles.headerTitleText}>{title}</span>
-          </span>
+          </button>
           {headerExtra && <span className={styles.headerExtra}>{headerExtra}</span>}
-        </button>
+        </div>
       )}
       {!collapsed && (
         <div className={`${styles.body} flex flex-col flex-1 min-h-0 ${bodyClassName}`}>

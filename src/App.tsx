@@ -6,6 +6,7 @@ import { BattlePanel } from '@/components/BattlePanel';
 import { CompanionsPanel } from '@/components/CompanionsPanel';
 import { CurrencyBar } from '@/components/CurrencyBar';
 import { EquipmentPanel } from '@/components/EquipmentPanel';
+import { ForgeButton } from '@/components/ForgeButton';
 import { ForgeModal } from '@/components/ForgeModal';
 import { MapPanel } from '@/components/MapPanel';
 import { QuestsPanel } from '@/components/QuestsPanel';
@@ -27,10 +28,10 @@ export function App() {
     return <WelcomeScreen onStart={() => setHasStarted(true)} />;
   }
 
-  return <GameShell />;
+  return <GameShell onReset={() => setHasStarted(false)} />;
 }
 
-function GameShell() {
+function GameShell({ onReset }: { onReset: () => void }) {
   const [openDrawer, setOpenDrawer] = useState<DrawerSide | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [forgeOpen, setForgeOpen] = useState(false);
@@ -64,7 +65,7 @@ function GameShell() {
         <h1
           className={`app-title ${styles.title} font-normal normal-case tracking-[2px] text-[#c9a44a] leading-none [text-shadow:0_0_30px_rgba(201,164,74,0.3),0_2px_4px_rgba(0,0,0,0.6)]`}
         >
-          Lord of the Clicks
+          Lord of the click<span className={styles.titleBigS}>S</span>
         </h1>
         <button
           type="button"
@@ -127,9 +128,12 @@ function GameShell() {
           </button>
           <button
             type="button"
-            onClick={runAndClose(() => {
-              if (confirm('¿Reiniciar partida? Perderás todo el progreso.')) resetGame();
-            })}
+            onClick={() => {
+              if (confirm('¿Reiniciar partida? Perderás todo el progreso.')) {
+                resetGame();
+                onReset();
+              }
+            }}
             className={resetButtonClass}
             title="Reiniciar partida"
             aria-label="Reiniciar partida"
@@ -161,6 +165,12 @@ function GameShell() {
             >
               Inventario
             </button>
+            <ForgeButton
+              locked={!state.forgeUnlocked}
+              highlight={state.forgeUnlocked && !state.forgeSeen}
+              onClick={openForge}
+              className={styles.mobileForgeButton}
+            />
             <button
               type="button"
               className={headerButtonClass}
@@ -247,10 +257,10 @@ function WelcomeScreen({ onStart }: WelcomeScreenProps) {
           className={styles.welcomeSigil}
           draggable={false}
         />
-        <p className={styles.welcomeKicker}>Un viaje incremental por la Tierra Media</p>
         <h1 id="welcome-title" className={`app-title ${styles.welcomeTitle}`}>
-          Lord of the Clicks
+          Lord of the click<span className={styles.titleBigS}>S</span>
         </h1>
+        <p className={styles.welcomeKicker}>Un viaje incremental por la Tierra Media</p>
         <p className={styles.welcomeLead}>
           Recluta compañeros, derrota criaturas legendarias, equipa reliquias y avanza zona a zona
           hasta las sombras de Mordor.

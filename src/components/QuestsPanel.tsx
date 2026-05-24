@@ -34,7 +34,7 @@ export function QuestsPanel() {
         const prog = state.questProgress[q.id] ?? 0;
         const pct = Math.min(100, (prog / q.need) * 100);
         const complete = prog >= q.need;
-        const reachOk = q.type === 'reach' && state.unlockedLocs.includes(q.loc);
+        const reachOk = q.type === 'reach' && state.visitedLocs.includes(q.loc);
         const actualComplete = complete || reachOk;
         const actualPct = actualComplete ? 100 : pct;
 

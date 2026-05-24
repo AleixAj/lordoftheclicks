@@ -84,19 +84,24 @@ export function unlockNextLocation(unlockedLocs: LocationId[], locIdx: number): 
   return [...unlockedLocs, nextLoc.id];
 }
 
+/**
+ * Credits accepted `reach` quests whose destination appears in `visitedLocs`.
+ * `visitedLocs` only grows when the player physically travels to a location,
+ * so gate-unlock events (e.g. recruiting Frodo+Sam unlocking Bosque Viejo)
+ * never inadvertently complete a "reach" objective before the visit happens.
+ */
 export function updateReachQuestProgress(
   questProgress: Record<QuestId, number>,
   questsDone: QuestId[],
-  unlockedLocs: LocationId[],
+  visitedLocs: LocationId[],
   questsAccepted: readonly QuestId[],
 ): Record<QuestId, number> {
   let changed = false;
   const next = { ...questProgress };
   for (const q of QUESTS) {
     if (questsDone.includes(q.id)) continue;
-    // Only accepted quests track progress.
     if (!questsAccepted.includes(q.id)) continue;
-    if (q.type === 'reach' && unlockedLocs.includes(q.loc) && next[q.id] !== 1) {
+    if (q.type === 'reach' && visitedLocs.includes(q.loc) && next[q.id] !== 1) {
       next[q.id] = 1;
       changed = true;
     }

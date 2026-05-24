@@ -69,7 +69,7 @@
 }
 
 .welcomeKicker {
-  margin: 0 0 4px;
+  margin: 20px 0 4px;
   font-family: var(--font-heading);
   font-size: 12px;
   font-weight: 800;
@@ -80,13 +80,20 @@
 
 .welcomeTitle {
   margin: 0;
-  font-size: clamp(42px, 9vw, 88px);
+  font-size: clamp(42px, 7.5vw, 62px);
   font-weight: 400;
-  line-height: 0.95;
+  line-height: 1;
+  white-space: nowrap;
   color: #f4d47a;
   text-shadow:
     0 0 32px rgba(244, 212, 122, 0.28),
     0 4px 10px rgba(0, 0, 0, 0.8);
+}
+
+/* The final S in "clickS" renders at full uppercase size (same as "L" in "Lord"). */
+.titleBigS {
+  font-size: 1em;
+  vertical-align: baseline;
 }
 
 .welcomeLead {
@@ -342,9 +349,31 @@
   .mobileActions {
     display: flex;
     flex: 0 0 auto;
+    align-items: center;
     justify-content: space-between;
     gap: 6px;
     padding: 2px 4px;
+  }
+
+  /* Forja chip sits between Inventario and Misiones, centred. The flex
+     children push outward (space-between) while this one auto-margins
+     to perfect-centre regardless of the side buttons' widths. The
+     `!important` flags defeat the smaller mobile styling that
+     `currency.module.css` applies to `.forgeButton` (which is sized for
+     the in-bar variant). */
+  .mobileForgeButton {
+    flex: 0 0 auto !important;
+    margin: 0 auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    min-height: 36px;
+    padding: 4px 14px !important;
+    gap: 8px !important;
+    font-size: 11px !important;
+  }
+
+  .mobileForgeButton > span {
+    display: inline !important;
   }
 
   .drawerOverlay {
@@ -403,21 +432,71 @@
 }
 
 @media (max-width: 720px) {
+  .welcomeCard {
+    padding: 20px 18px 24px;
+    overflow-y: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .welcomeSigil {
+    width: clamp(80px, 22vw, 120px);
+    margin-bottom: 14px;
+  }
+
+  .welcomeKicker {
+    font-size: 12px;
+    letter-spacing: 1.6px;
+    margin-top: 14px;
+    margin-bottom: 0;
+  }
+
+  .welcomeTitle {
+    font-size: min(8.8vw, 52px);
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .welcomeLead {
+    font-size: clamp(16px, 4.5vw, 19px);
+    margin-top: 18px;
+    line-height: 1.35;
+  }
+
   .welcomeHighlights {
     grid-template-columns: 1fr;
-    margin: 22px 0;
+    gap: 12px;
+    margin: 22px 0 24px;
+    flex: 1;
+    align-content: center;
   }
 
   .welcomeHighlights > div {
     min-height: auto;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-radius: 10px;
   }
 
-  .welcomeLead {
-    font-size: 17px;
+  .welcomeHighlights span {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    margin-bottom: 0;
+    font-size: 12px;
+  }
+
+  .welcomeHighlights strong {
+    font-size: 15px;
+    line-height: 1.25;
   }
 
   .welcomeStart {
     width: 100%;
+    min-height: 58px;
+    font-size: 17px;
   }
 }
 

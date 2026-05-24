@@ -268,7 +268,15 @@ export interface GameState {
   owned: ItemId[];
   locKills: Record<LocationId, number>;
   totalKills: number;
+  /** Locations the player can travel to (may be unlocked without visiting). */
   unlockedLocs: LocationId[];
+  /**
+   * Locations the player has physically traveled to at least once.
+   * Used to credit `reach` quests — separate from `unlockedLocs` so that
+   * gate-completion unlocks don't auto-complete "reach X" objectives before
+   * the player actually visits the location.
+   */
+  visitedLocs: LocationId[];
   bossDefeated: Record<LocationId, boolean>;
   semiBossDefeated: Record<LocationId, boolean>;
   questProgress: Record<QuestId, number>;

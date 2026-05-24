@@ -23,17 +23,17 @@
 
 Si vienes a evaluar el perfil frontend, esto es lo que el repo demuestra:
 
-| Competencia                          | Dónde verlo                                                                                                                                      |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Arquitectura escalable**           | Motor de juego puro (`src/engine/`) totalmente desacoplado de React. Store Zustand sólo orquesta. Componentes sólo pintan.                       |
-| **TypeScript estricto**              | `strict`, `noUnusedLocals`, `noUnusedParameters`. Modelo de dominio tipado (`GameState`, `EnemyType`, `UpgradeDefinition`, `BossFightState`…).   |
-| **Testing del dominio**              | 36 tests Vitest cubriendo fórmulas, combate, progresión, store, game-loop e integridad de contenido. Sin tests frágiles de UI.                   |
-| **Performance consciente**           | Pan/zoom del mapa con `translate3d` + `requestAnimationFrame` directo al DOM. Selectors granulares de Zustand. `useMemo` en listas pesadas.      |
-| **Responsive de verdad**             | Layout desktop de 3 columnas que muta a drawers mutuamente exclusivos en mobile/tablet. Compactación de copy y controles por viewport.           |
-| **Accesibilidad por defecto**        | `<button>` semánticos, `aria-label`, `focus-visible`, `eslint-plugin-jsx-a11y` activo en CI bloqueando el lint.                                  |
-| **Tooling de equipo**                | ESLint 9 flat + typescript-eslint + jsx-a11y, Prettier, Husky + lint-staged en pre-commit, GitHub Actions con `lint + typecheck + test + build`. |
-| **Persistencia y migraciones**       | Save versionado en `localStorage` con migraciones entre versiones y autosave debounced.                                                          |
-| **Decisiones de producto razonadas** | Cada feature está justificada por una decisión de diseño documentada (cap de nivel, armaduras como tiempo, forja de Rivendel, etc.).             |
+| Competencia                          | Dónde verlo                                                                                                                                                                       |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Arquitectura escalable**           | Motor de juego puro (`src/engine/`) totalmente desacoplado de React. Store Zustand sólo orquesta. Componentes sólo pintan.                                                        |
+| **TypeScript estricto**              | `strict`, `noUnusedLocals`, `noUnusedParameters`. Modelo de dominio tipado (`GameState`, `EnemyType`, `UpgradeDefinition`, `BossFightState`…).                                    |
+| **Testing del dominio**              | **39 tests Vitest** en 6 archivos cubriendo fórmulas, combate, progresión, store, game-loop e integridad de contenido. Sin tests frágiles de UI.                                  |
+| **Performance consciente**           | Pan/zoom del mapa con `translate3d` + `requestAnimationFrame` directo al DOM. Selectors granulares de Zustand. `useMemo` en listas pesadas. Precarga inteligente de fondos.       |
+| **Responsive de verdad**             | Layout desktop de 3 columnas que muta a drawers mutuamente exclusivos en mobile/tablet. Compactación de copy y controles por viewport.                                            |
+| **Accesibilidad por defecto**        | `<button>` semánticos, `aria-label`, `focus-visible`, `eslint-plugin-jsx-a11y` activo en CI bloqueando el lint.                                                                   |
+| **Tooling de equipo**                | ESLint 9 flat + typescript-eslint + jsx-a11y, Prettier, Husky + lint-staged en pre-commit, GitHub Actions con `lint + typecheck + test + build`.                                  |
+| **Persistencia y migraciones**       | Save versionado en `localStorage` (`v11`) con migraciones documentadas (p. ej. v10 → v11 reconstruyendo `visitedLocs` desde `locIdx` para sanear quests `reach` mal completadas). |
+| **Decisiones de producto razonadas** | Cada feature está justificada por una decisión de diseño documentada (cap de nivel, armaduras como tiempo, forja de Rivendel, `visitedLocs` vs `unlockedLocs`, etc.).             |
 
 Vista rápida:
 
@@ -66,7 +66,7 @@ pnpm install && pnpm dev   # http://localhost:5173
   enemigos icónicos (Ojo de Sauron, El Anillo) son intencionalmente sin
   tipo. Bonus visibles como **chips coloreados** (`BonusVsChips`).
 - 🪙 **Forja de Rivendel**: árbol de mejoras permanentes desbloqueable al
-  visitar Rivendel. 13 nodos en 5 cadenas (daño, riqueza, sabiduría,
+  visitar Rivendel. **14 nodos en 5 cadenas** (daño, riqueza, sabiduría,
   tiempo y compañeros) con prerequisitos visualizados por líneas SVG,
   diseño en diamante, compra por click/doble-click, reset con
   confirmación in-game y refund completo de mithril.
@@ -81,13 +81,20 @@ pnpm install && pnpm dev   # http://localhost:5173
   **añade segundos al timer de semi/jefe** (`+1s` cada 5 puntos).
 - 📈 **Cap de nivel de compañeros por progreso**: evita farmear el
   early-game para trivializar el final.
-- 📜 **Misiones descubribles** con badge `!`; las quests `reach` se
-  reparten en la zona _anterior_ para no bloquear el avance.
+- 📜 **24 misiones descubribles** (`reach` / `kills_at` / `boss`) con
+  badge `!`; las quests `reach` se reparten en la zona _anterior_ y se
+  acreditan al **visitar físicamente** la zona objetivo, no al
+  desbloquearla por gate (separación explícita `visitedLocs` vs
+  `unlockedLocs` para evitar autocompletados accidentales).
 - 💾 **Guardado automático** en `localStorage`, debounced a 500ms, con
-  migración entre versiones de save. Al recargar, los jugadores con
-  partida en curso saltan la bienvenida y el game loop arranca al
-  instante (también se resincroniza al volver de bfcache o cambiar de
-  pestaña, evitando "DPS pasivo congelado").
+  **migración entre versiones de save** (`SAVE_KEY` versionada,
+  actualmente `v11`; la migración v10→v11 reconstruye `visitedLocs` desde
+  `locIdx` para sanear quests `reach` mal completadas). Al recargar, los
+  jugadores con partida en curso saltan la bienvenida y el game loop
+  arranca al instante (también se resincroniza al volver de bfcache o
+  cambiar de pestaña, evitando "DPS pasivo congelado"). El botón de
+  reiniciar partida borra ambas claves y devuelve a la pantalla de
+  bienvenida.
 - ✨ **Halos coloreados configurables** por compañero y enemigo.
 
 ### UI / responsive
@@ -99,9 +106,12 @@ pnpm install && pnpm dev   # http://localhost:5173
 - 📐 **Compactación selectiva por viewport**: `CurrencyBar` reduce
   iconos y cambia "Nivel 50" → "Lvl 50"; "Comprar · 950 oro" → "950 G";
   "+45% ORC" → "+45% O" cuando la rejilla está densa.
-- 🎨 **Fondos por localización** y temática visual coherente: tipografía
-  **Ringbearer** para el título principal, Aniron/Cinzel para el resto,
-  paleta dorada y pergamino.
+- 🎨 **Fondos por localización** con **precarga inteligente** (zona
+  actual + adyacentes desbloqueadas), `Image.decoding = 'async'` y caché
+  de URLs ya pedidas para que viajar en móvil no muestre un flash en
+  negro. Temática visual coherente: tipografía **Ringbearer** para el
+  título principal, Aniron/Cinzel para el resto, paleta dorada y
+  pergamino, fondo de página en gris neutro.
 - ♿ **Accesibilidad**: interactivos `<button>` semánticos con
   `aria-label`, tooltips, `focus-visible` consistente y
   `eslint-plugin-jsx-a11y` bloqueando el lint en CI.
@@ -132,19 +142,19 @@ src/
 ├── data/                      # Contenido del juego (data-as-code)
 │   ├── locations.ts           #   30 zonas siguiendo la trilogía de Peter Jackson
 │   ├── enemies.ts             #   pool de mobs + semi-jefes + jefes por zona (con glow opcional)
-│   ├── companions.ts          #   miembros de La Comunidad (coste, retrato, glow, gates)
-│   ├── shop.ts                #   armas, armaduras y accesorios
-│   ├── quests.ts              #   misiones de tipo kills_at / boss / reach
-│   ├── upgrades.ts            #   árbol de mejoras de la Forja (5 cadenas, 13 nodos)
+│   ├── companions.ts          #    20 miembros de La Comunidad (coste, retrato, glow, gates)
+│   ├── shop.ts                #   armas, armaduras y accesorios por zona
+│   ├── quests.ts              #   24 misiones de tipo kills_at / boss / reach
+│   ├── upgrades.ts            #   árbol de mejoras de la Forja (5 cadenas, 14 nodos)
 │   └── index.ts               #   barrel exports
 ├── engine/                    # Lógica de juego pura (TS sin React)
 │   ├── formulas.ts            #   xp/nivel, DPS, daño click, bonus por tipo, armorFightTimeBonusS, upgradeCost
 │   ├── combat.ts              #   dealDamage (reducer puro testable)
-│   ├── progression.ts         #   desbloqueo de zonas, gates, reach quests, cap nivel compañeros, fightTimeLimitForFight
+│   ├── progression.ts         #   desbloqueo de zonas, gates, reach quests (visitedLocs), cap nivel, fightTimeLimitForFight
 │   ├── spawn.ts               #   generación de enemigos / semi-bosses / bosses
-│   ├── persistence.ts         #   save/load + migraciones por SAVE_KEY versionada
+│   ├── persistence.ts         #   save/load + migraciones por SAVE_KEY versionada (v10 → v11)
 │   ├── store.ts               #   Zustand store (datos + actions: startBossFight, buyUpgrade, resetUpgrades…)
-│   └── __tests__/             #   34 tests unitarios del motor
+│   └── __tests__/             #   37 tests unitarios del motor (engine + content + store)
 ├── hooks/                     # Hooks reutilizables
 │   ├── useGameLoop.ts         #   tick de DPS, auto-save, deadline de boss-fight, resync en visibility/pageshow
 │   ├── __tests__/             #   tests del game loop (deadline + activación)
@@ -165,6 +175,7 @@ src/
 │   ├── QuestsPanel.tsx        #   misiones aceptadas + claim
 │   ├── ShopPanel.tsx          #   tienda global filtrada por zonas visitadas
 │   ├── CurrencyBar.tsx        #   oro, mithril, XP, kills + botón de la Forja (con estado bloqueado/desbloqueado)
+│   ├── ForgeButton.tsx        #   botón reutilizable de la Forja (desktop en CurrencyBar, móvil en mobileActions)
 │   └── Panel.tsx              #   marco de pergamino reutilizable con título centrado
 ├── styles/                    # CSS Modules para temas custom
 │   ├── app.module.css         #   layout responsive + drawers
@@ -229,7 +240,19 @@ src/
   cargar saves antiguos (p. ej. introducir `forgeUnlocked`/`forgeSeen`
   sin romper partidas existentes). Sanea también partidas en estado raro
   (semi/jefe en pantalla sin `bossFight`, niveles de compañeros
-  corruptos) respawneando un mob del pool y normalizando el `level`.
+  corruptos) respawneando un mob del pool y normalizando el `level`. La
+  migración **v10 → v11** ilustra la estrategia: se detecta el save
+  legacy, se reconstruye `visitedLocs` desde `locIdx` (el mapa es lineal,
+  así que toda zona anterior a la actual fue visitada) y se resetea
+  `questProgress` de las quests `reach` aún no reclamadas, preservando
+  las completadas para no romper partidas.
+- **`visitedLocs` vs `unlockedLocs`.** Distinción explícita en el dominio:
+  una zona puede estar **desbloqueada** (accesible en el mapa, p. ej. al
+  reclutar Frodo + Sam) sin estar **visitada** (haber viajado allí). Las
+  misiones `reach` consultan `visitedLocs`; los componentes
+  (`QuestsPanel`, `combat.ts`, `applyPostMutations`) usan la misma
+  fuente. Un test en `store.test.ts` blinda el caso para evitar
+  autocompletados al desbloquear gates.
 - **Forja desbloqueable con onboarding.** El botón nace bloqueado
   (gris + `disabled` + `aria-disabled`). Al visitar Rivendel por
   primera vez se desbloquea, se dispara un toast persistente
@@ -289,8 +312,8 @@ src/
 - CI corre **lint + typecheck + test + build** en cada push/PR a `main`.
 - `ErrorBoundary` global para evitar pantallas en blanco.
 - Guardado en `localStorage` con migraciones y autosave debounced.
-- **36 tests Vitest** cubriendo combate, fórmulas, progresión, store,
-  game-loop y contenido.
+- **39 tests Vitest** en 6 archivos cubriendo combate, fórmulas,
+  progresión, store, game-loop y contenido.
 
 ## 🚀 Desarrollo
 
@@ -461,7 +484,7 @@ ver [`IDEAS.md`](./IDEAS.md).
 
 ## 🧪 Testing
 
-36 tests Vitest distribuidos entre el motor y los hooks:
+39 tests Vitest distribuidos entre el motor y los hooks:
 
 - **`engine/__tests__/formulas.test.ts`** — daño, XP, level-up, coste
   de subida de compañeros, bonus por tipo, bonus de armor en el timer
@@ -469,10 +492,14 @@ ver [`IDEAS.md`](./IDEAS.md).
 - **`engine/__tests__/combat.test.ts`** — reducer de combate (daño al
   enemigo, recompensas, transición, drop de mithril por tier).
 - **`engine/__tests__/progression.test.ts`** — desbloqueo de zonas,
-  completion de misiones `reach`, gating por compañeros, cap de nivel
-  por zona, `fightTimeLimitForFight`.
+  completion de misiones `reach` (vía `visitedLocs`), gating por
+  compañeros, cap de nivel por zona, `fightTimeLimitForFight`.
 - **`engine/__tests__/store.test.ts`** — acciones del store Zustand
-  sobre estado real (compra de upgrades, gates por requires/maxRank).
+  sobre estado real: compra de upgrades, gates por `requires`/`maxRank`,
+  y el caso de regresión "reclutar Frodo + Sam no completa la quest de
+  Bosque Viejo hasta haber viajado". También cubre el cheat
+  `completeAll` (todas las zonas quedan desbloqueadas, visitadas y
+  navegables).
 - **`engine/__tests__/content.test.ts`** — integridad: referencias
   válidas entre `locations`, `enemies`, `quests`, `shop`, `companions`
   y `upgrades`; cada `enemyType` está en el set permitido.

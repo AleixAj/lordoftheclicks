@@ -51,9 +51,7 @@
 
 .header {
   width: 100%;
-  border: 0;
   position: relative;
-  padding: 6px 12px;
   text-align: center;
   font-family: var(--font-heading);
   font-size: 12px;
@@ -64,12 +62,6 @@
   background: var(--color-header-bg);
   background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 0%, transparent 100%);
   border-bottom: 1px solid var(--color-border-gold);
-  cursor: pointer;
-  /* Reserve symmetric horizontal space so a right-side `headerExtra` never
-     visually shifts the centered title. */
-  --header-side: 0px;
-  padding-left: max(12px, var(--header-side));
-  padding-right: max(12px, var(--header-side));
 }
 
 .header:hover {
@@ -79,7 +71,30 @@
     radial-gradient(circle at 50% 0%, rgba(201, 164, 74, 0.2), transparent 60%);
 }
 
-.header:focus-visible {
+/* Inner collapse trigger: takes the entire header surface so clicking the
+   bar still toggles the panel, but lives as a SIBLING of `.headerExtra`
+   so clicks on the tab toggle don't bubble up and collapse the panel. */
+.headerCollapseBtn {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 6px 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  text-align: center;
+  cursor: pointer;
+  /* Reserve symmetric horizontal space so a right-side `headerExtra` never
+     visually shifts the centered title. */
+  --header-side: 0px;
+  padding-left: max(12px, var(--header-side));
+  padding-right: max(12px, var(--header-side));
+}
+
+.headerCollapseBtn:focus-visible {
   outline: 2px solid #f4d47a;
   outline-offset: -2px;
 }
@@ -112,7 +127,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  pointer-events: none;
+  z-index: 1;
 }
 
 /* Long descriptive text shown next to the title (e.g. the BattlePanel
@@ -134,8 +149,21 @@
   }
 
   /* Compact header: arrow pinned left, title text hidden, headerExtra
-     centered so a tab toggle owns the bar. Only kicks in when the
-     panel opts in via `compactHeaderOnMobile`. */
+     becomes the only in-flow child so it determines the bar height and
+     stays centred. Only kicks in when the panel opts in via
+     `compactHeaderOnMobile`. */
+  .headerCompact {
+    padding: 3px 0;
+  }
+
+  .headerCompact .headerCollapseBtn {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+  }
+
   .headerCompact .headerTitle {
     position: absolute;
     left: 8px;
@@ -150,11 +178,13 @@
   }
 
   .headerCompact .headerExtra {
-    position: static;
+    position: relative;
+    right: auto;
+    top: auto;
     transform: none;
     max-width: 100%;
     overflow: visible;
-    margin: 0 auto;
+    display: inline-flex;
   }
 }
 

@@ -1,17 +1,21 @@
-import { LOCATIONS } from '@/data';
+import { LOCATIONS, QUESTS } from '@/data';
 import type { CompanionId, CompanionState, GameState } from '@/types/game';
 import { calcClickDamage } from './formulas';
 import { spawnFromPool, spawnInitial } from './spawn';
 
-// Bumped to v10 after gating the Forja behind a Rivendel visit. Adds the
-// `forgeUnlocked` / `forgeSeen` flags used by the unlock notice and the
-// header button highlight.
-const SAVE_KEY = 'lotc_save_v10';
+// v11: fixed visitedLocs migration — old v10 saves incorrectly populated
+// visitedLocs from unlockedLocs, which caused reach quests to complete the
+// moment a gate was unlocked rather than when the player physically traveled
+// there. When migrating from v10 we always reset visitedLocs to ['comarca'].
+const SAVE_KEY = 'lotc_save_v11';
+const LEGACY_KEY = 'lotc_save_v10';
 
 /** True when localStorage already holds a save for this profile. */
 export function hasExistingSave(): boolean {
   if (typeof window === 'undefined') return false;
-  return window.localStorage.getItem(SAVE_KEY) != null;
+  return (
+    window.localStorage.getItem(SAVE_KEY) != null || window.localStorage.getItem(LEGACY_KEY) != null
+  );
 }
 
 /** Rehydrate companion ranks from older/partial save snapshots. */
@@ -44,6 +48,7 @@ export function createInitialState(): GameState {
     locKills: {},
     totalKills: 0,
     unlockedLocs: ['comarca'],
+    visitedLocs: ['comarca'],
     bossDefeated: {},
     semiBossDefeated: {},
     questProgress: {},
@@ -57,7 +62,12 @@ export function createInitialState(): GameState {
 
 export function loadGame(): GameState {
   if (typeof window === 'undefined') return createInitialState();
-  const saved = window.localStorage.getItem(SAVE_KEY);
+  const rawV11 = window.localStorage.getItem(SAVE_KEY);
+  const rawV10 = rawV11 == null ? window.localStorage.getItem(LEGACY_KEY) : null;
+  const saved = rawV11 ?? rawV10;
+  // Flag used below to reset the buggy visitedLocs field that the v10
+  // migration introduced by copying it wholesale from unlockedLocs.
+  const isV10Migration = rawV11 == null && rawV10 != null;
   if (!saved) return createInitialState();
   try {
     const parsed = JSON.parse(saved) as Partial<GameState>;
@@ -96,6 +106,29 @@ export function loadGame(): GameState {
       enemy = spawnFromPool(loc);
     }
 
+    // v10 migration: reconstruct visitedLocs from locIdx (the player must have
+    // physically traveled through every zone up to their current position since
+    // the world map is strictly linear). This is more accurate than ['comarca']
+    // for players already deep into the game, and more accurate than copying
+    // unlockedLocs which included gate-unlocked zones that were never visited.
+    const visitedLocs = isV10Migration
+      ? LOCATIONS.slice(0, locIdx + 1).map((l) => l.id)
+      : (parsed.visitedLocs ?? ['comarca']);
+
+    // v10 migration: the old code incorrectly set questProgress for reach
+    // quests when a gate was unlocked (recruiting companions), not on travel.
+    // Reset any reach quest that is not yet claimed AND whose target is not in
+    // the reconstructed visitedLocs, so it is re-earned by actual travel.
+    const parsedQuestProgress = { ...(parsed.questProgress ?? {}) };
+    if (isV10Migration) {
+      const claimedSet = new Set(parsed.questsDone ?? []);
+      for (const q of QUESTS) {
+        if (q.type === 'reach' && !visitedLocs.includes(q.loc) && !claimedSet.has(q.id)) {
+          parsedQuestProgress[q.id] = 0;
+        }
+      }
+    }
+
     return {
       ...base,
       ...parsed,
@@ -107,6 +140,8 @@ export function loadGame(): GameState {
       upgrades: parsed.upgrades ?? {},
       forgeUnlocked,
       forgeSeen,
+      visitedLocs,
+      questProgress: parsedQuestProgress,
       // Boss fights are real-time: a save mid-fight would carry a stale
       // deadline. Always reset on load.
       bossFight: null,
@@ -129,4 +164,5 @@ export function saveGame(state: GameState): void {
 export function resetSave(): void {
   if (typeof window === 'undefined') return;
   window.localStorage.removeItem(SAVE_KEY);
+  window.localStorage.removeItem(LEGACY_KEY);
 }
