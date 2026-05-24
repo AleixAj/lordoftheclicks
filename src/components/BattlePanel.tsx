@@ -4,6 +4,7 @@ import { calcActiveEnemyTypeBonusPct, calcDps } from '@/engine/formulas';
 import {
   bossKillThreshold,
   fightTimeLimitForFight,
+  isBossFightExpired,
   semiBossKillThreshold,
 } from '@/engine/progression';
 import {
@@ -50,6 +51,7 @@ export function BattlePanel() {
   const clickEnemy = useGameStore((s) => s.clickEnemy);
   const startBossFight = useGameStore((s) => s.startBossFight);
   const abandonBossFight = useGameStore((s) => s.abandonBossFight);
+  const dismissFightFailed = useGameStore((s) => s.dismissFightFailed);
   const travelTo = useGameStore((s) => s.travelTo);
   const acceptQuests = useGameStore((s) => s.acceptQuests);
 
@@ -65,12 +67,20 @@ export function BattlePanel() {
   const hasPendingCompanionsHere = !!loc?.companions?.some((id) => !state.companions[id]?.unlocked);
   const bg = loc?.background;
 
-  // Force a re-render every 250ms while a fight is active so the countdown bar
-  // stays smooth even when DPS is 0 (which would otherwise skip state updates).
+  // Re-render every 250ms during a boss fight so the countdown stays smooth when
+  // DPS is 0, and end the encounter as soon as the deadline passes (same cadence
+  // as useGameLoop so we don't rely on a single global interval).
   const [, forceTick] = useState(0);
   useEffect(() => {
     if (!bossFight) return;
-    const id = window.setInterval(() => forceTick((n) => n + 1), 250);
+    const id = window.setInterval(() => {
+      const fight = useGameStore.getState().state.bossFight;
+      if (fight && isBossFightExpired(fight)) {
+        useGameStore.getState().failBossFight();
+        return;
+      }
+      forceTick((n) => n + 1);
+    }, 250);
     return () => window.clearInterval(id);
   }, [bossFight]);
 
@@ -236,6 +246,23 @@ export function BattlePanel() {
             </span>
           </div>
         )}
+        {fightFailed && (
+          <div className={`${styles.unlockToast} ${styles.failToast}`} role="status">
+            <button
+              type="button"
+              className={styles.toastClose}
+              onClick={dismissFightFailed}
+              aria-label="Cerrar aviso"
+            >
+              ×
+            </button>
+            <strong>¡Has perdido!</strong>
+            <span>
+              El {fightFailed === 'boss' ? 'jefe' : 'semi-jefe'} ha escapado. Mejora tu equipo o
+              entrena a la Comunidad antes de volver a desafiarlo.
+            </span>
+          </div>
+        )}
         <div className={styles.stats}>
           <span>
             Daño click<b>{state.clickDmg}</b>
@@ -289,35 +316,23 @@ export function BattlePanel() {
                 draggable={false}
                 style={(() => {
                   const tmpl = ENEMIES[enemy.id];
-                  if (!tmpl?.glow) return undefined;
-                  const alpha = Math.min(0.9, tmpl.glow * 0.04);
-                  const rgb = tmpl.glowColor ?? '255, 255, 255';
-                  return {
-                    '--enemy-glow-blur': `${tmpl.glow}px`,
-                    '--enemy-glow-color': `rgba(${rgb}, ${alpha.toFixed(2)})`,
-                  } as CSSProperties;
+                  if (!tmpl) return undefined;
+                  const vars: Record<string, string> = {};
+                  if (tmpl.glow) {
+                    const alpha = Math.min(0.9, tmpl.glow * 0.04);
+                    const rgb = tmpl.glowColor ?? '255, 255, 255';
+                    vars['--enemy-glow-blur'] = `${tmpl.glow}px`;
+                    vars['--enemy-glow-color'] = `rgba(${rgb}, ${alpha.toFixed(2)})`;
+                  }
+                  if (isEliteEnemy && tmpl.spriteScale) {
+                    vars['--enemy-sprite-scale'] = `${tmpl.spriteScale}`;
+                  }
+                  if (isEliteEnemy && tmpl.spriteOffsetY) {
+                    vars['--enemy-sprite-offset-y'] = `${tmpl.spriteOffsetY}%`;
+                  }
+                  return Object.keys(vars).length > 0 ? (vars as CSSProperties) : undefined;
                 })()}
               />
-              {isEliteEnemy && (
-                <div className={styles.eliteOverlay} aria-hidden="true">
-                  <div
-                    className={`${styles.eliteTier} ${
-                      enemy.tier === 'boss' ? styles.eliteTierBoss : styles.eliteTierSemi
-                    }`}
-                  >
-                    {enemy.tier === 'boss' ? 'Jefe' : 'Semi-jefe'}
-                  </div>
-                  <div
-                    className={`${styles.eliteName} ${
-                      enemy.tier === 'boss' ? styles.boss : styles.semi
-                    }`}
-                  >
-                    {enemy.name}
-                  </div>
-                  {renderEnemyTypePill(styles.eliteTypePill)}
-                  {renderHpBlock(styles.eliteHpWrap)}
-                </div>
-              )}
               {dmgNums.map((d) => (
                 <div
                   key={d.id}
@@ -348,6 +363,29 @@ export function BattlePanel() {
               )}
             </button>
 
+            {isEliteEnemy && (
+              <div className={styles.eliteHpAnchor}>
+                <div className={styles.eliteLabels} aria-hidden="true">
+                  <div
+                    className={`${styles.eliteTier} ${
+                      enemy.tier === 'boss' ? styles.eliteTierBoss : styles.eliteTierSemi
+                    }`}
+                  >
+                    {enemy.tier === 'boss' ? 'Jefe' : 'Semi-jefe'}
+                  </div>
+                  <div
+                    className={`${styles.eliteName} ${
+                      enemy.tier === 'boss' ? styles.boss : styles.semi
+                    }`}
+                  >
+                    {enemy.name}
+                  </div>
+                  {renderEnemyTypePill(styles.eliteTypePill)}
+                </div>
+                {renderHpBlock(styles.eliteHpWrap)}
+              </div>
+            )}
+
             {!isEliteEnemy && (
               <div className={styles.name}>
                 {enemy.name}
@@ -356,12 +394,6 @@ export function BattlePanel() {
             )}
 
             {!isEliteEnemy && renderHpBlock()}
-
-            {fightFailed && (
-              <div className={styles.flash} role="status">
-                ¡Has perdido! El {fightFailed === 'boss' ? 'jefe' : 'semi-jefe'} ha escapado.
-              </div>
-            )}
           </div>
         ) : loc && loc.enemies.length === 0 && (loc.semiBoss || loc.boss) ? (
           <div className={styles.statePanel}>

@@ -10,7 +10,7 @@ interface MapMarkerProps {
   isComplete: boolean;
   scale: number;
   showLabel: boolean;
-  /** When true, an informational "!" badge appears under the dot. */
+  /** When true, an informational "!" badge appears over the dot. */
   hasQuest: boolean;
   onClick: (index: number, unlocked: boolean) => (e: React.MouseEvent) => void;
 }
@@ -84,12 +84,26 @@ function MapMarkerImpl({
           style={{
             width: scaled,
             height: scaled,
-            background,
-            borderColor,
-            boxShadow,
+            background: hasQuest ? 'transparent' : background,
+            borderColor: hasQuest ? 'transparent' : borderColor,
+            boxShadow: hasQuest ? 'none' : boxShadow,
             opacity: unlocked ? 1 : 0.7,
           }}
         />
+        {hasQuest && (
+          <span
+            className={styles.questBadge}
+            aria-hidden="true"
+            title={`${loc.name} tiene misiones pendientes`}
+            style={{
+              width: scaled,
+              height: scaled,
+              fontSize: Math.max(10, scaled * 0.52),
+            }}
+          >
+            !
+          </span>
+        )}
         {showLabel && (
           <span
             className={styles.label}
@@ -102,23 +116,6 @@ function MapMarkerImpl({
           </span>
         )}
       </button>
-      {hasQuest && (
-        <span
-          className={styles.questBadge}
-          aria-hidden="true"
-          title={`${loc.name} tiene misiones pendientes`}
-          style={{
-            width: Math.max(12, scaled * 0.85),
-            height: Math.max(12, scaled * 0.85),
-            fontSize: Math.max(9, scaled * 0.65),
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-          }}
-        >
-          !
-        </span>
-      )}
     </div>
   );
 }

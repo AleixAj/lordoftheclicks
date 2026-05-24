@@ -27,7 +27,7 @@ Si vienes a evaluar el perfil frontend, esto es lo que el repo demuestra:
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Arquitectura escalable**           | Motor de juego puro (`src/engine/`) totalmente desacoplado de React. Store Zustand sólo orquesta. Componentes sólo pintan.                       |
 | **TypeScript estricto**              | `strict`, `noUnusedLocals`, `noUnusedParameters`. Modelo de dominio tipado (`GameState`, `EnemyType`, `UpgradeDefinition`, `BossFightState`…).   |
-| **Testing del dominio**              | 34 tests Vitest cubriendo fórmulas, combate, progresión, store e integridad de contenido. Sin tests frágiles de UI.                              |
+| **Testing del dominio**              | 36 tests Vitest cubriendo fórmulas, combate, progresión, store, game-loop e integridad de contenido. Sin tests frágiles de UI.                   |
 | **Performance consciente**           | Pan/zoom del mapa con `translate3d` + `requestAnimationFrame` directo al DOM. Selectors granulares de Zustand. `useMemo` en listas pesadas.      |
 | **Responsive de verdad**             | Layout desktop de 3 columnas que muta a drawers mutuamente exclusivos en mobile/tablet. Compactación de copy y controles por viewport.           |
 | **Accesibilidad por defecto**        | `<button>` semánticos, `aria-label`, `focus-visible`, `eslint-plugin-jsx-a11y` activo en CI bloqueando el lint.                                  |
@@ -54,9 +54,12 @@ pnpm install && pnpm dev   # http://localhost:5173
   vida, sprite de enemigo por zona y números de daño flotantes.
 - 👹 **Jefes y semi-jefes con tiempo limitado** (default 30s,
   configurable). Si el timer llega a 0 pierdes y vuelves al pool normal
-  con flash de derrota; con la `✕` flotante puedes **abandonar
-  manualmente** sin penalización. Durante un encuentro se puede cambiar
-  de semi a jefe (o viceversa) sin abandonar, sustituye la pelea.
+  con un toast persistente de derrota (se cierra con la `×`); con la
+  `✕` flotante puedes **abandonar manualmente** sin penalización.
+  Durante un encuentro se puede cambiar de semi a jefe (o viceversa) sin
+  abandonar, sustituye la pelea. El chequeo del deadline corre tanto en
+  `useGameLoop` como en el intervalo del `BattlePanel`, para no depender
+  de un único interval global.
 - 🧩 **Tipos de enemigo y equipo situacional**: los objetos aplican
   multiplicadores porcentuales contra orcos, Uruk-hai, espectros, trolls,
   bestias, mordor, naturaleza, humanos o criatura antigua. Algunos
@@ -81,7 +84,10 @@ pnpm install && pnpm dev   # http://localhost:5173
 - 📜 **Misiones descubribles** con badge `!`; las quests `reach` se
   reparten en la zona _anterior_ para no bloquear el avance.
 - 💾 **Guardado automático** en `localStorage`, debounced a 500ms, con
-  migración entre versiones de save.
+  migración entre versiones de save. Al recargar, los jugadores con
+  partida en curso saltan la bienvenida y el game loop arranca al
+  instante (también se resincroniza al volver de bfcache o cambiar de
+  pestaña, evitando "DPS pasivo congelado").
 - ✨ **Halos coloreados configurables** por compañero y enemigo.
 
 ### UI / responsive
@@ -140,7 +146,8 @@ src/
 │   ├── store.ts               #   Zustand store (datos + actions: startBossFight, buyUpgrade, resetUpgrades…)
 │   └── __tests__/             #   34 tests unitarios del motor
 ├── hooks/                     # Hooks reutilizables
-│   ├── useGameLoop.ts         #   tick de DPS, auto-save, deadline de boss-fight
+│   ├── useGameLoop.ts         #   tick de DPS, auto-save, deadline de boss-fight, resync en visibility/pageshow
+│   ├── __tests__/             #   tests del game loop (deadline + activación)
 │   └── useMapInteraction.ts   #   pan / zoom / drag (mouse + touch) del mapa con translate3d + rAF
 ├── components/                # Componentes React (TSX, un componente por archivo)
 │   ├── App.tsx                #   layout principal, drawers laterales en mobile, dev cheats
@@ -183,9 +190,11 @@ src/
   consumen. Esto permite testear el dominio sin montar nada y migrar la
   UI sin tocar la lógica.
 - **Side-effects en hooks, nunca a nivel de módulo.** Tick de DPS,
-  autosave y deadline de las boss-fights viven en `useGameLoop`.
-  Pan/zoom/drag del mapa vive en `useMapInteraction`. Compatible con
-  HMR, SSR y unit-testable.
+  autosave y deadline de las boss-fights viven en `useGameLoop`, que
+  además se resincroniza con `visibilitychange` y `pageshow` para que
+  el DPS pasivo no se quede congelado tras cambiar de pestaña o volver
+  desde la bfcache. Pan/zoom/drag del mapa vive en `useMapInteraction`.
+  Compatible con HMR, SSR y unit-testable.
 - **`useMapInteraction` aplica `translate3d` directo al DOM con `rAF`**
   durante el drag para mantener 60 fps con la imagen pesada del mapa,
   evitando re-renders de React en cada `pointermove`.
@@ -208,7 +217,9 @@ src/
   define tramos crecientes. El store rechaza `levelUpCompanion` por
   encima del cap; el panel muestra "MAX" con tooltip. Tests dedicados.
 - **Boss-fight: fail vs abandon.** `failBossFight` se dispara desde el
-  `useGameLoop` cuando expira el deadline (flash "¡Has perdido!").
+  `useGameLoop` (y como red de seguridad desde el propio `BattlePanel`)
+  cuando expira el deadline, mostrando un toast persistente
+  "¡Has perdido!" que el jugador cierra manualmente con la `×`.
   `abandonBossFight` es la acción explícita del usuario (silenciosa).
   `startBossFight` con un tier distinto **sustituye** el encuentro.
 - **Quests data-driven.** Las misiones `reach` declaran `pickupLoc` ≠
@@ -216,7 +227,9 @@ src/
 - **Estado serializable + migraciones.** `GameState` es un POJO.
   `persistence.ts` usa una `SAVE_KEY` versionada y aplica migraciones al
   cargar saves antiguos (p. ej. introducir `forgeUnlocked`/`forgeSeen`
-  sin romper partidas existentes).
+  sin romper partidas existentes). Sanea también partidas en estado raro
+  (semi/jefe en pantalla sin `bossFight`, niveles de compañeros
+  corruptos) respawneando un mob del pool y normalizando el `level`.
 - **Forja desbloqueable con onboarding.** El botón nace bloqueado
   (gris + `disabled` + `aria-disabled`). Al visitar Rivendel por
   primera vez se desbloquea, se dispara un toast persistente
@@ -276,8 +289,8 @@ src/
 - CI corre **lint + typecheck + test + build** en cada push/PR a `main`.
 - `ErrorBoundary` global para evitar pantallas en blanco.
 - Guardado en `localStorage` con migraciones y autosave debounced.
-- **34 tests Vitest** cubriendo combate, fórmulas, progresión, store y
-  contenido.
+- **36 tests Vitest** cubriendo combate, fórmulas, progresión, store,
+  game-loop y contenido.
 
 ## 🚀 Desarrollo
 
@@ -448,20 +461,24 @@ ver [`IDEAS.md`](./IDEAS.md).
 
 ## 🧪 Testing
 
-Tests del motor en `src/engine/__tests__/` (34 tests, 5 archivos):
+36 tests Vitest distribuidos entre el motor y los hooks:
 
-- **`formulas.test.ts`** — daño, XP, level-up, coste de subida de
-  compañeros, bonus por tipo, bonus de armor en el timer
+- **`engine/__tests__/formulas.test.ts`** — daño, XP, level-up, coste
+  de subida de compañeros, bonus por tipo, bonus de armor en el timer
   (`armorFightTimeBonusS`), coste de upgrades de la Forja.
-- **`combat.test.ts`** — reducer de combate (daño al enemigo,
-  recompensas, transición).
-- **`progression.test.ts`** — desbloqueo de zonas, completion de
-  misiones `reach`, gating por compañeros, cap de nivel por zona,
-  `fightTimeLimitForFight`.
-- **`store.test.ts`** — acciones del store Zustand sobre estado real.
-- **`content.test.ts`** — integridad: referencias válidas entre
-  `locations`, `enemies`, `quests`, `shop`, `companions` y `upgrades`;
-  cada `enemyType` está en el set permitido.
+- **`engine/__tests__/combat.test.ts`** — reducer de combate (daño al
+  enemigo, recompensas, transición, drop de mithril por tier).
+- **`engine/__tests__/progression.test.ts`** — desbloqueo de zonas,
+  completion de misiones `reach`, gating por compañeros, cap de nivel
+  por zona, `fightTimeLimitForFight`.
+- **`engine/__tests__/store.test.ts`** — acciones del store Zustand
+  sobre estado real (compra de upgrades, gates por requires/maxRank).
+- **`engine/__tests__/content.test.ts`** — integridad: referencias
+  válidas entre `locations`, `enemies`, `quests`, `shop`, `companions`
+  y `upgrades`; cada `enemyType` está en el set permitido.
+- **`hooks/__tests__/useGameLoop.test.ts`** — el loop termina la pelea
+  al expirar el deadline y no avanza cuando está inactivo (welcome
+  screen).
 
 ```bash
 pnpm test:run

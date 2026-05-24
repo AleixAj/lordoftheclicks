@@ -80,6 +80,8 @@ interface GameStore {
   markForgeSeen: () => void;
   /** Dismisses the transient Forja-unlocked flash banner. */
   dismissForgeUnlockFlash: () => void;
+  /** Dismisses the boss/semi-boss escape banner. */
+  dismissFightFailed: () => void;
   resetGame: () => void;
   /** Dev cheat: unlock every location and complete `reach` quests. */
   unlockAll: () => void;
@@ -257,10 +259,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
       state: { ...current, enemy: pool, bossFight: null },
       fightFailed: failedTier,
     });
-    // Auto-clear the flash message so the UI feedback is short and unobtrusive.
-    window.setTimeout(() => {
-      if (get().fightFailed === failedTier) set({ fightFailed: null });
-    }, 2200);
   },
 
   abandonBossFight: () => {
@@ -459,6 +457,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
   dismissForgeUnlockFlash: () => {
     if (!get().forgeUnlockFlash) return;
     set({ forgeUnlockFlash: false });
+  },
+
+  dismissFightFailed: () => {
+    if (!get().fightFailed) return;
+    set({ fightFailed: null });
   },
 
   resetGame: () => {

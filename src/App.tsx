@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { hasExistingSave } from '@/engine/persistence';
 import { useGameStore } from '@/engine/store';
 import { useGameLoop } from '@/hooks/useGameLoop';
 import { BattlePanel } from '@/components/BattlePanel';
@@ -18,8 +19,18 @@ const resetButtonClass = `${headerButtonClass} min-w-9 px-2 text-[18px] leading-
 type DrawerSide = 'left' | 'right';
 
 export function App() {
-  useGameLoop();
-  const [hasStarted, setHasStarted] = useState(false);
+  // Returning players skip the welcome screen so the DPS loop mounts on refresh.
+  const [hasStarted, setHasStarted] = useState(() => hasExistingSave());
+  useGameLoop(hasStarted);
+
+  if (!hasStarted) {
+    return <WelcomeScreen onStart={() => setHasStarted(true)} />;
+  }
+
+  return <GameShell />;
+}
+
+function GameShell() {
   const [openDrawer, setOpenDrawer] = useState<DrawerSide | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [forgeOpen, setForgeOpen] = useState(false);
@@ -40,10 +51,6 @@ export function App() {
     markForgeSeen();
     dismissForgeUnlockFlash();
   };
-
-  if (!hasStarted) {
-    return <WelcomeScreen onStart={() => setHasStarted(true)} />;
-  }
 
   const closeMenu = () => setMenuOpen(false);
   const runAndClose = (fn: () => void) => () => {

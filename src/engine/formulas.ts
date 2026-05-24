@@ -115,7 +115,9 @@ export function calcDps(state: Pick<GameState, 'companions'>): number {
   let dps = 0;
   for (const c of COMPANIONS) {
     const cs = state.companions[c.id];
-    if (cs?.unlocked) dps += c.baseDps * cs.level;
+    if (!cs?.unlocked) continue;
+    const level = typeof cs.level === 'number' && cs.level > 0 ? cs.level : 1;
+    dps += c.baseDps * level;
   }
   return dps;
 }

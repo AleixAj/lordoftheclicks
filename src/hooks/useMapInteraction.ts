@@ -99,6 +99,16 @@ export function useMapInteraction({
   const liveOffsetRef = useRef<MapOffset>({ x: 0, y: 0 });
   const rafRef = useRef<number | null>(null);
   const pendingCoordRef = useRef<{ x: string; y: string } | null>(null);
+  const pinchRef = useRef({
+    pinching: false,
+    startDist: 0,
+    startZoom: 1,
+    startOffsetX: 0,
+    startOffsetY: 0,
+    startCenterX: 0,
+    startCenterY: 0,
+    liveZoom: 1,
+  });
 
   const [containerSize, setContainerSize] = useState<MapSize>({ w: 600, h: 220 });
   const [zoom, setZoom] = useState(defaultZoom);
@@ -270,25 +280,95 @@ export function useMapInteraction({
   }, [endDrag]);
 
   /* Touch handlers mirror the mouse ones so the map can be panned on
-     mobile/tablet. The container already sets `touch-action: none`, so
-     the browser won't try to scroll/zoom the page while dragging the map. */
-  const onTouchStart = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length !== 1) return;
-    const t = e.touches[0];
-    dragRef.current = {
-      dragging: true,
-      moved: 0,
-      startX: t.clientX,
-      startY: t.clientY,
-      baseX: liveOffsetRef.current.x,
-      baseY: liveOffsetRef.current.y,
-    };
-    setTransitioning(false);
-    setIsDragging(true);
-  }, []);
+     mobile/tablet, and add two-finger pinch-to-zoom. The container
+     already sets `touch-action: none`, so the browser won't try to
+     scroll/zoom the page while interacting with the map. */
+  const onTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      const el = containerRef.current;
+      if (e.touches.length === 2 && el) {
+        // Promote to pinch: cancel any single-finger drag in flight.
+        dragRef.current.dragging = false;
+        dragRef.current.moved = Number.POSITIVE_INFINITY; // suppress trailing click
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const r = el.getBoundingClientRect();
+        const cx = (t1.clientX + t2.clientX) / 2 - r.left;
+        const cy = (t1.clientY + t2.clientY) / 2 - r.top;
+        const dx = t1.clientX - t2.clientX;
+        const dy = t1.clientY - t2.clientY;
+        pinchRef.current = {
+          pinching: true,
+          startDist: Math.max(1, Math.hypot(dx, dy)),
+          startZoom: zoom,
+          startOffsetX: liveOffsetRef.current.x,
+          startOffsetY: liveOffsetRef.current.y,
+          startCenterX: cx,
+          startCenterY: cy,
+          liveZoom: zoom,
+        };
+        const inner = innerRef.current;
+        if (inner) inner.style.transformOrigin = '0 0';
+        setTransitioning(false);
+        setIsDragging(true);
+        return;
+      }
+      if (e.touches.length !== 1) return;
+      const t = e.touches[0];
+      dragRef.current = {
+        dragging: true,
+        moved: 0,
+        startX: t.clientX,
+        startY: t.clientY,
+        baseX: liveOffsetRef.current.x,
+        baseY: liveOffsetRef.current.y,
+      };
+      setTransitioning(false);
+      setIsDragging(true);
+    },
+    [zoom],
+  );
 
   const onTouchMove = useCallback(
     (e: React.TouchEvent) => {
+      const pinch = pinchRef.current;
+      const el = containerRef.current;
+      if (pinch.pinching && e.touches.length === 2 && el) {
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const r = el.getBoundingClientRect();
+        const cx = (t1.clientX + t2.clientX) / 2 - r.left;
+        const cy = (t1.clientY + t2.clientY) / 2 - r.top;
+        const dx = t1.clientX - t2.clientX;
+        const dy = t1.clientY - t2.clientY;
+        const dist = Math.max(1, Math.hypot(dx, dy));
+        const rawRatio = dist / pinch.startDist;
+        const nextZoom = Math.min(maxZoom, Math.max(minZoom, pinch.startZoom * rawRatio));
+        const actualRatio = nextZoom / pinch.startZoom;
+        // Anchor the original map point under the current finger midpoint,
+        // then add the finger-midpoint translation so two-finger pan works too.
+        const panDx = cx - pinch.startCenterX;
+        const panDy = cy - pinch.startCenterY;
+        const ox =
+          pinch.startCenterX - (pinch.startCenterX - pinch.startOffsetX) * actualRatio + panDx;
+        const oy =
+          pinch.startCenterY - (pinch.startCenterY - pinch.startOffsetY) * actualRatio + panDy;
+        const nextOff = clampOffset(
+          ox,
+          oy,
+          fit.w * nextZoom,
+          fit.h * nextZoom,
+          containerSize.w,
+          containerSize.h,
+        );
+        pinch.liveZoom = nextZoom;
+        liveOffsetRef.current = nextOff;
+        const inner = innerRef.current;
+        if (inner) {
+          inner.style.transform = `translate3d(${nextOff.x}px, ${nextOff.y}px, 0) scale(${actualRatio})`;
+        }
+        return;
+      }
       const drag = dragRef.current;
       if (!drag.dragging || e.touches.length !== 1) return;
       const t = e.touches[0];
@@ -309,10 +389,29 @@ export function useMapInteraction({
         inner.style.transform = `translate3d(${liveOff.x}px, ${liveOff.y}px, 0)`;
       }
     },
-    [displaySize.w, displaySize.h, containerSize.w, containerSize.h],
+    [
+      displaySize.w,
+      displaySize.h,
+      containerSize.w,
+      containerSize.h,
+      fit.w,
+      fit.h,
+      minZoom,
+      maxZoom,
+    ],
   );
 
   const onTouchEnd = useCallback(() => {
+    const pinch = pinchRef.current;
+    if (pinch.pinching) {
+      const inner = innerRef.current;
+      if (inner) inner.style.transformOrigin = '';
+      pinch.pinching = false;
+      setIsDragging(false);
+      setZoom(pinch.liveZoom);
+      setOffset(liveOffsetRef.current);
+      return;
+    }
     endDrag();
   }, [endDrag]);
 

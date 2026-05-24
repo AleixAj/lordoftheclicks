@@ -1,6 +1,7 @@
 import { LOCATIONS, QUESTS } from '@/data';
 import { armorFightTimeBonusS, upgradeEffectValue } from './formulas';
 import type {
+  BossFightState,
   CompanionId,
   CompanionState,
   EquippedItems,
@@ -39,6 +40,11 @@ export function bossKillThreshold(loc: Location): number {
 export function fightTimeLimitS(loc: Location, tier: 'semi' | 'boss'): number {
   if (tier === 'semi') return loc.semiBossTimeLimit ?? DEFAULT_SEMI_TIME_LIMIT_S;
   return loc.bossTimeLimit ?? DEFAULT_BOSS_TIME_LIMIT_S;
+}
+
+/** True when the wall-clock boss/semi deadline has been reached. */
+export function isBossFightExpired(fight: BossFightState, nowMs: number = Date.now()): boolean {
+  return nowMs >= fight.deadlineMs;
 }
 
 /** Total fight timer including armor bonus from equipped `def`. */

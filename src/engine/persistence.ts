@@ -1,11 +1,32 @@
-import type { GameState } from '@/types/game';
+import { LOCATIONS } from '@/data';
+import type { CompanionId, CompanionState, GameState } from '@/types/game';
 import { calcClickDamage } from './formulas';
-import { spawnInitial } from './spawn';
+import { spawnFromPool, spawnInitial } from './spawn';
 
 // Bumped to v10 after gating the Forja behind a Rivendel visit. Adds the
 // `forgeUnlocked` / `forgeSeen` flags used by the unlock notice and the
 // header button highlight.
 const SAVE_KEY = 'lotc_save_v10';
+
+/** True when localStorage already holds a save for this profile. */
+export function hasExistingSave(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.localStorage.getItem(SAVE_KEY) != null;
+}
+
+/** Rehydrate companion ranks from older/partial save snapshots. */
+function normalizeCompanions(
+  raw: Partial<Record<CompanionId, Partial<CompanionState>>> | undefined,
+): Record<CompanionId, CompanionState> {
+  if (!raw) return {};
+  const out: Record<CompanionId, CompanionState> = {};
+  for (const [id, cs] of Object.entries(raw)) {
+    if (!cs?.unlocked) continue;
+    const level = typeof cs.level === 'number' && cs.level > 0 ? cs.level : 1;
+    out[id as CompanionId] = { unlocked: true, level };
+  }
+  return out;
+}
 
 export function createInitialState(): GameState {
   return {
@@ -60,9 +81,27 @@ export function loadGame(): GameState {
     const forgeUnlocked = parsed.forgeUnlocked ?? false;
     const forgeSeen = parsed.forgeSeen ?? false;
 
+    const locIdx = parsed.locIdx ?? base.locIdx;
+    const loc = LOCATIONS[locIdx];
+    let enemy = parsed.enemy ?? base.enemy;
+    // Mid-fight saves clear bossFight but may still carry a semi/boss sprite.
+    // Respawn a pool mob so the player isn't stuck on an elite with no timer.
+    if (
+      enemy &&
+      (enemy.tier === 'semi' || enemy.tier === 'boss') &&
+      loc &&
+      !loc.isRest &&
+      loc.enemies.length > 0
+    ) {
+      enemy = spawnFromPool(loc);
+    }
+
     return {
       ...base,
       ...parsed,
+      locIdx,
+      enemy,
+      companions: normalizeCompanions(parsed.companions),
       semiBossDefeated: parsed.semiBossDefeated ?? {},
       questsAccepted,
       upgrades: parsed.upgrades ?? {},

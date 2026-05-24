@@ -140,14 +140,29 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Bosque Viejo
   // ============================================================
-  conejo: { id: 'conejo', name: 'Conejo Salvaje', hp: 25, gold: 6, xp: 4 },
-  ciervo: { id: 'ciervo', name: 'Ciervo', hp: 60, gold: 14, xp: 9 },
+  conejo: {
+    id: 'conejo',
+    name: 'Conejo Salvaje',
+    hp: 25,
+    gold: 6,
+    xp: 4,
+    sprite: '/enemies/green-frog.gif',
+  },
+  ciervo: {
+    id: 'ciervo',
+    name: 'Ciervo',
+    hp: 60,
+    gold: 14,
+    xp: 9,
+    sprite: '/enemies/crazy-cat.gif',
+  },
   espectro_bosque: {
     id: 'espectro_bosque',
     name: 'Espectro del Bosque',
     hp: 240,
     gold: 60,
     xp: 40,
+    sprite: '/enemies/nazgul.gif',
   },
   nazgul_jinete: {
     id: 'nazgul_jinete',
@@ -156,14 +171,36 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     gold: 95,
     xp: 60,
     isBoss: true,
+    sprite: '/enemies/nazgul.gif',
   },
 
   // ============================================================
   // Cima de los Vientos
   // ============================================================
-  bandido: { id: 'bandido', name: 'Bandido', hp: 85, gold: 20, xp: 13 },
-  lobo_alfa: { id: 'lobo_alfa', name: 'Lobo Alfa', hp: 180, gold: 45, xp: 30 },
-  khamul: { id: 'khamul', name: 'Khamûl, el del Este', hp: 520, gold: 135, xp: 90 },
+  bandido: {
+    id: 'bandido',
+    name: 'Bandido',
+    hp: 85,
+    gold: 20,
+    xp: 13,
+    sprite: '/enemies/wolf-gif.gif',
+  },
+  lobo_alfa: {
+    id: 'lobo_alfa',
+    name: 'Lobo Alfa',
+    hp: 180,
+    gold: 45,
+    xp: 30,
+    sprite: '/enemies/wolf-gif.gif',
+  },
+  khamul: {
+    id: 'khamul',
+    name: 'Khamûl, el del Este',
+    hp: 520,
+    gold: 135,
+    xp: 90,
+    sprite: '/enemies/wolf-gif.gif',
+  },
   rey_brujo_amon: {
     id: 'rey_brujo_amon',
     name: 'Rey Brujo · Forma de Sombra',
@@ -176,9 +213,30 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Caradhras
   // ============================================================
-  lobo_montana: { id: 'lobo_montana', name: 'Lobo de Montaña', hp: 160, gold: 35, xp: 22 },
-  oso_polar: { id: 'oso_polar', name: 'Oso Polar', hp: 280, gold: 55, xp: 35 },
-  aguila: { id: 'aguila', name: 'Águila Salvaje', hp: 140, gold: 32, xp: 21 },
+  lobo_montana: {
+    id: 'lobo_montana',
+    name: 'Lobo de Montaña',
+    hp: 160,
+    gold: 35,
+    xp: 22,
+    sprite: '/enemies/golem.gif',
+  },
+  oso_polar: {
+    id: 'oso_polar',
+    name: 'Oso Polar',
+    hp: 280,
+    gold: 55,
+    xp: 35,
+    sprite: '/enemies/golem.gif',
+  },
+  aguila: {
+    id: 'aguila',
+    name: 'Águila Salvaje',
+    hp: 140,
+    gold: 32,
+    xp: 21,
+    sprite: '/enemies/golem.gif',
+  },
   bandada_crebain: {
     id: 'bandada_crebain',
     name: 'Bandada de Crebain',
@@ -220,8 +278,22 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     gold: 30,
     xp: 18,
   },
-  pez_maligno: { id: 'pez_maligno', name: 'Pez Maligno', hp: 180, gold: 38, xp: 24 },
-  serpiente_agua: { id: 'serpiente_agua', name: 'Serpiente de Agua', hp: 165, gold: 36, xp: 22 },
+  pez_maligno: {
+    id: 'pez_maligno',
+    name: 'Pez Maligno',
+    hp: 180,
+    gold: 38,
+    xp: 24,
+    sprite: '/enemies/hydra.gif',
+  },
+  serpiente_agua: {
+    id: 'serpiente_agua',
+    name: 'Serpiente de Agua',
+    hp: 165,
+    gold: 36,
+    xp: 22,
+    sprite: '/enemies/hydra.gif',
+  },
   kraken_anduin: {
     id: 'kraken_anduin',
     name: 'Kraken del Anduin',
@@ -229,7 +301,15 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     gold: 305,
     xp: 195,
   },
-  hydra: { id: 'hydra', name: 'Hydra del Anduin', hp: 1500, gold: 360, xp: 230, isBoss: true },
+  hydra: {
+    id: 'hydra',
+    name: 'Hydra del Anduin',
+    hp: 1500,
+    gold: 360,
+    xp: 230,
+    isBoss: true,
+    sprite: '/enemies/hydra.gif',
+  },
 
   // ============================================================
   // Amon Hen

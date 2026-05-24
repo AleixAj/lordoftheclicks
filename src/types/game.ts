@@ -37,6 +37,17 @@ export interface Enemy {
   /** Optional sprite path (relative to /public). Falls back to a default placeholder. */
   sprite?: string;
   /**
+   * Optional zoom for the boss/semi-boss battle sprite. 1 = native size.
+   * Only applied when the enemy is rendered as elite (semi/boss).
+   */
+  spriteScale?: number;
+  /**
+   * Vertical offset for the boss/semi-boss battle sprite, in % of its own
+   * height. Negative values push it up so a larger sprite doesn't sit on
+   * the HP bar.
+   */
+  spriteOffsetY?: number;
+  /**
    * Optional colored halo around the sprite, in CSS pixels of blur radius.
    * Used to mark etereal / supernatural enemies (e.g. the King of the
    * Dead). 0 / undefined disables the glow.
