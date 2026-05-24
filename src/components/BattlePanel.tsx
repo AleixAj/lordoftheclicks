@@ -396,18 +396,15 @@ export function BattlePanel() {
             </button>
 
             {isEliteEnemy && (
-              <div className={styles.eliteHpAnchor}>
-                <div className={styles.eliteLabels} aria-hidden="true">
-                  <div
-                    className={`${styles.eliteName} ${
-                      enemy.tier === 'boss' ? styles.boss : styles.semi
-                    }`}
-                  >
-                    {enemy.name}
-                  </div>
-                  {renderEnemyTypePill(styles.eliteTypePill)}
+              <div className={styles.eliteLabels} aria-hidden="true">
+                <div
+                  className={`${styles.eliteName} ${
+                    enemy.tier === 'boss' ? styles.boss : styles.semi
+                  }`}
+                >
+                  {enemy.name}
                 </div>
-                {renderHpBlock(styles.eliteHpWrap)}
+                {renderEnemyTypePill(styles.eliteTypePill)}
               </div>
             )}
 
@@ -416,6 +413,10 @@ export function BattlePanel() {
                 {enemy.name}
                 {renderEnemyTypePill()}
               </div>
+            )}
+
+            {isEliteEnemy && (
+              <div className={styles.eliteHpAnchor}>{renderHpBlock(styles.eliteHpWrap)}</div>
             )}
 
             {!isEliteEnemy && renderHpBlock()}

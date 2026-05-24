@@ -142,7 +142,7 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   conejo: {
     id: 'conejo',
-    name: 'Conejo Salvaje',
+    name: 'Sapo',
     hp: 25,
     gold: 6,
     xp: 4,
@@ -150,7 +150,7 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   },
   ciervo: {
     id: 'ciervo',
-    name: 'Ciervo',
+    name: 'Gato',
     hp: 60,
     gold: 14,
     xp: 9,
@@ -216,7 +216,7 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   lobo_montana: {
     id: 'lobo_montana',
-    name: 'Lobo de Montaña',
+    name: 'Camaleón de Hielo',
     hp: 160,
     gold: 35,
     xp: 22,
@@ -232,7 +232,7 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   },
   aguila: {
     id: 'aguila',
-    name: 'Águila Salvaje',
+    name: 'Golem de Hielo',
     hp: 140,
     gold: 32,
     xp: 21,

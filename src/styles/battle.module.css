@@ -223,18 +223,16 @@
   align-items: center;
 }
 
-/* Stacked labels (tier, name, type pill) float ABOVE the HP anchor and
-   grow upward as more content is added — they never push the HP bar
-   downward. */
+/* Stacked labels (name + type pill) for boss/semi-boss encounters. Rendered
+   as a regular flex child of `.area` ABOVE the sprite, so the name reads
+   like a title card and the artwork below it can grow into the available
+   vertical space. */
 .eliteLabels {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 100%;
-  padding-bottom: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 4px;
+  width: 100%;
   pointer-events: none;
   z-index: 2;
 }
@@ -464,11 +462,11 @@
 }
 
 .hpFillSemi {
-  background: linear-gradient(180deg, #ff8a3a 0%, #ee4d18 50%, #a02410 100%);
+  background: linear-gradient(180deg, #ffe066 0%, #f5a020 50%, #a85f10 100%);
 }
 
 .hpFillBoss {
-  background: linear-gradient(180deg, #ffe066 0%, #f5a020 50%, #a85f10 100%);
+  background: linear-gradient(180deg, #ff8a3a 0%, #ee4d18 50%, #a02410 100%);
 }
 
 .hpText {
@@ -754,6 +752,13 @@
     white-space: normal;
     width: auto;
     max-width: 100%;
+    text-wrap: balance;
+  }
+
+  /* Tighten the inter-label spacing on mobile so the name + type pill
+     read as a single compact title above the sprite. */
+  .eliteLabels {
+    gap: 2px;
   }
 
   /* Compact the elite top badge so it doesn't take a chunk of the
@@ -761,6 +766,53 @@
   .eliteTopBadge {
     padding: 4px 8px;
     letter-spacing: 1.6px;
+  }
+
+  /* The "type" pill (Espectro, Orco…) under elite names is purely contextual
+     info; shrink it on mobile so it doesn't compete with the boss name. */
+  .eliteTypePill {
+    padding: 3px 9px;
+    font-size: 10px;
+    letter-spacing: 0.6px;
+    border-radius: 10px;
+    border-width: 1px;
+  }
+
+  /* Mobile-only: anchor the combat content (name + HP + timer) to the
+     bottom edge of the panel for ALL enemies (normal + elite). The sprite
+     takes the available top space; the labels stay tucked against the bar
+     so the title block reads as a single unit. */
+  .area {
+    justify-content: flex-end;
+    gap: 4px;
+    padding-top: 12px;
+    padding-bottom: 14px;
+  }
+
+  /* Tighten the gap between the normal enemy's name + type pill and its HP
+     bar, matching how elite labels sit on top of their bar. */
+  .name {
+    position: relative;
+    z-index: 3;
+    margin-top: -12px;
+    margin-bottom: 4px;
+    font-size: clamp(17px, 5.3vw, 24px);
+  }
+
+  .eliteLabels {
+    position: relative;
+    z-index: 3;
+    margin-top: -12px;
+  }
+
+  .eliteName {
+    font-size: clamp(17px, 5.3vw, 24px);
+  }
+
+  /* The name now lives under the sprite again; pull the frame slightly into
+     that label block so the artwork can sit behind the title if they overlap. */
+  .frame {
+    margin-bottom: -12px;
   }
 }
 
@@ -928,7 +980,16 @@
   border-bottom-color: rgba(201, 164, 74, 0.45);
 }
 
-.encWrap:hover .encTooltip,
+/* Hover-triggered tooltip is restricted to devices with a true hover capability
+   so it doesn't latch on touchscreens (where :hover stays sticky after tap and
+   would leave the boss/semi-boss tooltip open until another tap dismisses it). */
+@media (hover: hover) {
+  .encWrap:hover .encTooltip {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .encChip:focus-visible + .encTooltip {
   opacity: 1;
   transform: translateY(0);
@@ -1230,6 +1291,14 @@
   .recruitGrid[data-count='7'],
   .recruitGrid[data-count='8'] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* In 2×2 (4-companion) rosters on mobile, the row-gap stacks on top of the
+     card's bottom padding and the next portrait's transform offset, leaving
+     too much air between rows. Tighten the row spacing without touching the
+     column gap. */
+  .recruitGrid[data-count='4'] {
+    row-gap: 2px;
   }
 
   /* The desktop translateY for the 2-card rosters pushes them off-screen

@@ -266,20 +266,16 @@ function WelcomeScreen({ onStart }: WelcomeScreenProps) {
           hasta las sombras de Mordor.
         </p>
 
-        <div className={styles.welcomeHighlights} aria-label="Características del juego">
-          <div>
-            <span>Combate clicker</span>
-            <strong>Golpea, sube DPS y desafía jefes con temporizador.</strong>
-          </div>
-          <div>
-            <span>Compañía</span>
-            <strong>Recluta héroes, mejora niveles y combina equipo.</strong>
-          </div>
-          <div>
-            <span>Exploración</span>
-            <strong>Viaja por el mapa, desbloquea misiones y nuevas tiendas.</strong>
-          </div>
-        </div>
+        <ul className={styles.welcomeHighlights} aria-label="Características del juego">
+          <li>Combate clicker</li>
+          <li>Todos los personajes</li>
+          <li>Mapa de la Tierra Media</li>
+          <li>Bosses y semi-bosses</li>
+          <li>Forja de Rivendel</li>
+          <li>Misiones por zona</li>
+          <li>Equipo legendario</li>
+          <li>Oro y mithril</li>
+        </ul>
 
         <button type="button" className={styles.welcomeStart} onClick={onStart}>
           Empezar aventura
