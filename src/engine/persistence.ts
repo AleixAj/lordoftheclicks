@@ -1,4 +1,4 @@
-import { LOCATIONS, QUESTS } from '@/data';
+import { ENEMIES, LOCATIONS, QUESTS } from '@/data';
 import type { CompanionId, CompanionState, GameState } from '@/types/game';
 import { calcClickDamage } from './formulas';
 import { spawnFromPool, spawnInitial } from './spawn';
@@ -131,6 +131,11 @@ export function loadGame(): GameState {
       !loc.isRest &&
       loc.enemies.length > 0
     ) {
+      enemy = spawnFromPool(loc);
+    }
+    // Stale id from legacy saves (e.g. enemy renamed in code). Respawn from
+    // the current zone pool so combat lookups in ENEMIES don't return undefined.
+    if (enemy && !ENEMIES[enemy.id] && loc && !loc.isRest && loc.enemies.length > 0) {
       enemy = spawnFromPool(loc);
     }
 

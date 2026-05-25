@@ -2,106 +2,105 @@ import type { Enemy, EnemyId, EnemyType } from '@/types/game';
 
 const ENEMY_TYPES: Record<string, EnemyType> = {
   // Bosque Viejo
-  sapo: 'bestia',
-  gato: 'bestia',
-  espectro_bosque: 'espectro',
-  nazgul_jinete: 'espectro',
+  toad: 'bestia',
+  cat: 'bestia',
+  forest_specter: 'espectro',
+  nazgul_rider: 'espectro',
 
   // Cima de los Vientos
-  bandido: 'humano',
-  lobo_alfa: 'bestia',
+  bandit: 'humano',
+  alpha_wolf: 'bestia',
   khamul: 'espectro',
-  rey_brujo_amon: 'espectro',
+  witch_king_amon: 'espectro',
 
   // Caradhras
-  lobo_montana: 'bestia',
-  oso_polar: 'bestia',
-  golemhielo: 'naturaleza',
-  bandada_crebain: 'bestia',
-  tormenta_caradhras: 'naturaleza',
+  mountain_wolf: 'bestia',
+  ice_golem: 'naturaleza',
+  crebain_flock: 'bestia',
+  caradhras_storm: 'naturaleza',
 
   // Moria
-  orco_moria: 'orco',
-  orco_arquero_moria: 'orco',
-  orco_mayor: 'orco',
-  troll_caverna: 'troll',
+  moria_orc: 'orco',
+  moria_orc_archer: 'orco',
+  great_orc: 'orco',
+  cave_troll: 'troll',
   balrog: 'criatura_antigua',
 
   // Río Anduin
-  piranas_anduin: 'bestia',
-  pez_maligno: 'bestia',
-  serpiente_agua: 'bestia',
-  kraken_anduin: 'bestia',
+  anduin_piranhas: 'bestia',
+  water_serpent: 'bestia',
+  anduin_kraken: 'bestia',
   hydra: 'bestia',
 
   // Amon Hen
-  urukhai: 'uruk_hai',
-  urukhai_frenetico: 'uruk_hai',
-  capitan_amon: 'uruk_hai',
+  uruk_hai_warrior: 'uruk_hai',
+  uruk_hai_berserker: 'uruk_hai',
+  amon_hen_captain: 'uruk_hai',
   lurtz: 'uruk_hai',
 
   // Fangorn
-  arana_fangorn: 'bestia',
-  escorpion_fangorn: 'bestia',
+  fangorn_spider: 'bestia',
+  fangorn_scorpion: 'bestia',
   snaga: 'orco',
   grishnakh: 'orco',
 
   // Camino al Abismo de Helm
-  jinete_huargo: 'orco',
-  huargo: 'bestia',
-  huargo_alfa: 'bestia',
+  warg_rider: 'orco',
+  warg: 'bestia',
+  alpha_warg: 'bestia',
   sharku: 'orco',
 
   // Abismo de Helm
-  orco_escalador: 'orco',
-  capitan_uruk: 'uruk_hai',
+  helm_uruk_warrior: 'uruk_hai',
+  helm_uruk_berserker: 'uruk_hai',
+  uruk_hai_captain: 'uruk_hai',
   ugthak: 'uruk_hai',
 
   // Isengard
-  urukhai_elite: 'uruk_hai',
-  orco_isengard: 'orco',
-  lengua_serpiente: 'humano',
+  uruk_hai_elite: 'uruk_hai',
+  isengard_orc: 'orco',
+  wormtongue: 'humano',
   saruman: 'humano',
 
   // Senderos de los Muertos
-  guerrero_muerto: 'espectro',
-  espectro_juramentado: 'espectro',
-  heraldo_muertos: 'espectro',
-  rey_muerto: 'espectro',
+  dead_warrior: 'espectro',
+  sworn_specter: 'espectro',
+  dead_herald: 'espectro',
+  dead_king: 'espectro',
 
   // Pelargir
-  corsario: 'humano',
-  esclavista: 'humano',
-  maestre_corsario: 'humano',
-  capitan_corsario: 'humano',
+  corsair: 'humano',
+  slaver: 'humano',
+  master_corsair: 'humano',
+  corsair_captain: 'humano',
 
   // Osgiliath
-  orco_mordor: 'mordor',
-  orco_arquero_mordor: 'mordor',
-  capitan_orco: 'mordor',
-  nazgul_alado: 'espectro',
+  mordor_orc: 'mordor',
+  mordor_orc_archer: 'mordor',
+  orc_captain: 'mordor',
+  winged_nazgul: 'espectro',
 
   // Puertas de Minas Tirith
-  troll_batalla: 'troll',
-  troll_caverna_armadura: 'troll',
-  ariete_lobo: 'troll',
+  battle_troll: 'troll',
+  armored_troll: 'troll',
+  wolf_ram: 'troll',
 
   // Pelennor
   haradrim: 'humano',
-  haradrim_explorador: 'humano',
+  haradrim_scout: 'humano',
   mumakil: 'bestia',
-  rey_brujo: 'espectro',
+  witch_king: 'espectro',
 
   // Minas Morgul
-  orco_morgul: 'mordor',
-  orco_arquero_morgul: 'mordor',
-  dragon_nazgul: 'bestia',
+  morgul_orc: 'mordor',
+  morgul_orc_archer: 'mordor',
+  nazgul_dragon: 'bestia',
   gothmog: 'mordor',
 
   // Guarida de Shelob
-  arana_pequena: 'bestia',
-  telarana: 'naturaleza',
-  arana_grande: 'bestia',
+  small_spider: 'bestia',
+  web: 'naturaleza',
+  great_spider: 'bestia',
   shelob: 'bestia',
 
   // Cirith Ungol
@@ -109,65 +108,65 @@ const ENEMY_TYPES: Record<string, EnemyType> = {
   shagrat: 'uruk_hai',
 
   // Puerta Negra
-  troll_mordor: 'troll',
-  orco_caverna_armadura: 'mordor',
-  boca_de_sauron: 'mordor',
+  mordor_troll: 'troll',
+  armored_cave_orc: 'mordor',
+  mouth_of_sauron: 'mordor',
 
   // Gorgoroth
-  orco_elite: 'mordor',
-  troll_elite_mordor: 'troll',
+  elite_orc: 'mordor',
+  mordor_elite_troll: 'troll',
 
   // Monte del Destino
-  gollum_final: 'humano',
+  gollum: 'humano',
   // ============================================================
   // Definidos pero NO asignados a ninguna zona.
   // Mantenidos como reserva para futuras zonas o variantes.
   // ============================================================
-  nazgul_explorador: 'espectro',
-  avalancha: 'naturaleza',
-  orco_nevado: 'orco',
-  bestia_anduin: 'bestia',
-  muerto_juramentado: 'espectro',
-  nazgul_buscador: 'espectro',
+  nazgul_scout: 'espectro',
+  avalanche: 'naturaleza',
+  snowy_orc: 'orco',
+  anduin_beast: 'bestia',
+  sworn_dead: 'espectro',
+  nazgul_seeker: 'espectro',
   nazgul: 'espectro',
-  nazgul_alado_lider: 'espectro',
-  guardian_torre: 'mordor',
-  oriental: 'humano',
-  fuego_montana: 'naturaleza',
+  winged_nazgul_leader: 'espectro',
+  tower_guardian: 'mordor',
+  easterling: 'humano',
+  mountain_fire: 'naturaleza',
   black_serpent: 'humano',
-  manada_huargos: 'bestia',
+  warg_pack: 'bestia',
 };
 
 const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Bosque Viejo
   // ============================================================
-  sapo: {
-    id: 'sapo',
+  toad: {
+    id: 'toad',
     name: 'Sapo',
     hp: 25,
     gold: 6,
     xp: 4,
     sprite: '/enemies/green-frog.gif',
   },
-  gato: {
-    id: 'gato',
+  cat: {
+    id: 'cat',
     name: 'Gato',
     hp: 60,
     gold: 14,
     xp: 9,
     sprite: '/enemies/crazy-cat.gif',
   },
-  espectro_bosque: {
-    id: 'espectro_bosque',
+  forest_specter: {
+    id: 'forest_specter',
     name: 'Espectro del Bosque',
     hp: 240,
     gold: 60,
     xp: 40,
     sprite: '/enemies/forest-spectral.png',
   },
-  nazgul_jinete: {
-    id: 'nazgul_jinete',
+  nazgul_rider: {
+    id: 'nazgul_rider',
     name: 'Jinete Negro',
     hp: 380,
     gold: 95,
@@ -179,16 +178,16 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Cima de los Vientos
   // ============================================================
-  bandido: {
-    id: 'bandido',
+  bandit: {
+    id: 'bandit',
     name: 'Bandido',
     hp: 85,
     gold: 20,
     xp: 13,
     sprite: '/enemies/wolf-gif.gif',
   },
-  lobo_alfa: {
-    id: 'lobo_alfa',
+  alpha_wolf: {
+    id: 'alpha_wolf',
     name: 'Lobo Alfa',
     hp: 180,
     gold: 45,
@@ -203,8 +202,8 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     xp: 90,
     sprite: '/enemies/khamul.png',
   },
-  rey_brujo_amon: {
-    id: 'rey_brujo_amon',
+  witch_king_amon: {
+    id: 'witch_king_amon',
     name: 'Rey Brujo · Forma de Sombra',
     hp: 1400,
     gold: 360,
@@ -216,40 +215,32 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Caradhras
   // ============================================================
-  lobo_montana: {
-    id: 'lobo_montana',
+  mountain_wolf: {
+    id: 'mountain_wolf',
     name: 'Lobo de Montaña',
     hp: 160,
     gold: 35,
     xp: 22,
     sprite: '/enemies/wolf-gif.gif',
   },
-  oso_polar: {
-    id: 'oso_polar',
-    name: 'Oso Polar',
-    hp: 280,
-    gold: 55,
-    xp: 35,
-    sprite: '/enemies/ice-camaleon.gif',
-  },
-  golemhielo: {
-    id: 'golemhielo',
+  ice_golem: {
+    id: 'ice_golem',
     name: 'Golem de Hielo',
     hp: 140,
     gold: 32,
     xp: 21,
     sprite: '/enemies/golem.gif',
   },
-  bandada_crebain: {
-    id: 'bandada_crebain',
+  crebain_flock: {
+    id: 'crebain_flock',
     name: 'Bandada de Crebain',
     hp: 600,
     gold: 150,
     xp: 95,
     sprite: '/enemies/crebain.png',
   },
-  tormenta_caradhras: {
-    id: 'tormenta_caradhras',
+  caradhras_storm: {
+    id: 'caradhras_storm',
     name: 'Tormenta de Caradhras',
     hp: 1000,
     gold: 250,
@@ -261,32 +252,32 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Moria (Tumba de Balin / Puente de Khazad-dûm)
   // ============================================================
-  orco_moria: {
-    id: 'orco_moria',
+  moria_orc: {
+    id: 'moria_orc',
     name: 'Orco',
     hp: 95,
     gold: 22,
     xp: 15,
     sprite: '/enemies/orc-classic.gif',
   },
-  orco_arquero_moria: {
-    id: 'orco_arquero_moria',
+  moria_orc_archer: {
+    id: 'moria_orc_archer',
     name: 'Orco Arquero',
     hp: 75,
     gold: 18,
     xp: 12,
     sprite: '/enemies/orc-classic.gif',
   },
-  orco_mayor: {
-    id: 'orco_mayor',
+  great_orc: {
+    id: 'great_orc',
     name: 'Orco Mayor',
     hp: 380,
     gold: 95,
     xp: 60,
     sprite: '/enemies/orc-classic.gif',
   },
-  troll_caverna: {
-    id: 'troll_caverna',
+  cave_troll: {
+    id: 'cave_troll',
     name: 'Troll',
     hp: 700,
     gold: 170,
@@ -306,32 +297,24 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Río Anduin
   // ============================================================
-  piranas_anduin: {
-    id: 'piranas_anduin',
+  anduin_piranhas: {
+    id: 'anduin_piranhas',
     name: 'Pirañas del Anduin',
     hp: 130,
     gold: 30,
     xp: 18,
     sprite: '/enemies/fire-fish.gif',
   },
-  pez_maligno: {
-    id: 'pez_maligno',
-    name: 'Pez Maligno',
-    hp: 180,
-    gold: 38,
-    xp: 24,
-    sprite: '/enemies/red-octopus.gif',
-  },
-  serpiente_agua: {
-    id: 'serpiente_agua',
+  water_serpent: {
+    id: 'water_serpent',
     name: 'Serpiente de Agua',
     hp: 165,
     gold: 36,
     xp: 22,
     sprite: '/enemies/elemental-agua.gif',
   },
-  kraken_anduin: {
-    id: 'kraken_anduin',
+  anduin_kraken: {
+    id: 'anduin_kraken',
     name: 'Kraken del Anduin',
     hp: 1250,
     gold: 305,
@@ -351,24 +334,24 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Amon Hen
   // ============================================================
-  urukhai: {
-    id: 'urukhai',
+  uruk_hai_warrior: {
+    id: 'uruk_hai_warrior',
     name: 'Uruk-hai',
     hp: 210,
     gold: 45,
     xp: 28,
     sprite: '/enemies/urukhai.png',
   },
-  urukhai_frenetico: {
-    id: 'urukhai_frenetico',
-    name: 'Uruk-hai Frenético',
+  uruk_hai_berserker: {
+    id: 'uruk_hai_berserker',
+    name: 'Uruk-hai Berserker',
     hp: 310,
     gold: 68,
     xp: 42,
     sprite: '/enemies/urukhai.png',
   },
-  capitan_amon: {
-    id: 'capitan_amon',
+  amon_hen_captain: {
+    id: 'amon_hen_captain',
     name: 'Capitán Uruk-hai',
     hp: 780,
     gold: 195,
@@ -388,16 +371,16 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Fangorn
   // ============================================================
-  arana_fangorn: {
-    id: 'arana_fangorn',
+  fangorn_spider: {
+    id: 'fangorn_spider',
     name: 'Araña de Fangorn',
     hp: 165,
     gold: 38,
     xp: 24,
     sprite: '/enemies/fangorn-spider.png',
   },
-  escorpion_fangorn: {
-    id: 'escorpion_fangorn',
+  fangorn_scorpion: {
+    id: 'fangorn_scorpion',
     name: 'Escorpión de Fangorn',
     hp: 165,
     gold: 38,
@@ -425,24 +408,24 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Camino al Abismo de Helm
   // ============================================================
-  jinete_huargo: {
-    id: 'jinete_huargo',
+  warg_rider: {
+    id: 'warg_rider',
     name: 'Jinete Huargo',
     hp: 280,
     gold: 62,
     xp: 38,
     sprite: '/enemies/warg-rider.png',
   },
-  huargo: {
-    id: 'huargo',
+  warg: {
+    id: 'warg',
     name: 'Huargo',
     hp: 250,
     gold: 58,
     xp: 35,
     sprite: '/enemies/warg2.png',
   },
-  huargo_alfa: {
-    id: 'huargo_alfa',
+  alpha_warg: {
+    id: 'alpha_warg',
     name: 'Huargo Alfa',
     hp: 620,
     gold: 155,
@@ -462,17 +445,25 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Abismo de Helm
   // ============================================================
-  orco_escalador: {
-    id: 'orco_escalador',
-    name: 'Orco Escalador',
-    hp: 195,
-    gold: 44,
-    xp: 27,
+  helm_uruk_warrior: {
+    id: 'helm_uruk_warrior',
+    name: 'Uruk-hai',
+    hp: 340,
+    gold: 74,
+    xp: 46,
     sprite: '/enemies/urukhai.png',
   },
-  capitan_uruk: {
-    id: 'capitan_uruk',
-    name: 'Capitán Uruk-hai del Abismo',
+  helm_uruk_berserker: {
+    id: 'helm_uruk_berserker',
+    name: 'Uruk-hai Berserker',
+    hp: 470,
+    gold: 100,
+    xp: 62,
+    sprite: '/enemies/urukhai.png',
+  },
+  uruk_hai_captain: {
+    id: 'uruk_hai_captain',
+    name: 'Capitán Uruk-hai',
     hp: 1150,
     gold: 285,
     xp: 185,
@@ -493,24 +484,24 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Isengard
   // ============================================================
-  urukhai_elite: {
-    id: 'urukhai_elite',
+  uruk_hai_elite: {
+    id: 'uruk_hai_elite',
     name: 'Uruk-hai Élite',
     hp: 380,
     gold: 82,
     xp: 52,
     sprite: '/enemies/urukhai.png',
   },
-  orco_isengard: {
-    id: 'orco_isengard',
+  isengard_orc: {
+    id: 'isengard_orc',
     name: 'Orco de Isengard',
     hp: 360,
     gold: 78,
     xp: 50,
     sprite: '/enemies/urukhai.png',
   },
-  lengua_serpiente: {
-    id: 'lengua_serpiente',
+  wormtongue: {
+    id: 'wormtongue',
     name: 'Gríma Lengua de Serpiente',
     hp: 1380,
     gold: 340,
@@ -530,32 +521,32 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Senderos de los Muertos
   // ============================================================
-  guerrero_muerto: {
-    id: 'guerrero_muerto',
+  dead_warrior: {
+    id: 'dead_warrior',
     name: 'Guerrero del Sagrario',
     hp: 580,
     gold: 130,
     xp: 80,
     sprite: '/enemies/urukhai.png',
   },
-  espectro_juramentado: {
-    id: 'espectro_juramentado',
+  sworn_specter: {
+    id: 'sworn_specter',
     name: 'Espectro Juramentado',
     hp: 360,
     gold: 78,
     xp: 50,
     sprite: '/enemies/urukhai.png',
   },
-  heraldo_muertos: {
-    id: 'heraldo_muertos',
+  dead_herald: {
+    id: 'dead_herald',
     name: 'Heraldo de los Muertos',
     hp: 1080,
     gold: 265,
     xp: 175,
     sprite: '/enemies/uruk-berserker.png',
   },
-  rey_muerto: {
-    id: 'rey_muerto',
+  dead_king: {
+    id: 'dead_king',
     name: 'Rey de los Muertos',
     hp: 3000,
     gold: 770,
@@ -569,32 +560,32 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Pelargir
   // ============================================================
-  corsario: {
-    id: 'corsario',
+  corsair: {
+    id: 'corsair',
     name: 'Corsario de Umbar',
     hp: 330,
     gold: 75,
     xp: 48,
     sprite: '/enemies/urukhai.png',
   },
-  esclavista: {
-    id: 'esclavista',
+  slaver: {
+    id: 'slaver',
     name: 'Esclavista de Umbar',
     hp: 390,
     gold: 88,
     xp: 56,
     sprite: '/enemies/urukhai.png',
   },
-  maestre_corsario: {
-    id: 'maestre_corsario',
+  master_corsair: {
+    id: 'master_corsair',
     name: 'Maestre Corsario',
     hp: 980,
     gold: 245,
     xp: 160,
     sprite: '/enemies/uruk-berserker.png',
   },
-  capitan_corsario: {
-    id: 'capitan_corsario',
+  corsair_captain: {
+    id: 'corsair_captain',
     name: 'Capitán Corsario',
     hp: 2700,
     gold: 650,
@@ -606,32 +597,32 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Osgiliath
   // ============================================================
-  orco_mordor: {
-    id: 'orco_mordor',
+  mordor_orc: {
+    id: 'mordor_orc',
     name: 'Orco de Mordor',
     hp: 280,
     gold: 65,
     xp: 40,
     sprite: '/enemies/urukhai.png',
   },
-  orco_arquero_mordor: {
-    id: 'orco_arquero_mordor',
+  mordor_orc_archer: {
+    id: 'mordor_orc_archer',
     name: 'Orco Arquero de Mordor',
     hp: 240,
     gold: 56,
     xp: 35,
     sprite: '/enemies/urukhai.png',
   },
-  capitan_orco: {
-    id: 'capitan_orco',
+  orc_captain: {
+    id: 'orc_captain',
     name: 'Capitán Orco',
     hp: 880,
     gold: 220,
     xp: 145,
     sprite: '/enemies/uruk-berserker.png',
   },
-  nazgul_alado: {
-    id: 'nazgul_alado',
+  winged_nazgul: {
+    id: 'winged_nazgul',
     name: 'Nazgûl Alado',
     hp: 1700,
     gold: 420,
@@ -643,24 +634,24 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Puertas de Minas Tirith
   // ============================================================
-  troll_batalla: {
-    id: 'troll_batalla',
+  battle_troll: {
+    id: 'battle_troll',
     name: 'Troll de Batalla',
     hp: 920,
     gold: 195,
     xp: 115,
     sprite: '/enemies/urukhai.png',
   },
-  troll_caverna_armadura: {
-    id: 'troll_caverna_armadura',
+  armored_troll: {
+    id: 'armored_troll',
     name: 'Troll con Armadura',
     hp: 1620,
     gold: 390,
     xp: 260,
     sprite: '/enemies/uruk-berserker.png',
   },
-  ariete_lobo: {
-    id: 'ariete_lobo',
+  wolf_ram: {
+    id: 'wolf_ram',
     name: 'Ariete Lobo',
     hp: 2400,
     gold: 580,
@@ -680,8 +671,8 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     xp: 45,
     sprite: '/enemies/urukhai.png',
   },
-  haradrim_explorador: {
-    id: 'haradrim_explorador',
+  haradrim_scout: {
+    id: 'haradrim_scout',
     name: 'Explorador Haradrim',
     hp: 240,
     gold: 55,
@@ -696,8 +687,8 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     xp: 350,
     sprite: '/enemies/uruk-berserker.png',
   },
-  rey_brujo: {
-    id: 'rey_brujo',
+  witch_king: {
+    id: 'witch_king',
     name: 'Rey Brujo de Angmar',
     hp: 5600,
     gold: 1500,
@@ -709,24 +700,24 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Minas Morgul
   // ============================================================
-  orco_morgul: {
-    id: 'orco_morgul',
+  morgul_orc: {
+    id: 'morgul_orc',
     name: 'Orco de Morgul',
     hp: 480,
     gold: 105,
     xp: 68,
     sprite: '/enemies/urukhai.png',
   },
-  orco_arquero_morgul: {
-    id: 'orco_arquero_morgul',
+  morgul_orc_archer: {
+    id: 'morgul_orc_archer',
     name: 'Orco Arquero de Morgul',
     hp: 430,
     gold: 95,
     xp: 62,
     sprite: '/enemies/urukhai.png',
   },
-  dragon_nazgul: {
-    id: 'dragon_nazgul',
+  nazgul_dragon: {
+    id: 'nazgul_dragon',
     name: 'Dragón Nazgûl',
     hp: 1450,
     gold: 350,
@@ -746,24 +737,24 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Guarida de Shelob
   // ============================================================
-  arana_pequena: {
-    id: 'arana_pequena',
+  small_spider: {
+    id: 'small_spider',
     name: 'Araña Pequeña',
     hp: 320,
     gold: 75,
     xp: 48,
     sprite: '/enemies/urukhai.png',
   },
-  telarana: {
-    id: 'telarana',
+  web: {
+    id: 'web',
     name: 'Telaraña',
     hp: 380,
     gold: 80,
     xp: 52,
     sprite: '/enemies/urukhai.png',
   },
-  arana_grande: {
-    id: 'arana_grande',
+  great_spider: {
+    id: 'great_spider',
     name: 'Araña Grande',
     hp: 1800,
     gold: 440,
@@ -804,24 +795,24 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Puerta Negra
   // ============================================================
-  troll_mordor: {
-    id: 'troll_mordor',
+  mordor_troll: {
+    id: 'mordor_troll',
     name: 'Troll de Mordor',
     hp: 1100,
     gold: 240,
     xp: 145,
     sprite: '/enemies/urukhai.png',
   },
-  orco_caverna_armadura: {
-    id: 'orco_caverna_armadura',
+  armored_cave_orc: {
+    id: 'armored_cave_orc',
     name: 'Orco de Caverna con Armadura',
     hp: 1620,
     gold: 390,
     xp: 260,
     sprite: '/enemies/uruk-berserker.png',
   },
-  boca_de_sauron: {
-    id: 'boca_de_sauron',
+  mouth_of_sauron: {
+    id: 'mouth_of_sauron',
     name: 'Boca de Sauron',
     hp: 4600,
     gold: 1080,
@@ -833,32 +824,32 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Gorgoroth
   // ============================================================
-  orco_elite: {
-    id: 'orco_elite',
+  elite_orc: {
+    id: 'elite_orc',
     name: 'Orco Élite de Mordor',
     hp: 520,
     gold: 115,
     xp: 72,
     sprite: '/enemies/urukhai.png',
   },
-  troll_elite_mordor: {
-    id: 'troll_elite_mordor',
+  mordor_elite_troll: {
+    id: 'mordor_elite_troll',
     name: 'Troll Élite de Mordor',
     hp: 1400,
     gold: 310,
     xp: 190,
     sprite: '/enemies/urukhai.png',
   },
-  ojo_de_sauron: {
-    id: 'ojo_de_sauron',
+  eye_of_sauron: {
+    id: 'eye_of_sauron',
     name: 'Ojo de Sauron',
     hp: 3000,
     gold: 850,
     xp: 560,
     sprite: '/enemies/uruk-berserker.png',
   },
-  espiritu_de_sauron: {
-    id: 'espiritu_de_sauron',
+  sauron_spirit: {
+    id: 'sauron_spirit',
     name: 'Espíritu de Sauron',
     hp: 6400,
     gold: 1800,
@@ -870,16 +861,16 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Monte del Destino
   // ============================================================
-  gollum_final: {
-    id: 'gollum_final',
+  gollum: {
+    id: 'gollum',
     name: 'Gollum',
     hp: 1600,
     gold: 480,
     xp: 950,
     sprite: '/enemies/uruk-berserker.png',
   },
-  anillo: {
-    id: 'anillo',
+  one_ring: {
+    id: 'one_ring',
     name: 'El Anillo Único',
     hp: 6800,
     gold: 2000,
@@ -892,48 +883,48 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // Reserva (no asignados a ninguna zona)
   // Se mantienen aquí para reciclarlos en futuras zonas o variantes.
   // ============================================================
-  nazgul_explorador: {
-    id: 'nazgul_explorador',
+  nazgul_scout: {
+    id: 'nazgul_scout',
     name: 'Espectro del Anillo',
     hp: 220,
     gold: 48,
     xp: 30,
     sprite: '/enemies/urukhai.png',
   },
-  avalancha: {
-    id: 'avalancha',
+  avalanche: {
+    id: 'avalanche',
     name: 'Avalancha',
     hp: 280,
     gold: 45,
     xp: 28,
     sprite: '/enemies/urukhai.png',
   },
-  orco_nevado: {
-    id: 'orco_nevado',
+  snowy_orc: {
+    id: 'snowy_orc',
     name: 'Orco Nevado',
     hp: 180,
     gold: 38,
     xp: 24,
     sprite: '/enemies/urukhai.png',
   },
-  bestia_anduin: {
-    id: 'bestia_anduin',
+  anduin_beast: {
+    id: 'anduin_beast',
     name: 'Bestia del Anduin',
     hp: 600,
     gold: 150,
     xp: 95,
     sprite: '/enemies/urukhai.png',
   },
-  muerto_juramentado: {
-    id: 'muerto_juramentado',
+  sworn_dead: {
+    id: 'sworn_dead',
     name: 'Muerto Juramentado',
     hp: 420,
     gold: 95,
     xp: 60,
     sprite: '/enemies/urukhai.png',
   },
-  nazgul_buscador: {
-    id: 'nazgul_buscador',
+  nazgul_seeker: {
+    id: 'nazgul_seeker',
     name: 'Nazgûl Buscador',
     hp: 2400,
     gold: 580,
@@ -949,32 +940,32 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     xp: 105,
     sprite: '/enemies/urukhai.png',
   },
-  nazgul_alado_lider: {
-    id: 'nazgul_alado_lider',
+  winged_nazgul_leader: {
+    id: 'winged_nazgul_leader',
     name: 'Líder Nazgûl Alado',
     hp: 1320,
     gold: 320,
     xp: 215,
     sprite: '/enemies/urukhai.png',
   },
-  guardian_torre: {
-    id: 'guardian_torre',
+  tower_guardian: {
+    id: 'tower_guardian',
     name: 'Guardián de la Torre',
     hp: 1540,
     gold: 370,
     xp: 245,
     sprite: '/enemies/urukhai.png',
   },
-  oriental: {
-    id: 'oriental',
+  easterling: {
+    id: 'easterling',
     name: 'Oriental',
     hp: 380,
     gold: 88,
     xp: 55,
     sprite: '/enemies/urukhai.png',
   },
-  fuego_montana: {
-    id: 'fuego_montana',
+  mountain_fire: {
+    id: 'mountain_fire',
     name: 'Fuego de la Montaña',
     hp: 650,
     gold: 130,
@@ -989,8 +980,8 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     xp: 360,
     sprite: '/enemies/urukhai.png',
   },
-  manada_huargos: {
-    id: 'manada_huargos',
+  warg_pack: {
+    id: 'warg_pack',
     name: 'Manada de Huargos',
     hp: 1500,
     gold: 360,
@@ -1001,49 +992,49 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
 };
 
 const BALANCED_ELITE_HP: Partial<Record<EnemyId, number>> = {
-  espectro_bosque: 260,
-  nazgul_jinete: 620,
+  forest_specter: 260,
+  nazgul_rider: 620,
   khamul: 720,
-  rey_brujo_amon: 1500,
-  bandada_crebain: 720,
-  tormenta_caradhras: 1450,
-  orco_mayor: 640,
-  troll_caverna: 1250,
+  witch_king_amon: 1500,
+  crebain_flock: 720,
+  caradhras_storm: 1450,
+  great_orc: 640,
+  cave_troll: 1250,
   balrog: 5200,
-  kraken_anduin: 1600,
+  anduin_kraken: 1600,
   hydra: 2450,
-  capitan_amon: 1550,
+  amon_hen_captain: 1550,
   lurtz: 3150,
   snaga: 1400,
   grishnakh: 3000,
-  huargo_alfa: 1450,
+  alpha_warg: 1450,
   sharku: 3200,
-  capitan_uruk: 2200,
+  uruk_hai_captain: 2200,
   ugthak: 4300,
-  lengua_serpiente: 2500,
+  wormtongue: 2500,
   saruman: 5600,
-  heraldo_muertos: 2650,
-  rey_muerto: 5200,
-  maestre_corsario: 2500,
-  capitan_corsario: 5400,
-  capitan_orco: 2400,
-  nazgul_alado: 5200,
-  troll_caverna_armadura: 3200,
-  ariete_lobo: 5800,
+  dead_herald: 2650,
+  dead_king: 5200,
+  master_corsair: 2500,
+  corsair_captain: 5400,
+  orc_captain: 2400,
+  winged_nazgul: 5200,
+  armored_troll: 3200,
+  wolf_ram: 5800,
   mumakil: 4200,
-  rey_brujo: 7800,
-  dragon_nazgul: 3800,
+  witch_king: 7800,
+  nazgul_dragon: 3800,
   gothmog: 7200,
-  arana_grande: 4000,
+  great_spider: 4000,
   shelob: 7600,
   gorbag: 3900,
   shagrat: 8000,
-  orco_caverna_armadura: 4300,
-  boca_de_sauron: 8500,
-  ojo_de_sauron: 5400,
-  espiritu_de_sauron: 9800,
-  gollum_final: 3600,
-  anillo: 12000,
+  armored_cave_orc: 4300,
+  mouth_of_sauron: 8500,
+  eye_of_sauron: 5400,
+  sauron_spirit: 9800,
+  gollum: 3600,
+  one_ring: 12000,
 };
 
 export const ENEMIES: Record<EnemyId, Enemy> = Object.fromEntries(

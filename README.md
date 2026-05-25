@@ -425,13 +425,13 @@ el mapa `ENEMY_TYPES` del propio `enemies.ts`:
 // src/data/enemies.ts
 // 1) Declara el tipo (omitir para enemigos sin debilidad como el Ojo de Sauron)
 const ENEMY_TYPES: Record<string, EnemyType> = {
-  orco_guardia: 'orco',
+  guard_orc: 'orco',
   // …
 };
 
-// 2) Añade la def (stats, sprite opcional, glow opcional)
-orco_guardia: {
-  id: 'orco_guardia',
+// 2) Añade la def (id en inglés snake_case, name visible en español)
+guard_orc: {
+  id: 'guard_orc',
   name: 'Orco Guardia',
   hp: 220,
   gold: 42,
@@ -478,10 +478,10 @@ Una zona de combate con semi-jefe y jefe:
   id: 'eregion',
   name: 'Eregion',
   desc: 'Las tierras de los herreros élficos',
-  enemies: ['huargo', 'orco_moria'],
+  enemies: ['warg', 'moria_orc'],
   killsNeeded: 80,
-  semiBoss: 'capitan_orco',
-  boss: 'troll_caverna',
+  semiBoss: 'orc_captain',
+  boss: 'cave_troll',
   semiBossAt: 40,            // opcional, default floor(killsNeeded/2)
   bossAt: 80,                // opcional, default killsNeeded
   semiBossTimeLimit: 30,     // opcional, default 30s

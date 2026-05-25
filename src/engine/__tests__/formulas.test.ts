@@ -135,7 +135,7 @@ describe('formulas', () => {
       companions: { frodo: { unlocked: true, level: 2 } },
     });
     const enemy = {
-      id: 'orco_moria',
+      id: 'moria_orc',
       name: 'Orco',
       hp: 100,
       maxHp: 100,
