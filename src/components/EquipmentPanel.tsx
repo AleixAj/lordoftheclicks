@@ -56,8 +56,7 @@ export function EquipmentPanel() {
                   >
                     {slot.items.map((it) => (
                       <option key={it.id} value={it.id}>
-                        {it.name} (
-                        {slot.key === 'armor' ? formatArmorStatLine(it.def) : `+${it[slot.stat]}`})
+                        {it.name} ({formatItemStatLine(it, slot.key, slot.stat)})
                       </option>
                     ))}
                   </select>

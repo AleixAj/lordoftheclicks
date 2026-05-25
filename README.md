@@ -74,6 +74,9 @@ pnpm install && pnpm dev   # http://localhost:5173
   bestias, mordor, naturaleza, humanos o criatura antigua. Algunos
   enemigos icónicos (Ojo de Sauron, El Anillo) son intencionalmente sin
   tipo. Bonus visibles como **chips coloreados** (`BonusVsChips`).
+  Además de `bonusVs`, los items pueden declarar `goldPct` para sumar
+  un porcentaje extra de oro por kill mientras están equipados
+  (apilable con las mejoras de la Forja).
 - 🪙 **Forja de Rivendel**: árbol de mejoras permanentes desbloqueable al
   visitar Rivendel. **14 nodos en 5 cadenas** (daño, riqueza, sabiduría,
   tiempo y compañeros) con prerequisitos visualizados por líneas SVG,
@@ -82,8 +85,11 @@ pnpm install && pnpm dev   # http://localhost:5173
 - 🧙 **Reclutamiento de La Comunidad** en zonas de descanso, con
   retratos a color tras desbloquear y gates por jefe derrotado para
   héroes icónicos (p. ej. el Rey de los Muertos).
-- 🏪 **Tiendas locales** y **toggle "Reclutar / Tienda"** en algunas
-  zonas de combate para reclutar compañeros únicos.
+- 🏪 **Tiendas locales** en zonas de descanso con toggle
+  **"Reclutar / Tienda"**. En zonas de combate con `hasShop` (p. ej.
+  Fangorn) el toggle se vuelve **"Combate / Reclutar"** y la segunda
+  pestaña expone el reclutamiento del compañero único de la zona
+  (Bárbol).
 - 🛡️ **Equipo épico** (Dardo, Hadhafang, Hacha de Gimli, Cota de
   Mithril, Luz de Galadriel, Palantír…) con bonus de especialización.
 - ⏱️ **Armaduras como tiempo**: el `def` de las armaduras no suma DPS,
@@ -103,7 +109,13 @@ pnpm install && pnpm dev   # http://localhost:5173
   arranca al instante (también se resincroniza al volver de bfcache o
   cambiar de pestaña, evitando "DPS pasivo congelado"). El botón de
   reiniciar partida borra ambas claves y devuelve a la pantalla de
-  bienvenida.
+  bienvenida tras un modal de confirmación in-game.
+- 📤 **Exportar / importar partida** desde el menú **Ajustes**: el save
+  se serializa a un `.txt` codificado en **Base64** (`SaveBackupFile`
+  con `app`, `fileVersion`, `saveKey` y `state`). Al importar se valida
+  la estructura antes de escribir en `localStorage` y se recarga la
+  página; el guardado automático sigue siendo la vía principal, esto es
+  solo un backup opcional.
 - ✨ **Halos coloreados configurables** por compañero y enemigo.
 
 ### UI / responsive
@@ -173,6 +185,7 @@ src/
 │   ├── ErrorBoundary.tsx      #   captura crashes y renderiza fallback
 │   ├── BattlePanel.tsx        #   combate; subcomponentes internos: FloatingActions, EncounterChip, …
 │   ├── ForgeModal.tsx         #   modal del árbol de mejoras (diamantes + SVG connections + confirm modal)
+│   ├── ConfirmDialog.tsx      #   modal de confirmación reutilizable (acciones destructivas, Esc / backdrop)
 │   ├── BonusVsChips.tsx       #   chips coloreados por tipo (variantes full / mini)
 │   ├── MapPanel.tsx           #   wrapper con título = nombre de zona actual + modo expandido
 │   ├── MapView.tsx            #   viewport del mapa (consume useMapInteraction)
@@ -194,7 +207,7 @@ src/
 │   ├── map.module.css         #   mapa, marcadores, ruta, toolbar
 │   └── panel.module.css       #   marco de pergamino + cards
 ├── lib/                       # Utilidades transversales
-│   ├── equipmentText.ts       #   labels/iconos/colores/abreviaturas de tipos, getBonusVsEntries
+│   ├── equipmentText.ts       #   labels/iconos/colores de tipos, getBonusVsEntries, formatItemStatLine
 │   └── logger.ts              #   logger abstraído (preparado para Sentry/Datadog)
 ├── test/setup.ts              # Setup global de Vitest
 ├── main.tsx                   # Entry point (StrictMode + ErrorBoundary)
@@ -270,9 +283,10 @@ src/
   store + UI guiada por flags (`forgeUnlocked`, `forgeSeen`,
   `forgeUnlockFlash`).
 - **Confirmaciones in-game, no `window.confirm`.** Las acciones
-  destructivas (reset del árbol de la Forja) abren un modal estilizado
-  con `Esc`, backdrop dismiss y `autoFocus` en el confirmar, no el
-  diálogo nativo del navegador.
+  destructivas (reset del árbol de la Forja, reiniciar partida) abren
+  un modal estilizado (`ConfirmDialog` reutilizable + el confirm interno
+  de la Forja) con `Esc`, backdrop dismiss y `autoFocus` en el
+  confirmar. Nada de diálogos nativos del navegador.
 - **Accesibilidad por defecto.** `eslint-plugin-jsx-a11y` rompe el lint
   si se introduce un interactivo sin semántica. `<button>` siempre, no
   `<div onClick>`. Iconos decorativos con `aria-hidden`. Imágenes con
@@ -321,7 +335,7 @@ src/
 - CI corre **lint + typecheck + test + build** en cada push/PR a `main`.
 - `ErrorBoundary` global para evitar pantallas en blanco.
 - Guardado en `localStorage` con migraciones y autosave debounced.
-- **40 tests Vitest** en 6 archivos cubriendo combate, fórmulas,
+- **43 tests Vitest** en 6 archivos cubriendo combate, fórmulas,
   progresión, store, game-loop y contenido.
 
 ### Cosas que todavía quiero mejorar
@@ -374,18 +388,33 @@ prefijo `VITE_` para exponerse al cliente; sus tipos viven en
 - **Reglas activas**: TS strict, `react-hooks/recommended`,
   `react-refresh`, `jsx-a11y/recommended`, Prettier como árbitro final.
 
-### Modo dev (cheats)
+### Menú Ajustes y cheats de dev
 
-En desarrollo aparecen botones extra en la cabecera (no se renderizan en
-producción):
+En cabecera vive el botón **Ajustes** (icono de engranaje SVG; en móvil
+solo el icono). Despliega un menú con dos bloques:
 
-- **⚙ Unlock all** — desbloquea todas las ubicaciones del mapa y la Forja.
-- **⛀ +1M G/M** — añade 1M de oro y 1M de mithril al monedero.
-- **⏭ Complete zone** — completa la zona actual (kills al máximo, boss
-  - semi-boss derrotados, siguiente zona desbloqueada).
-- **★ Complete game** — simula una partida completada al 100%, dejando los
-  héroes a nivel 1 y sin equipo equipado para poder probar sin DPS pasivo
-  exagerado.
+**Siempre disponibles**
+
+- **📥 Descargar partida** — exporta el save actual como `.txt` en
+  Base64.
+- **📤 Importar partida** — abre un picker de archivos y reemplaza el
+  save tras validar el formato.
+
+**Solo en desarrollo** (no se renderizan en producción):
+
+- **⚙ Desbloquear todas las zonas** — desbloquea todas las ubicaciones
+  del mapa y la Forja, y además deja semi-jefe y jefe accesibles en
+  cada zona (bypassa el gate de kills y pre-marca los semi como
+  derrotados, sin tocar `bossDefeated`).
+- **⛀ +1.000.000 oro y mithril** — añade 1M de oro y 1M de mithril al
+  monedero.
+- **⏭ Completar zona actual** — completa la zona actual (kills al
+  máximo, boss + semi-boss derrotados, siguiente zona desbloqueada).
+- **★ Completar juego entero** — simula una partida completada al 100%,
+  dejando los héroes a nivel 1 y sin equipo equipado para poder probar
+  sin DPS pasivo exagerado.
+- **↺ Reiniciar partida** — borra el save y vuelve a la welcome screen
+  tras un modal de confirmación in-game (`ConfirmDialog`).
 
 ## 📋 Añadir contenido
 
@@ -422,6 +451,22 @@ Un objeto con bonus situacional (se renderiza como chips coloreados con
   cost: 500,
   loc: 'rivendel',
   bonusVs: { espectro: 0.35, mordor: 0.2 },
+},
+```
+
+Un accesorio sin daño directo pero con `goldPct` (efecto pasivo de
+economía, apilable con las mejoras de la Forja):
+
+```ts
+// src/data/shop.ts
+{
+  id: 'pipa_fumar',
+  name: 'Pipa de Fumar',
+  bonus: 0,
+  cost: 60,
+  loc: 'comarca',
+  desc: 'Hierba de la Comarca, calma y concentración',
+  goldPct: 0.05,         // +5% de oro por kill mientras esté equipado
 },
 ```
 
@@ -513,11 +558,13 @@ ver [`IDEAS.md`](./IDEAS.md).
 
 ## 🧪 Testing
 
-40 tests Vitest distribuidos entre el motor y los hooks:
+43 tests Vitest distribuidos entre el motor y los hooks:
 
 - **`engine/__tests__/formulas.test.ts`** — daño, XP, level-up, coste
   de subida de compañeros, bonus por tipo, bonus de armor en el timer
-  (`armorFightTimeBonusS`), coste de upgrades de la Forja.
+  (`armorFightTimeBonusS`), coste de upgrades de la Forja y
+  `applyRewardMultiplier` con `goldPct` de items equipados (p. ej. la
+  Pipa de Fumar).
 - **`engine/__tests__/combat.test.ts`** — reducer de combate (daño al
   enemigo, recompensas, transición, drop de mithril por tier).
 - **`engine/__tests__/progression.test.ts`** — desbloqueo de zonas,
@@ -526,10 +573,10 @@ ver [`IDEAS.md`](./IDEAS.md).
 - **`engine/__tests__/store.test.ts`** — acciones del store Zustand
   sobre estado real: compra de upgrades, gates por `requires`/`maxRank`,
   y el caso de regresión "reclutar Frodo + Sam no completa la quest de
-  Bosque Viejo hasta haber viajado". También cubre el cheat
-  `completeAll` (todas las zonas quedan desbloqueadas, visitadas y
-  navegables, héroes a nivel 1 y sin equipo equipado para facilitar
-  pruebas manuales sin DPS pasivo excesivo).
+  Bosque Viejo hasta haber viajado". También cubre los cheats:
+  `completeAll` (todas las zonas desbloqueadas y visitadas, héroes a
+  nivel 1 y sin equipo equipado) y `unlockAll` (cada zona con semi/boss
+  queda inmediatamente jugable sin auto-marcar el jefe como derrotado).
 - **`engine/__tests__/content.test.ts`** — integridad: referencias
   válidas entre `locations`, `enemies`, `quests`, `shop`, `companions`
   y `upgrades`; cada `enemyType` está en el set permitido.

@@ -59,6 +59,7 @@ const ENEMY_TYPES: Record<string, EnemyType> = {
 
   // Isengard
   urukhai_elite: 'uruk_hai',
+  orco_isengard: 'orco',
   lengua_serpiente: 'humano',
   saruman: 'humano',
 
@@ -498,6 +499,14 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     hp: 380,
     gold: 82,
     xp: 52,
+    sprite: '/enemies/urukhai.png',
+  },
+  orco_isengard: {
+    id: 'orco_isengard',
+    name: 'Orco de Isengard',
+    hp: 360,
+    gold: 78,
+    xp: 50,
     sprite: '/enemies/urukhai.png',
   },
   lengua_serpiente: {
