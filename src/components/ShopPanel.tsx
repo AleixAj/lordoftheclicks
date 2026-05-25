@@ -1,6 +1,6 @@
 import { SHOP_ACCESS, SHOP_ARMOR, SHOP_WEAPONS } from '@/data';
 import { useGameStore } from '@/engine/store';
-import { SLOT_ICONS, formatArmorStatLine } from '@/lib/equipmentText';
+import { SLOT_ICONS, formatItemStatLine } from '@/lib/equipmentText';
 import styles from '@/styles/panel.module.css';
 import type { EquipSlot, ShopItem } from '@/types/game';
 import { BonusVsChips } from './BonusVsChips';
@@ -94,9 +94,7 @@ function Section({ title, items, slot, statKey, state, onBuy, onEquip }: Section
                 {equipped && <span className={styles.statusBadge}>Equipado</span>}
               </div>
               <div className={styles.meta}>
-                {slot === 'armor'
-                  ? formatArmorStatLine(item.def)
-                  : `+${item[statKey]} ${slot === 'weapon' ? 'daño' : 'bonus'}`}
+                {formatItemStatLine(item, slot, statKey)}
                 {item.desc && <span className="italic"> · {item.desc}</span>}
               </div>
               <BonusVsChips item={item} />

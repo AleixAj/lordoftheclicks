@@ -150,12 +150,24 @@ export function applyLevelUps(xp: number, level: number): { xp: number; level: n
   return { xp: nextXp, level: nextLevel };
 }
 
+/**
+ * Sums an additive percentage perk (`goldPct`, ...) across all equipped
+ * items. Returns 0 when nothing relevant is equipped so callers can safely
+ * add it on top of Forja upgrades.
+ */
+export function equippedRewardBonus(equipped: EquippedItems | undefined, key: 'goldPct'): number {
+  if (!equipped) return 0;
+  return getEquippedItems(equipped).reduce((sum, item) => sum + (item[key] ?? 0), 0);
+}
+
 export function applyRewardMultiplier(
   amount: number,
   upgrades: Partial<Record<UpgradeId, number>> | undefined,
   effect: 'gold_pct' | 'xp_pct',
+  equipped?: EquippedItems,
 ): number {
-  return Math.max(0, Math.floor(amount * (1 + upgradeEffectValue(upgrades, effect))));
+  const itemBonus = effect === 'gold_pct' ? equippedRewardBonus(equipped, 'goldPct') : 0;
+  return Math.max(0, Math.floor(amount * (1 + upgradeEffectValue(upgrades, effect) + itemBonus)));
 }
 
 export function mithrilRewardForTier(

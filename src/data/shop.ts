@@ -3,11 +3,12 @@ import type { ShopItem } from '@/types/game';
 export const SHOP_WEAPONS: readonly ShopItem[] = [
   {
     id: 'daga_elfica',
-    name: 'Daga Élfica',
-    dmg: 4,
+    name: 'Sartén',
+    dmg: 2,
     cost: 45,
     loc: 'comarca',
-    bonusVs: { orco: 0.15, bestia: 0.1 },
+    desc: 'Lo último que Sam dejaría atrás',
+    bonusVs: { bestia: 0.1 },
   },
   {
     id: 'dardo',
@@ -20,7 +21,7 @@ export const SHOP_WEAPONS: readonly ShopItem[] = [
   },
   {
     id: 'espada_trancos',
-    name: 'Espada de Trancos',
+    name: 'Espada Dúnedain',
     dmg: 14,
     cost: 260,
     loc: 'bree',
@@ -155,6 +156,15 @@ export const SHOP_ARMOR: readonly ShopItem[] = [
 
 export const SHOP_ACCESS: readonly ShopItem[] = [
   {
+    id: 'pipa_fumar',
+    name: 'Pipa de Fumar',
+    bonus: 0,
+    cost: 60,
+    loc: 'comarca',
+    desc: 'Hierba de la Comarca, calma y concentración',
+    goldPct: 0.05,
+  },
+  {
     id: 'phial',
     name: 'Luz de Galadriel',
     bonus: 9,
@@ -164,13 +174,13 @@ export const SHOP_ACCESS: readonly ShopItem[] = [
     bonusVs: { espectro: 0.45, criatura_antigua: 0.25 },
   },
   {
-    id: 'cuerno_gondor',
-    name: 'Cuerno de Gondor',
+    id: 'estrella_tarde',
+    name: 'Estrella de la Tarde',
     bonus: 11,
     cost: 720,
     loc: 'rivendel',
-    desc: 'La llamada de Boromir',
-    bonusVs: { uruk_hai: 0.3, humano: 0.2 },
+    desc: 'Joya de Arwen, símbolo de esperanza',
+    bonusVs: { espectro: 0.25, mordor: 0.2 },
   },
   {
     id: 'lembas',
@@ -178,18 +188,8 @@ export const SHOP_ACCESS: readonly ShopItem[] = [
     bonus: 15,
     cost: 1350,
     loc: 'lothlorien',
-    desc: 'Pan élfico que restaura energía',
-    bonusVs: {
-      naturaleza: 0.15,
-      bestia: 0.15,
-      orco: 0.15,
-      uruk_hai: 0.15,
-      espectro: 0.15,
-      humano: 0.15,
-      troll: 0.15,
-      mordor: 0.15,
-      criatura_antigua: 0.15,
-    },
+    desc: 'Pan élfico que sustenta hasta Mordor',
+    bonusVs: { mordor: 0.25, espectro: 0.25, orco: 0.2 },
   },
   {
     id: 'palantir',
@@ -198,6 +198,15 @@ export const SHOP_ACCESS: readonly ShopItem[] = [
     cost: 2250,
     loc: 'campamento_rohan',
     bonusVs: { humano: 0.3, mordor: 0.25 },
+  },
+  {
+    id: 'cuerno_gondor',
+    name: 'Cuerno de Gondor',
+    bonus: 26,
+    cost: 3200,
+    loc: 'ithilien',
+    desc: 'La llamada de Boromir',
+    bonusVs: { mordor: 0.3, uruk_hai: 0.3 },
   },
   {
     id: 'estandarte_rey',

@@ -168,6 +168,11 @@ export interface ShopItem {
   bonus?: number;
   /** Percentage damage multiplier against enemy types (`0.35` = +35%). */
   bonusVs?: Partial<Record<EnemyType, number>>;
+  /**
+   * Extra gold per kill while the item is equipped (`0.05` = +5%). Stacks
+   * additively with Forja upgrades and other equipped items.
+   */
+  goldPct?: number;
 }
 
 export type QuestType = 'kills_at' | 'reach' | 'boss';

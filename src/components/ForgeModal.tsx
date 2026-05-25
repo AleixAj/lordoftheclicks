@@ -227,15 +227,15 @@ export function ForgeModal({ open, mithril, upgrades, onBuy, onReset, onClose }:
                 redistribuirlos como prefieras.
               </p>
               <div className={styles.confirmActions}>
+                <button type="button" className={styles.confirmAccept} onClick={handleConfirmReset}>
+                  Reiniciar
+                </button>
                 <button
                   type="button"
                   className={styles.confirmCancel}
                   onClick={() => setConfirmReset(false)}
                 >
                   Cancelar
-                </button>
-                <button type="button" className={styles.confirmAccept} onClick={handleConfirmReset}>
-                  Reiniciar
                 </button>
               </div>
             </div>

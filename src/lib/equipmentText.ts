@@ -59,7 +59,7 @@ export const SLOT_LABELS: Record<EquipSlot, string> = {
 };
 
 export const STAT_LABELS: Record<EquipSlot, string> = {
-  weapon: 'daño',
+  weapon: 'daño click',
   armor: 's en semi/jefe',
   accessory: 'bonus click',
 };
@@ -77,6 +77,29 @@ export function armorFightTimeBonusS(def: number | undefined): number {
 export function formatArmorStatLine(def: number | undefined): string {
   const secs = armorFightTimeBonusS(def);
   return `+${secs}s en semi/jefe`;
+}
+
+/**
+ * Composes the meta stat line shown on shop/equipment cards. Skips parts
+ * with no value so an accessory like the Pipa de Fumar (bonus 0, goldPct
+ * 0.05) reads `+5% oro` instead of the misleading `+0 bonus click`.
+ */
+export function formatItemStatLine(
+  item: ShopItem,
+  slot: EquipSlot,
+  statKey: keyof Pick<ShopItem, 'dmg' | 'def' | 'bonus'>,
+): string {
+  if (slot === 'armor') return formatArmorStatLine(item.def);
+  const parts: string[] = [];
+  const statValue = item[statKey];
+  if (typeof statValue === 'number' && statValue > 0) {
+    const label = slot === 'weapon' ? 'daño click' : 'bonus click';
+    parts.push(`+${statValue} ${label}`);
+  }
+  if (item.goldPct && item.goldPct > 0) {
+    parts.push(`+${Math.round(item.goldPct * 100)}% oro`);
+  }
+  return parts.join(' · ');
 }
 
 export function getBonusVsEntries(item: Pick<ShopItem, 'bonusVs'>): BonusVsEntry[] {

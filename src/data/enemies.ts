@@ -2,8 +2,8 @@ import type { Enemy, EnemyId, EnemyType } from '@/types/game';
 
 const ENEMY_TYPES: Record<string, EnemyType> = {
   // Bosque Viejo
-  conejo: 'bestia',
-  ciervo: 'bestia',
+  sapo: 'bestia',
+  gato: 'bestia',
   espectro_bosque: 'espectro',
   nazgul_jinete: 'espectro',
 
@@ -16,7 +16,7 @@ const ENEMY_TYPES: Record<string, EnemyType> = {
   // Caradhras
   lobo_montana: 'bestia',
   oso_polar: 'bestia',
-  aguila: 'bestia',
+  golemhielo: 'naturaleza',
   bandada_crebain: 'bestia',
   tormenta_caradhras: 'naturaleza',
 
@@ -41,12 +41,14 @@ const ENEMY_TYPES: Record<string, EnemyType> = {
   lurtz: 'uruk_hai',
 
   // Fangorn
-  orco_isengard: 'orco',
-  lobo_mayor: 'bestia',
-  urukhai_cazador: 'uruk_hai',
+  arana_fangorn: 'bestia',
+  escorpion_fangorn: 'bestia',
+  snaga: 'orco',
+  grishnakh: 'orco',
 
   // Camino al Abismo de Helm
-  jinete_huargo: 'bestia',
+  jinete_huargo: 'orco',
+  huargo: 'bestia',
   huargo_alfa: 'bestia',
   sharku: 'orco',
 
@@ -120,7 +122,6 @@ const ENEMY_TYPES: Record<string, EnemyType> = {
   // Definidos pero NO asignados a ninguna zona.
   // Mantenidos como reserva para futuras zonas o variantes.
   // ============================================================
-  huargo: 'bestia',
   nazgul_explorador: 'espectro',
   avalancha: 'naturaleza',
   orco_nevado: 'orco',
@@ -140,16 +141,16 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Bosque Viejo
   // ============================================================
-  conejo: {
-    id: 'conejo',
+  sapo: {
+    id: 'sapo',
     name: 'Sapo',
     hp: 25,
     gold: 6,
     xp: 4,
     sprite: '/enemies/green-frog.gif',
   },
-  ciervo: {
-    id: 'ciervo',
+  gato: {
+    id: 'gato',
     name: 'Gato',
     hp: 60,
     gold: 14,
@@ -162,7 +163,7 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     hp: 240,
     gold: 60,
     xp: 40,
-    sprite: '/enemies/nazgul.gif',
+    sprite: '/enemies/forest-spectral.png',
   },
   nazgul_jinete: {
     id: 'nazgul_jinete',
@@ -191,7 +192,7 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     hp: 180,
     gold: 45,
     xp: 30,
-    sprite: '/enemies/wolf-gif.gif',
+    sprite: '/enemies/wolf.png',
   },
   khamul: {
     id: 'khamul',
@@ -199,7 +200,7 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     hp: 520,
     gold: 135,
     xp: 90,
-    sprite: '/enemies/wolf-gif.gif',
+    sprite: '/enemies/khamul.png',
   },
   rey_brujo_amon: {
     id: 'rey_brujo_amon',
@@ -208,7 +209,7 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     gold: 360,
     xp: 230,
     isBoss: true,
-    sprite: '/enemies/uruk-berserker.png',
+    sprite: '/enemies/witch-king-shadow3.png',
   },
 
   // ============================================================
@@ -216,11 +217,11 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   lobo_montana: {
     id: 'lobo_montana',
-    name: 'Camaleón de Hielo',
+    name: 'Lobo de Montaña',
     hp: 160,
     gold: 35,
     xp: 22,
-    sprite: '/enemies/ice-camaleon.gif',
+    sprite: '/enemies/wolf-gif.gif',
   },
   oso_polar: {
     id: 'oso_polar',
@@ -228,10 +229,10 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     hp: 280,
     gold: 55,
     xp: 35,
-    sprite: '/enemies/golem.gif',
+    sprite: '/enemies/ice-camaleon.gif',
   },
-  aguila: {
-    id: 'aguila',
+  golemhielo: {
+    id: 'golemhielo',
     name: 'Golem de Hielo',
     hp: 140,
     gold: 32,
@@ -244,7 +245,7 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     hp: 600,
     gold: 150,
     xp: 95,
-    sprite: '/enemies/uruk-berserker.png',
+    sprite: '/enemies/crebain.png',
   },
   tormenta_caradhras: {
     id: 'tormenta_caradhras',
@@ -253,7 +254,7 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     gold: 250,
     xp: 165,
     isBoss: true,
-    sprite: '/enemies/uruk-berserker.png',
+    sprite: '/enemies/caradhras-storm.png',
   },
 
   // ============================================================
@@ -285,11 +286,11 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   },
   troll_caverna: {
     id: 'troll_caverna',
-    name: 'Troll de Caverna',
+    name: 'Troll',
     hp: 700,
     gold: 170,
     xp: 110,
-    sprite: '/enemies/orc-berserker.gif',
+    sprite: '/enemies/troll.gif',
   },
   balrog: {
     id: 'balrog',
@@ -298,7 +299,7 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     gold: 1050,
     xp: 680,
     isBoss: true,
-    sprite: '/enemies/orc-berserker.gif',
+    sprite: '/enemies/balrog.gif',
   },
 
   // ============================================================
@@ -334,7 +335,7 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     hp: 1250,
     gold: 305,
     xp: 195,
-    sprite: '/enemies/pulpo.gif',
+    sprite: '/enemies/kraken.png',
   },
   hydra: {
     id: 'hydra',
@@ -343,7 +344,7 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     gold: 360,
     xp: 230,
     isBoss: true,
-    sprite: '/enemies/hydra.gif',
+    sprite: '/enemies/hydra.png',
   },
 
   // ============================================================
@@ -386,30 +387,38 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   // Fangorn
   // ============================================================
-  orco_isengard: {
-    id: 'orco_isengard',
-    name: 'Orco de Isengard',
+  arana_fangorn: {
+    id: 'arana_fangorn',
+    name: 'Araña de Fangorn',
     hp: 165,
     gold: 38,
     xp: 24,
-    sprite: '/enemies/urukhai.png',
+    sprite: '/enemies/fangorn-spider.png',
   },
-  lobo_mayor: {
-    id: 'lobo_mayor',
-    name: 'Lobo Mayor de Fangorn',
+  escorpion_fangorn: {
+    id: 'escorpion_fangorn',
+    name: 'Escorpión de Fangorn',
+    hp: 165,
+    gold: 38,
+    xp: 24,
+    sprite: '/enemies/fangorn-scorpion.png',
+  },
+  snaga: {
+    id: 'snaga',
+    name: 'Snaga',
     hp: 560,
     gold: 140,
     xp: 92,
-    sprite: '/enemies/uruk-berserker.png',
+    sprite: '/enemies/snaga.png',
   },
-  urukhai_cazador: {
-    id: 'urukhai_cazador',
-    name: 'Uruk-hai Cazador',
+  grishnakh: {
+    id: 'grishnakh',
+    name: 'Grishnákh',
     hp: 1600,
     gold: 390,
     xp: 250,
     isBoss: true,
-    sprite: '/enemies/uruk-berserker.png',
+    sprite: '/enemies/grishnakh.png',
   },
 
   // ============================================================
@@ -417,11 +426,19 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // ============================================================
   jinete_huargo: {
     id: 'jinete_huargo',
-    name: 'Jinete de Huargo',
+    name: 'Jinete Huargo',
     hp: 280,
     gold: 62,
     xp: 38,
-    sprite: '/enemies/urukhai.png',
+    sprite: '/enemies/warg-rider.png',
+  },
+  huargo: {
+    id: 'huargo',
+    name: 'Huargo',
+    hp: 250,
+    gold: 58,
+    xp: 35,
+    sprite: '/enemies/warg2.png',
   },
   huargo_alfa: {
     id: 'huargo_alfa',
@@ -429,7 +446,7 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     hp: 620,
     gold: 155,
     xp: 100,
-    sprite: '/enemies/uruk-berserker.png',
+    sprite: '/enemies/warg.png',
   },
   sharku: {
     id: 'sharku',
@@ -438,7 +455,7 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
     gold: 410,
     xp: 270,
     isBoss: true,
-    sprite: '/enemies/uruk-berserker.png',
+    sprite: '/enemies/sharku.png',
   },
 
   // ============================================================
@@ -866,14 +883,6 @@ const ENEMY_DEFS: Record<EnemyId, Omit<Enemy, 'enemyType'>> = {
   // Reserva (no asignados a ninguna zona)
   // Se mantienen aquí para reciclarlos en futuras zonas o variantes.
   // ============================================================
-  huargo: {
-    id: 'huargo',
-    name: 'Huargo',
-    hp: 140,
-    gold: 32,
-    xp: 20,
-    sprite: '/enemies/urukhai.png',
-  },
   nazgul_explorador: {
     id: 'nazgul_explorador',
     name: 'Espectro del Anillo',
@@ -996,8 +1005,8 @@ const BALANCED_ELITE_HP: Partial<Record<EnemyId, number>> = {
   hydra: 2450,
   capitan_amon: 1550,
   lurtz: 3150,
-  lobo_mayor: 1400,
-  urukhai_cazador: 3000,
+  snaga: 1400,
+  grishnakh: 3000,
   huargo_alfa: 1450,
   sharku: 3200,
   capitan_uruk: 2200,

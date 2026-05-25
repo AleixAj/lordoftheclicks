@@ -48,8 +48,8 @@ export function dealDamage(
       : enemyTier === 'semi'
         ? !state.semiBossDefeated[locId]
         : false;
-  const goldEarned = applyRewardMultiplier(baseGold, state.upgrades, 'gold_pct');
-  const xpEarned = applyRewardMultiplier(baseXp, state.upgrades, 'xp_pct');
+  const goldEarned = applyRewardMultiplier(baseGold, state.upgrades, 'gold_pct', state.equipped);
+  const xpEarned = applyRewardMultiplier(baseXp, state.upgrades, 'xp_pct', state.equipped);
   const mithrilEarned = mithrilRewardForTier(enemyTier, state.locIdx, state.upgrades, firstClear);
 
   // Pool kills increment locKills. Semi/boss kills don't (they're gated by it).

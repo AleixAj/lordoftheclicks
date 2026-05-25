@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyLevelUps,
+  applyRewardMultiplier,
   armorFightTimeBonusS,
   calcClickDamage,
   calcClickDamageAgainstEnemy,
@@ -123,8 +124,8 @@ describe('formulas', () => {
       equipped: { weapon: 'dardo', armor: null, accessory: 'lembas' },
     });
 
-    expect(calcEnemyTypeMultiplier(state.equipped, 'orco')).toBeCloseTo(1.35);
-    expect(calcEnemyTypeMultiplier(state.equipped, 'espectro')).toBeCloseTo(1.15);
+    expect(calcEnemyTypeMultiplier(state.equipped, 'orco')).toBeCloseTo(1.4);
+    expect(calcEnemyTypeMultiplier(state.equipped, 'espectro')).toBeCloseTo(1.25);
   });
 
   it('applies enemy type bonuses to click and DPS damage', () => {
@@ -151,5 +152,25 @@ describe('formulas', () => {
     const result = applyLevelUps(1000, 1);
     expect(result.level).toBeGreaterThan(1);
     expect(result.xp).toBeLessThan(xpForLevel(result.level));
+  });
+
+  it('applyRewardMultiplier adds equipped item goldPct on top of upgrades', () => {
+    const base = applyRewardMultiplier(100, {}, 'gold_pct');
+    const withPipa = applyRewardMultiplier(100, {}, 'gold_pct', {
+      weapon: null,
+      armor: null,
+      accessory: 'pipa_fumar',
+    });
+    expect(base).toBe(100);
+    expect(withPipa).toBe(105);
+  });
+
+  it('applyRewardMultiplier ignores goldPct for xp_pct effect', () => {
+    const xpWithPipa = applyRewardMultiplier(100, {}, 'xp_pct', {
+      weapon: null,
+      armor: null,
+      accessory: 'pipa_fumar',
+    });
+    expect(xpWithPipa).toBe(100);
   });
 });

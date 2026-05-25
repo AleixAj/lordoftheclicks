@@ -9,6 +9,34 @@ import { spawnFromPool, spawnInitial } from './spawn';
 // there. When migrating from v10 we always reset visitedLocs to ['comarca'].
 const SAVE_KEY = 'lotc_save_v11';
 const LEGACY_KEY = 'lotc_save_v10';
+const SAVE_FILE_APP = 'lord-of-the-clicks';
+const SAVE_FILE_VERSION = 1;
+
+interface SaveBackupFile {
+  app: typeof SAVE_FILE_APP;
+  fileVersion: typeof SAVE_FILE_VERSION;
+  saveKey: typeof SAVE_KEY;
+  exportedAt: string;
+  state: GameState;
+}
+
+function encodeBase64(value: string): string {
+  const bytes = new TextEncoder().encode(value);
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return window.btoa(binary);
+}
+
+function decodeBase64(value: string): string {
+  const binary = window.atob(value.trim());
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+function saveFileName(): string {
+  const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  return `lord-of-the-clicks-save-${stamp}.txt`;
+}
 
 /** True when localStorage already holds a save for this profile. */
 export function hasExistingSave(): boolean {
@@ -159,6 +187,40 @@ export function loadGame(): GameState {
 export function saveGame(state: GameState): void {
   if (typeof window === 'undefined') return;
   window.localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+}
+
+export function downloadSaveFile(state: GameState): void {
+  if (typeof window === 'undefined') return;
+  const backup: SaveBackupFile = {
+    app: SAVE_FILE_APP,
+    fileVersion: SAVE_FILE_VERSION,
+    saveKey: SAVE_KEY,
+    exportedAt: new Date().toISOString(),
+    state,
+  };
+  const blob = new Blob([encodeBase64(JSON.stringify(backup))], {
+    type: 'text/plain;charset=utf-8',
+  });
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = saveFileName();
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+export async function importSaveFile(file: File): Promise<void> {
+  if (typeof window === 'undefined') return;
+  const raw = await file.text();
+  const decoded = decodeBase64(raw);
+  const parsed = JSON.parse(decoded) as Partial<SaveBackupFile>;
+  if (parsed.app !== SAVE_FILE_APP || !parsed.state || typeof parsed.state !== 'object') {
+    throw new Error('Invalid save file');
+  }
+  window.localStorage.setItem(SAVE_KEY, JSON.stringify(parsed.state));
+  window.localStorage.removeItem(LEGACY_KEY);
 }
 
 export function resetSave(): void {

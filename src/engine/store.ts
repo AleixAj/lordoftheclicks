@@ -476,12 +476,26 @@ export const useGameStore = create<GameStore>((set, get) => ({
   unlockAll: () => {
     const current = get().state;
     const allIds = LOCATIONS.map((l) => l.id);
+    // Bypass the kill-count gates so semi/boss buttons become clickable in
+    // every zone, and pre-flag each semi as defeated so the boss isn't
+    // blocked behind it. Defeats are kept as visual ✓ marks only — both
+    // encounters remain re-fightable.
+    const locKills = { ...current.locKills };
+    const semiBossDefeated = { ...current.semiBossDefeated };
+    for (const loc of LOCATIONS) {
+      if (!loc.semiBoss && !loc.boss) continue;
+      const needed = bossKillThreshold(loc);
+      locKills[loc.id] = Math.max(locKills[loc.id] ?? 0, needed);
+      if (loc.semiBoss) semiBossDefeated[loc.id] = true;
+    }
     set({
       state: applyPostMutations({
         ...current,
         unlockedLocs: allIds,
         forgeUnlocked: true,
         forgeSeen: true,
+        locKills,
+        semiBossDefeated,
       }),
     });
   },

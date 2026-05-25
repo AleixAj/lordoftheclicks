@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { hasExistingSave } from '@/engine/persistence';
+import { useRef, useState, type ReactNode } from 'react';
+import { downloadSaveFile, hasExistingSave, importSaveFile } from '@/engine/persistence';
 import { useGameStore } from '@/engine/store';
 import { useGameLoop } from '@/hooks/useGameLoop';
 import { BattlePanel } from '@/components/BattlePanel';
 import { CompanionsPanel } from '@/components/CompanionsPanel';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { CurrencyBar } from '@/components/CurrencyBar';
 import { EquipmentPanel } from '@/components/EquipmentPanel';
 import { ForgeButton } from '@/components/ForgeButton';
@@ -16,7 +17,7 @@ import styles from '@/styles/app.module.css';
 const headerButtonClass =
   'min-h-9 px-3 py-1.5 rounded-md border border-[#c9a44a]/80 bg-[#1e1a14]/95 text-[12px] font-[Cinzel] font-extrabold tracking-wide text-[#f4d47a] shadow-[0_0_12px_rgba(201,164,74,0.28),inset_0_1px_0_rgba(255,255,255,0.12)] transition hover:scale-[1.03] hover:border-[#f4d47a] hover:bg-[#2a2117] hover:text-[#ffe89a] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#f4d47a]';
 const devHeaderButtonClass = `${headerButtonClass} uppercase`;
-const resetButtonClass = `${headerButtonClass} min-w-9 px-2 text-[18px] leading-none text-[#ffdf7a]`;
+const resetButtonClass = `${headerButtonClass} border-[#c95a4a]/80 text-[#ffb29a] hover:border-[#ff8a72] hover:text-[#ffd6c4] shadow-[0_0_12px_rgba(201,90,74,0.32),inset_0_1px_0_rgba(255,255,255,0.12)]`;
 type DrawerSide = 'left' | 'right';
 
 export function App() {
@@ -35,6 +36,8 @@ function GameShell({ onReset }: { onReset: () => void }) {
   const [openDrawer, setOpenDrawer] = useState<DrawerSide | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [forgeOpen, setForgeOpen] = useState(false);
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
+  const importInputRef = useRef<HTMLInputElement>(null);
   const state = useGameStore((s) => s.state);
   const resetGame = useGameStore((s) => s.resetGame);
   const unlockAll = useGameStore((s) => s.unlockAll);
@@ -58,6 +61,23 @@ function GameShell({ onReset }: { onReset: () => void }) {
     fn();
     closeMenu();
   };
+  const downloadCurrentSave = () => {
+    downloadSaveFile(useGameStore.getState().state);
+    closeMenu();
+  };
+  const openImportPicker = () => importInputRef.current?.click();
+  const importSelectedSave = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      await importSaveFile(file);
+      window.location.reload();
+    } catch {
+      alert('No se ha podido importar la partida. Comprueba que el archivo sea válido.');
+    } finally {
+      if (importInputRef.current) importInputRef.current.value = '';
+      closeMenu();
+    }
+  };
 
   return (
     <div className={styles.shell}>
@@ -69,18 +89,25 @@ function GameShell({ onReset }: { onReset: () => void }) {
         </h1>
         <button
           type="button"
-          className={styles.menuToggle}
+          className={`${headerButtonClass} ${styles.settingsToggle}`}
           onClick={() => setMenuOpen((open) => !open)}
           aria-expanded={menuOpen}
           aria-controls="header-actions"
-          aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
+          aria-label="Ajustes"
           hidden={openDrawer !== null}
         >
-          <span className={styles.menuToggleBars} aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </span>
+          <svg
+            className={styles.settingsIcon}
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              fill="currentColor"
+              d="M19.14 12.94a7.49 7.49 0 0 0 0-1.88l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96a7.31 7.31 0 0 0-1.63-.95L14.4 2.81a.5.5 0 0 0-.5-.42h-3.8a.5.5 0 0 0-.5.42l-.34 2.5a7.34 7.34 0 0 0-1.63.95l-2.39-.96a.5.5 0 0 0-.61.22L2.71 8.84a.5.5 0 0 0 .12.64l2.03 1.58a7.49 7.49 0 0 0 0 1.88L2.83 14.52a.5.5 0 0 0-.12.64l1.92 3.32a.5.5 0 0 0 .61.22l2.39-.96a7.34 7.34 0 0 0 1.63.95l.34 2.5a.5.5 0 0 0 .5.42h3.8a.5.5 0 0 0 .5-.42l.34-2.5a7.31 7.31 0 0 0 1.63-.95l2.39.96a.5.5 0 0 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64ZM12 15.5A3.5 3.5 0 1 1 15.5 12 3.5 3.5 0 0 1 12 15.5Z"
+            />
+          </svg>
+          <span className={styles.settingsLabel}>Ajustes</span>
         </button>
         {menuOpen && (
           <button
@@ -94,52 +121,57 @@ function GameShell({ onReset }: { onReset: () => void }) {
           id="header-actions"
           className={`${styles.headerActions} ${menuOpen ? styles.headerActionsOpen : ''}`}
         >
-          <button
-            type="button"
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".txt,text/plain"
+            className={styles.hiddenFileInput}
+            onChange={(event) => void importSelectedSave(event.currentTarget.files?.[0])}
+          />
+          <MenuAction
+            icon={<DownloadIcon />}
+            label="Descargar partida"
+            onClick={downloadCurrentSave}
+          />
+          <MenuAction icon={<UploadIcon />} label="Importar partida" onClick={openImportPicker} />
+          <MenuAction
+            icon={<UnlockIcon />}
+            label="Desbloquear todas las zonas"
             onClick={runAndClose(unlockAll)}
             className={`${devHeaderButtonClass} ${styles.devAction}`}
             title="Test: desbloquear todas las ubicaciones"
-          >
-            ⚙ Desbloq
-          </button>
-          <button
-            type="button"
+          />
+          <MenuAction
+            icon={<CoinIcon />}
+            label="+1.000.000 oro y mithril"
             onClick={runAndClose(() => giveGold(1_000_000))}
             className={`${devHeaderButtonClass} ${styles.devAction}`}
             title="Test: añadir 1.000.000 de oro y 1.000.000 de mithril"
-          >
-            ⛀ +1M G/M
-          </button>
-          <button
-            type="button"
+          />
+          <MenuAction
+            icon={<SkipIcon />}
+            label="Completar zona actual"
             onClick={runAndClose(completeCurrentZone)}
             className={`${devHeaderButtonClass} ${styles.devAction}`}
             title="Test: completar la zona actual (boss derrotado, siguiente zona desbloqueada)"
-          >
-            ⏭ Zona
-          </button>
-          <button
-            type="button"
+          />
+          <MenuAction
+            icon={<StarIcon />}
+            label="Completar juego entero"
             onClick={runAndClose(completeAll)}
             className={`${devHeaderButtonClass} ${styles.devAction} border-[#7fc36d]/80 text-[#b8f0a8] shadow-[0_0_12px_rgba(127,195,109,0.24),inset_0_1px_0_rgba(255,255,255,0.12)] hover:border-[#b8f0a8] hover:text-[#dcffd2]`}
             title="Test: simular partida completada (bosses, items, compañeros, oro)"
-          >
-            ★ Juego
-          </button>
-          <button
-            type="button"
+          />
+          <MenuAction
+            icon={<RestartIcon />}
+            label="Reiniciar partida"
             onClick={() => {
-              if (confirm('¿Reiniciar partida? Perderás todo el progreso.')) {
-                resetGame();
-                onReset();
-              }
+              closeMenu();
+              setResetConfirmOpen(true);
             }}
-            className={resetButtonClass}
+            className={`${resetButtonClass} ${styles.devAction}`}
             title="Reiniciar partida"
-            aria-label="Reiniciar partida"
-          >
-            ↺
-          </button>
+          />
         </div>
       </header>
 
@@ -238,6 +270,24 @@ function GameShell({ onReset }: { onReset: () => void }) {
         onReset={resetUpgrades}
         onClose={() => setForgeOpen(false)}
       />
+      <ConfirmDialog
+        open={resetConfirmOpen}
+        title="Reiniciar partida"
+        message={
+          <>
+            Vas a borrar tu progreso actual: oro, mithril, compañeros, equipo y mejoras de la Forja.
+            Esta acción <strong>no se puede deshacer</strong>.
+          </>
+        }
+        confirmLabel="Reiniciar"
+        cancelLabel="Cancelar"
+        onCancel={() => setResetConfirmOpen(false)}
+        onConfirm={() => {
+          setResetConfirmOpen(false);
+          resetGame();
+          onReset();
+        }}
+      />
     </div>
   );
 }
@@ -296,12 +346,109 @@ function DrawerHeader({ title, onClose }: DrawerHeaderProps) {
       <span>{title}</span>
       <button
         type="button"
-        className={resetButtonClass}
+        className={`${headerButtonClass} min-w-9 px-2 text-[18px] leading-none text-[#ffdf7a]`}
         onClick={onClose}
         aria-label="Cerrar panel"
       >
         ×
       </button>
     </div>
+  );
+}
+
+interface MenuActionProps {
+  icon: ReactNode;
+  label: string;
+  onClick: () => void;
+  className?: string;
+  title?: string;
+}
+
+function MenuAction({ icon, label, onClick, className, title }: MenuActionProps) {
+  const finalClassName = className ?? `${headerButtonClass} ${styles.devAction}`;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`${finalClassName} ${styles.menuAction}`}
+      title={title}
+    >
+      <span className={styles.menuActionIcon} aria-hidden="true">
+        {icon}
+      </span>
+      <span className={styles.menuActionLabel}>{label}</span>
+    </button>
+  );
+}
+
+const iconBase = {
+  className: styles.menuActionSvg,
+  viewBox: '0 0 24 24',
+  'aria-hidden': true,
+  focusable: false,
+} as const;
+
+function DownloadIcon() {
+  return (
+    <svg {...iconBase}>
+      <path fill="currentColor" d="M5 20h14v-2H5v2Zm7-3 5-5h-3V4h-4v8H7l5 5Z" />
+    </svg>
+  );
+}
+
+function UploadIcon() {
+  return (
+    <svg {...iconBase}>
+      <path fill="currentColor" d="M5 20h14v-2H5v2Zm7-17-5 5h3v8h4v-8h3l-5-5Z" />
+    </svg>
+  );
+}
+
+function UnlockIcon() {
+  return (
+    <svg {...iconBase}>
+      <path
+        fill="currentColor"
+        d="M18 8h-1V6a5 5 0 0 0-9.9-1h2.02A3 3 0 0 1 15 6v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2Zm-6 9a2 2 0 1 1 2-2 2 2 0 0 1-2 2Z"
+      />
+    </svg>
+  );
+}
+
+function CoinIcon() {
+  return (
+    <svg {...iconBase}>
+      <path
+        fill="currentColor"
+        d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm.9 14.4v1.6h-1.7v-1.5a4.3 4.3 0 0 1-3-1.4l1.2-1.3a3 3 0 0 0 2.4 1.1c1 0 1.6-.5 1.6-1.2 0-.6-.4-1-1.7-1.4-2-.6-3-1.5-3-3 0-1.4 1-2.5 2.6-2.8V5h1.7v1.5a3.7 3.7 0 0 1 2.6 1.3l-1.2 1.3a2.5 2.5 0 0 0-2-1c-1 0-1.5.4-1.5 1.1s.5 1 1.7 1.4c2 .6 3 1.5 3 3.1 0 1.5-1.1 2.6-2.7 2.8Z"
+      />
+    </svg>
+  );
+}
+
+function SkipIcon() {
+  return (
+    <svg {...iconBase}>
+      <path fill="currentColor" d="M6 5v14l8-7-8-7Zm10 0h2v14h-2V5Z" />
+    </svg>
+  );
+}
+
+function StarIcon() {
+  return (
+    <svg {...iconBase}>
+      <path
+        fill="currentColor"
+        d="M12 2 9.2 8.6 2 9.3l5.5 4.7L5.8 21 12 17.3 18.2 21l-1.7-7 5.5-4.7-7.2-.7L12 2Z"
+      />
+    </svg>
+  );
+}
+
+function RestartIcon() {
+  return (
+    <svg {...iconBase}>
+      <path fill="currentColor" d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7Z" />
+    </svg>
   );
 }

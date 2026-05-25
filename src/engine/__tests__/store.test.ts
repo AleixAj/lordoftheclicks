@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { LOCATIONS, UPGRADES } from '@/data';
 import { createInitialState } from '../persistence';
 import { upgradeCost } from '../formulas';
+import { bossKillThreshold } from '../progression';
 import { useGameStore } from '../store';
 
 describe('store forge upgrades', () => {
@@ -99,5 +100,20 @@ describe('store dev cheats', () => {
 
     expect(Object.values(afterComplete.companions).every((c) => c.level === 1)).toBe(true);
     expect(afterComplete.equipped).toEqual({ weapon: null, armor: null, accessory: null });
+  });
+
+  it('unlockAll makes every zone semi/boss available without auto-defeating the boss', () => {
+    useGameStore.setState({ state: createInitialState() });
+
+    useGameStore.getState().unlockAll();
+    const state = useGameStore.getState().state;
+
+    expect(state.unlockedLocs).toEqual(LOCATIONS.map((loc) => loc.id));
+    for (const loc of LOCATIONS) {
+      if (!loc.semiBoss && !loc.boss) continue;
+      expect(state.locKills[loc.id]).toBeGreaterThanOrEqual(bossKillThreshold(loc));
+      if (loc.semiBoss) expect(state.semiBossDefeated[loc.id]).toBe(true);
+      expect(state.bossDefeated[loc.id]).toBeFalsy();
+    }
   });
 });

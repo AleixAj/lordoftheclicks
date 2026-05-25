@@ -1,6 +1,6 @@
 import { SHOP_ACCESS, SHOP_ARMOR, SHOP_WEAPONS } from '@/data';
 import { useGameStore } from '@/engine/store';
-import { SLOT_ICONS, formatArmorStatLine } from '@/lib/equipmentText';
+import { SLOT_ICONS, formatItemStatLine } from '@/lib/equipmentText';
 import styles from '@/styles/panel.module.css';
 import type { EquipSlot, ShopItem } from '@/types/game';
 import { BonusVsChips } from './BonusVsChips';
@@ -84,11 +84,7 @@ function EquippedItem({ slot, item }: EquippedItemProps) {
       <div className={styles.itemIcon}>{SLOT_ICONS[slot.key]}</div>
       <div className={styles.content}>
         <div className={`${styles.itemName} ${styles.itemNameGold}`}>{item.name}</div>
-        <div className={styles.meta}>
-          {slot.key === 'armor'
-            ? formatArmorStatLine(item.def)
-            : `+${item[slot.stat]} ${slot.key === 'weapon' ? 'daño' : 'bonus'}`}
-        </div>
+        <div className={styles.meta}>{formatItemStatLine(item, slot.key, slot.stat)}</div>
         <BonusVsChips item={item} />
       </div>
     </>

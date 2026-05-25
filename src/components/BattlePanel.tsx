@@ -24,8 +24,7 @@ import {
   ENEMY_TYPE_COLORS,
   SLOT_ICONS,
   SLOT_LABELS,
-  STAT_LABELS,
-  formatArmorStatLine,
+  formatItemStatLine,
 } from '@/lib/equipmentText';
 import type {
   Companion,
@@ -235,6 +234,7 @@ export function BattlePanel() {
                 current={restView}
                 onChange={setRestView}
                 firstLabel={loc?.isRest ? 'Reclutar' : 'Combate'}
+                secondLabel={loc?.isRest ? 'Tienda' : 'Reclutar'}
                 variant="header"
               />
             </span>
@@ -285,10 +285,10 @@ export function BattlePanel() {
         )}
         <div className={styles.stats}>
           <span>
-            Daño click<b>{state.clickDmg}</b>
+            Daño click<b>{Math.round(state.clickDmg)}</b>
           </span>
           <span>
-            DPS<b>{dps.toFixed(1)}</b>
+            DPS<b>{Math.round(dps)}</b>
           </span>
           {bossKillsNeeded > 0 && (
             <span>
@@ -299,7 +299,7 @@ export function BattlePanel() {
         </div>
 
         <div className={styles.statsMobile} aria-label="DPS actual">
-          DPS<b>{dps.toFixed(1)}</b>
+          DPS<b>{Math.round(dps)}</b>
         </div>
 
         {isEliteEnemy && (
@@ -319,6 +319,7 @@ export function BattlePanel() {
             current={restView}
             onChange={setRestView}
             firstLabel={loc?.isRest ? 'Reclutar' : 'Combate'}
+            secondLabel={loc?.isRest ? 'Tienda' : 'Reclutar'}
             variant="floating"
           />
         )}
@@ -685,6 +686,12 @@ interface RestModeToggleProps {
   /** Label for the non-shop tab. `Reclutar` in rest stops, `Combate` in combat zones with a merchant. */
   firstLabel?: string;
   /**
+   * Label for the second tab. `Tienda` in rest stops, `Reclutar` in combat
+   * zones flagged with `hasShop` (e.g. Fangorn) since that tab actually
+   * exposes the recruit UI for the zone's companion.
+   */
+  secondLabel?: string;
+  /**
    * `floating` is the original in-scene chip (visible only on desktop).
    * `header` is the compact variant rendered inside the panel header bar
    * and shown only on mobile.
@@ -701,6 +708,7 @@ function RestModeToggle({
   current,
   onChange,
   firstLabel = 'Reclutar',
+  secondLabel = 'Tienda',
   variant = 'floating',
 }: RestModeToggleProps) {
   const wrapperClass = `${styles.restToggle} ${
@@ -724,7 +732,7 @@ function RestModeToggle({
         className={`${styles.restToggleBtn} ${current === 'shop' ? styles.restToggleActive : ''}`}
         onClick={() => onChange('shop')}
       >
-        Tienda
+        {secondLabel}
       </button>
     </div>
   );
@@ -800,10 +808,9 @@ interface RestShopCardProps {
 
 function RestShopCard({ item, ownedItem, equippedItem, gold, onBuy, onEquip }: RestShopCardProps) {
   const afford = gold >= item.cost;
-  const statLine =
-    item.slot === 'armor'
-      ? formatArmorStatLine(item.def)
-      : `+${item.slot === 'weapon' ? item.dmg : item.bonus} ${STAT_LABELS[item.slot]}`;
+  const statKey: keyof Pick<ShopItem, 'dmg' | 'def' | 'bonus'> =
+    item.slot === 'weapon' ? 'dmg' : item.slot === 'armor' ? 'def' : 'bonus';
+  const statLine = formatItemStatLine(item, item.slot, statKey);
   const icon = SLOT_ICONS[item.slot];
   const slotName = SLOT_LABELS[item.slot];
   const subtitle = item.desc ?? slotName;
@@ -827,6 +834,7 @@ function RestShopCard({ item, ownedItem, equippedItem, gold, onBuy, onEquip }: R
         item={item}
         className={styles.shopBonusChips}
         chipClassName={styles.shopBonusChip}
+        reserveSpace
       />
       {ownedItem ? (
         equippedItem ? (

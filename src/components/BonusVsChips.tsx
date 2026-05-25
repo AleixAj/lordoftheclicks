@@ -7,11 +7,34 @@ interface BonusVsChipsProps {
   item: Pick<ShopItem, 'bonusVs'>;
   className?: string;
   chipClassName?: string;
+  /**
+   * When true and the item has no bonuses, render an invisible placeholder
+   * chip so cards stay vertically aligned in a row (e.g. shop grids where
+   * one item has a bonus and the other doesn't).
+   */
+  reserveSpace?: boolean;
 }
 
-export function BonusVsChips({ item, className = '', chipClassName = '' }: BonusVsChipsProps) {
+export function BonusVsChips({
+  item,
+  className = '',
+  chipClassName = '',
+  reserveSpace = false,
+}: BonusVsChipsProps) {
   const bonuses = getBonusVsEntries(item);
-  if (!bonuses.length) return null;
+  if (!bonuses.length) {
+    if (!reserveSpace) return null;
+    return (
+      <div className={`${panelStyles.bonusChips} ${className}`} aria-hidden="true">
+        <span
+          className={`${panelStyles.bonusChip} ${chipClassName}`}
+          style={{ visibility: 'hidden' }}
+        >
+          <span className={panelStyles.bonusChipPct}>+0%</span>
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className={`${panelStyles.bonusChips} ${className}`}>
