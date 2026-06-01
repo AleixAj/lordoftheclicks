@@ -1,3 +1,4 @@
+import { ARMOR_DEF_PER_FIGHT_SECOND } from '@/engine/formulas';
 import type { EnemyType, EquipSlot, ShopItem } from '@/types/game';
 
 export const ENEMY_TYPE_LABELS: Record<EnemyType, string> = {
@@ -64,19 +65,23 @@ export const STAT_LABELS: Record<EquipSlot, string> = {
   accessory: 'bonus click',
 };
 
-/** +1 second on semi/boss fights per this many points of armor `def` in item data. */
-export const ARMOR_DEF_PER_FIGHT_SECOND = 5;
+/**
+ * Display-side helpers below mirror the engine's armor rules but only
+ * need the raw `def` value, so they're kept here to avoid pulling the
+ * full `EquippedItems` context into the shop/equipment cards. The
+ * canonical constant lives in `@/engine/formulas` to keep a single
+ * source of truth.
+ */
 
-/** Extra seconds on timed semi/boss fights from armor `def` value in data. */
-export function armorFightTimeBonusS(def: number | undefined): number {
+/** Seconds added to semi/boss fights for a given raw `def` value. */
+function defToBonusSeconds(def: number | undefined): number {
   if (!def || def <= 0) return 0;
   return Math.floor(def / ARMOR_DEF_PER_FIGHT_SECOND);
 }
 
 /** Display line for armor stat in shop/equipment UI. */
 export function formatArmorStatLine(def: number | undefined): string {
-  const secs = armorFightTimeBonusS(def);
-  return `+${secs}s en semi/jefe`;
+  return `+${defToBonusSeconds(def)}s en semi/jefe`;
 }
 
 /**

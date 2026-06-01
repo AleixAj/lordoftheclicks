@@ -1,6 +1,12 @@
 /**
- * Pure calculation helpers shared across the engine and the UI.
- * Keeping them isolated makes them trivially unit-testable.
+ * Pure calculation helpers shared between the engine and the UI.
+ *
+ * Every export here is a deterministic function of its arguments — no
+ * `Date.now`, no `Math.random` (callers inject `rng` where needed), no
+ * access to the store. This keeps the gameplay math trivially unit
+ * testable (see `__tests__/formulas.test.ts`) and lets components reuse
+ * the exact same formulas as the engine for previews (e.g. shop tooltips
+ * showing "+15 daño click" before buying).
  */
 import { SHOP_ACCESS, SHOP_ARMOR, SHOP_WEAPONS, UPGRADES } from '@/data';
 import { COMPANIONS } from '@/data/companions';
@@ -15,12 +21,23 @@ import type {
   UpgradeId,
 } from '@/types/game';
 
+/**
+ * Upper bound on `bonusVs` multipliers (e.g. +135% becomes the cap).
+ * Prevents endgame stacking from trivialising whole zones once the
+ * player owns multiple themed items.
+ */
 const ENEMY_TYPE_MULTIPLIER_CAP = 2.35;
 
+/**
+ * XP required to advance from `level` to `level + 1`. Exponential curve
+ * (base × 1.6^(level−1)) so the early game flies by and late levels
+ * pace the player against the rest of the progression.
+ */
 export function xpForLevel(level: number): number {
   return Math.floor(20 * Math.pow(1.6, level - 1));
 }
 
+/** Rank of a Forja upgrade in the current save (0 if never bought). */
 export function upgradeRank(
   upgrades: Partial<Record<UpgradeId, number>> | undefined,
   id: UpgradeId,
@@ -28,12 +45,22 @@ export function upgradeRank(
   return upgrades?.[id] ?? 0;
 }
 
+/**
+ * Mithril cost of the *next* rank of an upgrade. Geometric growth so
+ * dumping mithril into a single branch isn't strictly optimal late game.
+ * Returns `Infinity` for unknown ids so callers fail closed.
+ */
 export function upgradeCost(id: UpgradeId, rank: number): number {
   const upgrade = UPGRADES.find((candidate) => candidate.id === id);
   if (!upgrade) return Infinity;
   return Math.ceil(upgrade.baseCost * Math.pow(upgrade.costGrowth, rank));
 }
 
+/**
+ * Total bonus from every upgrade that targets a given `effect`. Each
+ * upgrade contributes `rank × valuePerRank`. Used by formulas that
+ * apply a single perk type (click damage, gold %, fight time…).
+ */
 export function upgradeEffectValue(
   upgrades: Partial<Record<UpgradeId, number>> | undefined,
   effect: UpgradeEffect,
@@ -44,6 +71,11 @@ export function upgradeEffectValue(
   );
 }
 
+/**
+ * Gold cost to push a companion from `companionLevel` to the next level.
+ * Forja can shave up to 50% off via `companion_cost_pct`; the floor of 1
+ * ensures the action is never free even with extreme stacking.
+ */
 export function companionUpgradeCost(
   companionLevel: number,
   upgrades?: Partial<Record<UpgradeId, number>>,
@@ -53,6 +85,10 @@ export function companionUpgradeCost(
   return Math.max(1, Math.floor(base * (1 + reduction)));
 }
 
+/**
+ * Click damage with NO enemy-type adjustments. Equals:
+ *   (1 + level + weapon.dmg + accessory.bonus) × (1 + Forja click_damage_pct)
+ */
 export function calcClickDamage(
   state: Pick<GameState, 'level' | 'equipped'> & Partial<Pick<GameState, 'upgrades'>>,
 ): number {
@@ -68,6 +104,7 @@ export function calcClickDamage(
   return dmg * (1 + upgradeEffectValue(state.upgrades, 'click_damage_pct'));
 }
 
+/** Resolves the equipped item ids into their full `ShopItem` records. */
 export function getEquippedItems(equipped: EquippedItems): ShopItem[] {
   const items: ShopItem[] = [];
   if (equipped.weapon) {
@@ -85,6 +122,11 @@ export function getEquippedItems(equipped: EquippedItems): ShopItem[] {
   return items;
 }
 
+/**
+ * Damage multiplier vs a given enemy type from stacked `bonusVs` perks.
+ * Returns `1` for typeless enemies (final/unique foes like the Eye of
+ * Sauron) and is clamped to `ENEMY_TYPE_MULTIPLIER_CAP`.
+ */
 export function calcEnemyTypeMultiplier(
   equipped: EquippedItems,
   enemyType: EnemyType | undefined,
@@ -97,6 +139,7 @@ export function calcEnemyTypeMultiplier(
   return Math.min(1 + bonus, ENEMY_TYPE_MULTIPLIER_CAP);
 }
 
+/** Same as `calcEnemyTypeMultiplier` but expressed as a rounded percentage for UI labels. */
 export function calcActiveEnemyTypeBonusPct(
   equipped: EquippedItems,
   enemyType: EnemyType | undefined,
@@ -104,6 +147,7 @@ export function calcActiveEnemyTypeBonusPct(
   return Math.round((calcEnemyTypeMultiplier(equipped, enemyType) - 1) * 100);
 }
 
+/** Click damage scaled by the enemy-type multiplier; used by the actual hit pipeline. */
 export function calcClickDamageAgainstEnemy(
   state: Pick<GameState, 'level' | 'equipped'> & Partial<Pick<GameState, 'upgrades'>>,
   enemy: Pick<EnemyInstance, 'enemyType'>,
@@ -111,6 +155,11 @@ export function calcClickDamageAgainstEnemy(
   return calcClickDamage(state) * calcEnemyTypeMultiplier(state.equipped, enemy.enemyType);
 }
 
+/**
+ * Total companion DPS (sum of `baseDps × level` for every unlocked ally).
+ * Locked or zero-level companions contribute nothing. Defensive about
+ * malformed save data: levels ≤ 0 are coerced to 1.
+ */
 export function calcDps(state: Pick<GameState, 'companions'>): number {
   let dps = 0;
   for (const c of COMPANIONS) {
@@ -133,6 +182,7 @@ export function armorFightTimeBonusS(equipped: EquippedItems): number {
   return Math.floor(armor.def / ARMOR_DEF_PER_FIGHT_SECOND);
 }
 
+/** Companion DPS adjusted by the equipment's anti-type multiplier. */
 export function calcDpsAgainstEnemy(
   state: Pick<GameState, 'companions' | 'equipped'>,
   enemy: Pick<EnemyInstance, 'enemyType'>,
@@ -140,6 +190,11 @@ export function calcDpsAgainstEnemy(
   return calcDps(state) * calcEnemyTypeMultiplier(state.equipped, enemy.enemyType);
 }
 
+/**
+ * Consumes XP and advances levels until the remainder fits below the
+ * threshold for the new level. Loop-based so a huge XP payload (e.g.
+ * boss kill at low level) can yield multiple levels in one call.
+ */
 export function applyLevelUps(xp: number, level: number): { xp: number; level: number } {
   let nextXp = xp;
   let nextLevel = level;
@@ -160,6 +215,11 @@ export function equippedRewardBonus(equipped: EquippedItems | undefined, key: 'g
   return getEquippedItems(equipped).reduce((sum, item) => sum + (item[key] ?? 0), 0);
 }
 
+/**
+ * Applies an additive reward modifier (Forja % + equipped item %) to a
+ * base amount of gold or XP. Bonuses stack additively (not multiplicatively)
+ * to keep stacking intuitive and capping easier.
+ */
 export function applyRewardMultiplier(
   amount: number,
   upgrades: Partial<Record<UpgradeId, number>> | undefined,
@@ -170,6 +230,11 @@ export function applyRewardMultiplier(
   return Math.max(0, Math.floor(amount * (1 + upgradeEffectValue(upgrades, effect) + itemBonus)));
 }
 
+/**
+ * Mithril dropped on a semi/boss kill. Scales with `locIdx` (deeper
+ * zones drop more), doubles the first-clear bonus for bosses, and
+ * stacks with the Forja `mithril_flat` upgrade. Normal mobs never drop.
+ */
 export function mithrilRewardForTier(
   tier: EnemyTier,
   locIdx: number,

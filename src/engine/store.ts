@@ -1,3 +1,26 @@
+/**
+ * Single source of truth for the game's runtime state.
+ *
+ * This module is the only React-aware piece of the engine: it wraps the
+ * pure helpers in `formulas`, `combat`, `spawn`, `progression` and
+ * `persistence` behind a flat Zustand store so components dispatch
+ * actions instead of mutating state.
+ *
+ * State shape:
+ *  - `state`: persisted `GameState` (saved to localStorage by `useGameLoop`).
+ *  - Top-level booleans (`shaking`, `deadAnim`, `goldBurst`, `fightFailed`,
+ *    `forgeUnlockFlash`) are transient UI flags that don't need to survive
+ *    a reload and are kept outside `state` on purpose.
+ *
+ * Conventions:
+ *  - Actions read `get().state`, validate preconditions, and replace the
+ *    state via `set(...)`. They never mutate.
+ *  - `applyPostMutations` runs after every state-changing action so reach
+ *    quests stay consistent without scattering the logic across actions.
+ *  - Dev cheats are colocated here (rather than in a separate module) so
+ *    they share the same invariants as real actions and the auto-save
+ *    pipeline picks them up automatically.
+ */
 import { create } from 'zustand';
 import {
   COMPANIONS,
@@ -93,8 +116,15 @@ interface GameStore {
   giveGold: (amount?: number) => void;
 }
 
+// Module-scope counter: guarantees a unique React key for every floating
+// number even when several pop in the same frame.
 let dmgIdSeq = 0;
 
+/**
+ * Spawns a floating damage number near the enemy and auto-removes it
+ * after 800ms (matches the CSS fade-out animation in `battle.module.css`).
+ * Coordinates are jittered so repeated clicks don't stack on top of each other.
+ */
 function pushDamageNumber(
   set: (fn: (s: GameStore) => Partial<GameStore>) => void,
   value: number,
@@ -111,6 +141,11 @@ function pushDamageNumber(
   }, 800);
 }
 
+/**
+ * Cross-cutting normalization run after every state mutation. Today it
+ * only credits "reach" quests when `visitedLocs` changes; centralising it
+ * here means individual actions don't have to remember to do it.
+ */
 function applyPostMutations(state: GameState): GameState {
   return {
     ...state,

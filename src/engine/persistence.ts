@@ -1,3 +1,22 @@
+/**
+ * Save layer.
+ *
+ * Persistence strategy:
+ *  - Auto-save is debounced and triggered by `useGameLoop` whenever
+ *    `state` changes (see hook).
+ *  - The active schema is keyed by `SAVE_KEY`. When the shape of
+ *    `GameState` changes in a way that requires a migration, bump the
+ *    version in the key (e.g. `lotc_save_v11` → `lotc_save_v12`) and
+ *    handle the legacy key inside `loadGame`.
+ *  - `loadGame` is forgiving: missing fields fall back to defaults and
+ *    parse errors return a fresh state rather than wiping the player's
+ *    progress mid-session.
+ *
+ * Manual export/import:
+ *  - The player can download a base64-wrapped backup and reimport it
+ *    later. The wrapper records `app`, `fileVersion` and the original
+ *    `SAVE_KEY` so future builds can recognise (and migrate) old files.
+ */
 import { ENEMIES, LOCATIONS, QUESTS } from '@/data';
 import type { CompanionId, CompanionState, GameState } from '@/types/game';
 import { calcClickDamage } from './formulas';
@@ -20,6 +39,9 @@ interface SaveBackupFile {
   state: GameState;
 }
 
+// btoa/atob only handle Latin-1, so we round-trip through TextEncoder to
+// keep accented characters (Khamûl, Mûmakil, Grishnákh…) intact in the
+// downloadable save file.
 function encodeBase64(value: string): string {
   const bytes = new TextEncoder().encode(value);
   let binary = '';
@@ -33,6 +55,7 @@ function decodeBase64(value: string): string {
   return new TextDecoder().decode(bytes);
 }
 
+// Filesystem-safe timestamp (drops `:` so Windows accepts the file name).
 function saveFileName(): string {
   const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
   return `lord-of-the-clicks-save-${stamp}.txt`;
@@ -60,6 +83,7 @@ function normalizeCompanions(
   return out;
 }
 
+/** Fresh save with the opening enemy already spawned in La Comarca. */
 export function createInitialState(): GameState {
   return {
     locIdx: 0,
@@ -88,6 +112,11 @@ export function createInitialState(): GameState {
   };
 }
 
+/**
+ * Reads the persisted state and applies migrations. Never throws:
+ * malformed JSON or missing keys fall back to a brand-new save so a
+ * single bad write can't soft-lock the player out of the game.
+ */
 export function loadGame(): GameState {
   if (typeof window === 'undefined') return createInitialState();
   const rawV11 = window.localStorage.getItem(SAVE_KEY);
@@ -189,11 +218,17 @@ export function loadGame(): GameState {
   }
 }
 
+/** Writes the current state under the active `SAVE_KEY`. SSR-safe (no-op on the server). */
 export function saveGame(state: GameState): void {
   if (typeof window === 'undefined') return;
   window.localStorage.setItem(SAVE_KEY, JSON.stringify(state));
 }
 
+/**
+ * Triggers a browser download of the current state wrapped in a small
+ * envelope (`app`, `fileVersion`, `saveKey`, `exportedAt`). The wrapper
+ * lets future builds recognise the file even after the SAVE_KEY bumps.
+ */
 export function downloadSaveFile(state: GameState): void {
   if (typeof window === 'undefined') return;
   const backup: SaveBackupFile = {
@@ -216,6 +251,11 @@ export function downloadSaveFile(state: GameState): void {
   window.URL.revokeObjectURL(url);
 }
 
+/**
+ * Restores a save from a user-provided backup file. Throws on any
+ * mismatch (wrong app marker, malformed payload) so the caller can
+ * surface a user-friendly error instead of silently corrupting the save.
+ */
 export async function importSaveFile(file: File): Promise<void> {
   if (typeof window === 'undefined') return;
   const raw = await file.text();
@@ -228,6 +268,7 @@ export async function importSaveFile(file: File): Promise<void> {
   window.localStorage.removeItem(LEGACY_KEY);
 }
 
+/** Wipes both the current and legacy save keys. Used by `resetGame`. */
 export function resetSave(): void {
   if (typeof window === 'undefined') return;
   window.localStorage.removeItem(SAVE_KEY);

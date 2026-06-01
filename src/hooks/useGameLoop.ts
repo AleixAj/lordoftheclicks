@@ -2,7 +2,11 @@ import { useEffect } from 'react';
 import { isBossFightExpired } from '@/engine/progression';
 import { saveGame, useGameStore } from '@/engine/store';
 
+// 4 Hz feels smooth for floating numbers but doesn't waste CPU. The
+// engine pre-divides per-second DPS by this rate inside `tick`.
 const TICK_INTERVAL_MS = 250;
+// Debouncing reduces localStorage writes during rapid click bursts and
+// is short enough that a refresh feels instant from the player's POV.
 const AUTOSAVE_DEBOUNCE_MS = 500;
 
 function runGameFrame(): void {
