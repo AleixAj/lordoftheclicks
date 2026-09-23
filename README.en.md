@@ -187,7 +187,6 @@ src/
 │   ├── __tests__/             #   game loop tests (deadline + activation)
 │   └── useMapInteraction.ts   #   map pan / zoom / drag (mouse + touch) with translate3d + rAF
 ├── components/                # React components (TSX, one component per file)
-│   ├── App.tsx                #   main layout, side drawers on mobile, dev cheats
 │   ├── ErrorBoundary.tsx      #   catches crashes and renders a fallback
 │   ├── BattlePanel.tsx        #   combat; internal subcomponents: FloatingActions, EncounterChip, …
 │   ├── ForgeModal.tsx         #   upgrade tree modal (diamonds + SVG connections + confirm modal)
@@ -216,6 +215,7 @@ src/
 │   ├── equipmentText.ts       #   type labels/icons/colors, getBonusVsEntries, formatItemStatLine
 │   └── logger.ts              #   abstracted logger (ready for Sentry/Datadog)
 ├── test/setup.ts              # Global Vitest setup
+├── App.tsx                    # main layout, side drawers on mobile, dev cheats
 ├── main.tsx                   # Entry point (StrictMode + ErrorBoundary)
 └── index.css                  # Tailwind v4 + CSS vars theme + @font-face Ringbearer/Aniron
 ```

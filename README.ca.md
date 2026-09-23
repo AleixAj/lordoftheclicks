@@ -193,7 +193,6 @@ src/
 │   ├── __tests__/             #   tests del game loop (deadline + activació)
 │   └── useMapInteraction.ts   #   pan / zoom / arrossegament (ratolí + tàctil) del mapa amb translate3d + rAF
 ├── components/                # Components React (TSX, un component per fitxer)
-│   ├── App.tsx                #   layout principal, calaixos laterals al mòbil, trucs de desenvolupament
 │   ├── ErrorBoundary.tsx      #   captura els errors i renderitza un fallback
 │   ├── BattlePanel.tsx        #   combat; subcomponents interns: FloatingActions, EncounterChip, …
 │   ├── ForgeModal.tsx         #   modal de l'arbre de millores (diamants + connexions SVG + modal de confirmació)
@@ -222,6 +221,7 @@ src/
 │   ├── equipmentText.ts       #   etiquetes/icones/colors de tipus, getBonusVsEntries, formatItemStatLine
 │   └── logger.ts              #   logger abstret (preparat per a Sentry/Datadog)
 ├── test/setup.ts              # Configuració global de Vitest
+├── App.tsx                    # layout principal, calaixos laterals al mòbil, trucs de desenvolupament
 ├── main.tsx                   # Punt d'entrada (StrictMode + ErrorBoundary)
 └── index.css                  # Tailwind v4 + tema amb variables CSS + @font-face Ringbearer/Aniron
 ```
