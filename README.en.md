@@ -3,6 +3,7 @@
 <p>
   <a href="README.md"><img src="docs/readme/lang-es.svg" alt="Español" width="170"></a>
   <img src="docs/readme/lang-en-active.svg" alt="English" width="170">
+  <a href="README.ca.md"><img src="docs/readme/lang-ca.svg" alt="Català" width="170"></a>
 </p>
 
 > An incremental clicker set in _The Lord of the Rings_. It started as a
@@ -45,7 +46,7 @@ code shows several decisions I care about as a frontend developer:
 - **Taking responsive design seriously.** Desktop uses three columns; mobile
   narrows the focus to combat, side drawers and compact controls.
 - **Making state persistent and migratable.** The save uses versioned keys and
-  migrations to fix model changes without breaking existing games.
+  migrations to handle model changes without breaking existing saved games.
 - **Testing what can break the game.** There are tests for formulas, combat,
   progression, the store, content and the game loop.
 
@@ -100,7 +101,7 @@ pnpm install && pnpm dev   # http://localhost:5173
 - ⏱️ **Armor as time**: armor `def` doesn't add DPS, it
   **adds seconds to the mini-boss/boss timer** (`+1s` per 5 points).
 - 📈 **Companion level cap based on progress**: prevents farming the
-  early game to trivialize the ending.
+  early game to trivialize the endgame.
 - 📜 **24 discoverable quests** (`reach` / `kills_at` / `boss`) with
   a `!` badge; `reach` quests are handed out in the _previous_ zone and are
   credited when you **physically visit** the target zone, not when it gets
@@ -224,7 +225,7 @@ src/
 - **Pure engine, thin store, dumb components.** `combat.ts`,
   `progression.ts`, `formulas.ts` and `spawn.ts` are pure functions with no
   React dependencies. The Zustand store only exposes data +
-  actions. Components don't compute game rules, they only
+  actions. Components don't compute game rules; they only
   consume them. This makes it possible to test the domain without mounting
   anything and to migrate the UI without touching the logic.
 - **Side effects in hooks, never at module level.** The DPS tick,
@@ -265,14 +266,14 @@ src/
 - **Serializable state + migrations.** `GameState` is a POJO.
   `persistence.ts` uses a versioned `SAVE_KEY` and applies migrations when
   loading old saves (e.g. introducing `forgeUnlocked`/`forgeSeen`
-  without breaking existing games). It also cleans up games in odd states
+  without breaking existing saves). It also cleans up saves in odd states
   (mini-boss/boss on screen without `bossFight`, corrupted companion
   levels) by respawning a mob from the pool and normalizing `level`. The
   **v10 → v11** migration illustrates the strategy: the legacy save is
   detected, `visitedLocs` is rebuilt from `locIdx` (the map is linear,
   so every zone before the current one was visited) and
   `questProgress` is reset for `reach` quests not yet claimed, preserving
-  completed ones so existing games don't break.
+  completed ones so existing saves don't break.
 - **`visitedLocs` vs `unlockedLocs`.** An explicit distinction in the domain:
   a zone can be **unlocked** (reachable on the map, e.g. after
   recruiting Frodo + Sam) without being **visited** (having traveled there).
@@ -345,7 +346,7 @@ src/
 
 ### Things I still want to improve
 
-I don't consider it "finished". Some parts work well but have room to grow:
+I don't consider it "finished". Some parts work well but still have room for improvement:
 
 - `BattlePanel.tsx` holds too much code (combat, recruitment,
   local shop and encounter chips). I want to extract subcomponents to
@@ -386,8 +387,8 @@ Copy `.env.example` to `.env.local`. All variables must have the
 
 ### Code quality
 
-- **Pre-commit** (Husky + lint-staged): every commit automatically runs ESLint and
-  Prettier on the staged files.
+- **Pre-commit** (Husky + lint-staged): every commit automatically runs ESLint
+  and Prettier on the staged files.
 - **CI**: GitHub Actions runs `lint`, `typecheck`, `test:run` and `build`
   on every push/PR to `main`.
 - **Active rules**: TS strict, `react-hooks/recommended`,
@@ -400,25 +401,25 @@ just the icon). It opens a menu with two sections:
 
 **Always available**
 
-- **📥 Download save** — exports the current save as a Base64
+- **📥 Descargar partida** (Download save) — exports the current save as a Base64
   `.txt`.
-- **📤 Import save** — opens a file picker and replaces the
+- **📤 Importar partida** (Import save) — opens a file picker and replaces the
   save after validating the format.
 
 **Development only** (not rendered in production):
 
-- **⚙ Unlock all zones** — unlocks every map location
+- **⚙ Desbloquear todas las zonas** (Unlock all zones) — unlocks every map location
   and the Forge, and also makes the mini-boss and boss available in
   every zone (bypasses the kill gate and pre-marks mini-bosses as
   defeated, without touching `bossDefeated`).
-- **⛀ +1,000,000 gold and mithril** — adds 1M gold and 1M mithril to the
+- **⛀ +1.000.000 oro y mithril** (+1,000,000 gold and mithril) — adds 1M gold and 1M mithril to the
   wallet.
-- **⏭ Complete current zone** — completes the current zone (kills maxed
+- **⏭ Completar zona actual** (Complete current zone) — completes the current zone (kills maxed
   out, boss + mini-boss defeated, next zone unlocked).
-- **★ Complete entire game** — simulates a 100% completed game,
+- **★ Completar juego entero** (Complete entire game) — simulates a 100% completed game,
   leaving heroes at level 1 with no gear equipped so you can test
   without excessive passive DPS.
-- **↺ Restart game** — deletes the save and returns to the welcome screen
+- **↺ Reiniciar partida** (Restart game) — deletes the save and returns to the welcome screen
   after an in-game confirmation modal (`ConfirmDialog`).
 
 ## 📋 Adding content

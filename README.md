@@ -3,6 +3,7 @@
 <p>
   <img src="docs/readme/lang-es-active.svg" alt="Español" width="170">
   <a href="README.en.md"><img src="docs/readme/lang-en.svg" alt="English" width="170"></a>
+  <a href="README.ca.md"><img src="docs/readme/lang-ca.svg" alt="Català" width="170"></a>
 </p>
 
 > Clicker incremental ambientado en _El Señor de los Anillos_. Nació como un
@@ -223,8 +224,8 @@ src/
 
 - **Motor puro, store fino, componentes tontos.** `combat.ts`,
   `progression.ts`, `formulas.ts` y `spawn.ts` son funciones puras sin
-  dependencias de React. El store de Zustand sólo expone datos +
-  actions. Los componentes no calculan reglas de juego, sólo las
+  dependencias de React. El store de Zustand solo expone datos +
+  actions. Los componentes no calculan reglas de juego, solo las
   consumen. Esto permite testear el dominio sin montar nada y migrar la
   UI sin tocar la lógica.
 - **Side-effects en hooks, nunca a nivel de módulo.** Tick de DPS,
@@ -330,7 +331,7 @@ src/
   drawers, currency bar, modal de la Forja) y Tailwind para layout.
 - Mapa interactivo con drag (mouse + touch), zoom y modal fullscreen.
 - Feedback visual: daño flotante, críticos, partículas, temporizador de
-  jefe, barras de vida, halos coloreados, hover sólo sobre la imagen,
+  jefe, barras de vida, halos coloreados, hover solo sobre la imagen,
   toasts persistentes para hitos de progreso.
 
 ### Calidad
