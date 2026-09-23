@@ -1,5 +1,10 @@
 # Lord of the Clicks
 
+<p>
+  <img src="docs/readme/lang-es-active.svg" alt="Español" width="170">
+  <a href="README.en.md"><img src="docs/readme/lang-en.svg" alt="English" width="170"></a>
+</p>
+
 > Clicker incremental ambientado en _El Señor de los Anillos_. Nació como un
 > proyecto personal para mezclar dos cosas que disfruto: los juegos
 > incrementales y construir interfaces con buen detalle visual. La idea es
